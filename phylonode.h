@@ -30,6 +30,7 @@ class PhyloNeighbor : public Neighbor {
 public:
     friend class TinaTree;
     friend class PhyloSuperTreePlen;
+    friend class ParsTree; // DTH ##############
 
     /**
         construct class with a node and length		@param anode the other end of the branch

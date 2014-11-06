@@ -125,6 +125,12 @@ public:
      */
     void regroupSitePattern(int groups, IntVector &site_group);
 
+    /**
+     * This will further reduce the number of patterns by e.g., condensing two sites AACCC and AAGGG into one.
+     * For unweighted parsimony such sites will have the same score.
+     * @param aln input alignment
+     */
+    void condenseParsimonyEquivalentSites(Alignment *aln);
 
     /****************************************************************************
             output alignment 

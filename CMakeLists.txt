@@ -359,6 +359,9 @@ graph.cpp
 modelmorphology.cpp
 candidateset.cpp
 checkpoint.cpp
+parstree.cpp
+sprparsimony.cpp
+sankoffcostmatrix.cpp
 )
 
 ##################################################################

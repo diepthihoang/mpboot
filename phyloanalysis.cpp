@@ -50,7 +50,9 @@
 #include "guidedbootstrap.h"
 #include "modelset.h"
 #include "timeutil.h"
-
+#include "parstree.h"
+#include "tinatree.h"
+#include "sprparsimony.h"
 
 void reportReferences(Params &params, ofstream &out, string &original_model) {
 	out << "To cite IQ-TREE please use:" << endl << endl
@@ -506,39 +508,41 @@ void reportPhyloAnalysis(Params &params, string &original_model,
 			reportModelSelection(out, params, model_info, tree.isSuperTree());
 		}
 
-		out << "SUBSTITUTION PROCESS" << endl << "--------------------" << endl
-				<< endl;
-		if (tree.isSuperTree()) {
-			if(params.partition_type)
-				out	<< "Proportional partition model with joint branch lengths and separate models between partitions" << endl << endl;
-			else
-				out	<< "Full partition model with separate branch lengths and models between partitions" << endl << endl;
-			PhyloSuperTree *stree = (PhyloSuperTree*) &tree;
-			PhyloSuperTree::iterator it;
-			int part;
-			if(params.partition_type)
-				out << "  ID  Model          Rate   Parameters" << endl;
-			else
-				out << "  ID  Model          Parameters" << endl;
-			//out << "-------------------------------------" << endl;
-			for (it = stree->begin(), part = 0; it != stree->end(); it++, part++) {
-				out.width(4);
-				out << right << (part+1) << "  ";
-				out.width(14);
+		if (!params.maximum_parsimony) {
+			out << "SUBSTITUTION PROCESS" << endl << "--------------------" << endl
+					<< endl;
+			if (tree.isSuperTree()) {
 				if(params.partition_type)
-					out << left << (*it)->getModelName() << " " << stree->part_info[part].part_rate  << " " << (*it)->getModelNameParams() << endl;
+					out	<< "Proportional partition model with joint branch lengths and separate models between partitions" << endl << endl;
 				else
-					out << left << (*it)->getModelName() << " " << (*it)->getModelNameParams() << endl;
+					out	<< "Full partition model with separate branch lengths and models between partitions" << endl << endl;
+				PhyloSuperTree *stree = (PhyloSuperTree*) &tree;
+				PhyloSuperTree::iterator it;
+				int part;
+				if(params.partition_type)
+					out << "  ID  Model          Rate   Parameters" << endl;
+				else
+					out << "  ID  Model          Parameters" << endl;
+				//out << "-------------------------------------" << endl;
+				for (it = stree->begin(), part = 0; it != stree->end(); it++, part++) {
+					out.width(4);
+					out << right << (part+1) << "  ";
+					out.width(14);
+					if(params.partition_type)
+						out << left << (*it)->getModelName() << " " << stree->part_info[part].part_rate  << " " << (*it)->getModelNameParams() << endl;
+					else
+						out << left << (*it)->getModelName() << " " << (*it)->getModelNameParams() << endl;
+				}
+				out << endl;
+				/*
+				for (it = stree->begin(), part = 0; it != stree->end(); it++, part++) {
+					reportModel(out, *(*it));
+					reportRate(out, *(*it));
+				}*/
+			} else {
+				reportModel(out, tree);
+				reportRate(out, tree);
 			}
-			out << endl;
-			/*
-			for (it = stree->begin(), part = 0; it != stree->end(); it++, part++) {
-				reportModel(out, *(*it));
-				reportRate(out, *(*it));
-			}*/
-		} else {
-			reportModel(out, tree);
-			reportRate(out, tree);
 		}
 
 		/*
@@ -599,8 +603,8 @@ void reportPhyloAnalysis(Params &params, string &original_model,
 				<< endl;
 */
 		if (params.compute_ml_tree) {
-			out << "MAXIMUM LIKELIHOOD TREE" << endl
-					<< "-----------------------" << endl << endl;
+			out << (params.maximum_parsimony ? "MAXIMUM PARSIMONY TREE" : "MAXIMUM LIKELIHOOD TREE") << endl
+								<< "-----------------------" << endl << endl;
 
 			tree.setRootNode(params.root);
 			out << "NOTE: Tree is UNROOTED although outgroup taxon '" << tree.root->name << "' is drawn at root" << endl;
@@ -1071,38 +1075,44 @@ void computeInitialTree(Params &params, IQTree &iqtree, string &dist_file, int &
 			params.SSE = LK_SSE;
 		}
     } else switch (params.start_tree) {
-    case STT_PARSIMONY:
-        // Create parsimony tree using IQ-Tree kernel
-        cout << endl;
-        cout << "Creating initial parsimony tree by random order stepwise addition..." << endl;
-        iqtree.computeParsimonyTree(params.out_prefix, iqtree.aln);
-        iqtree.initializeAllPartialPars();
-        iqtree.clearAllPartialLH();
-        iqtree.fixNegativeBranch(true);
-        numInitTrees = params.numParsTrees;
-        break;
-    case STT_PLL_PARSIMONY:
-        cout << endl;
-        cout << "Create initial parsimony tree by phylogenetic likelihood library (PLL)... ";
-        // generate a parsimony tree for model optimization
-        iqtree.pllInst->randomNumberSeed = params.ran_seed;
-        pllComputeRandomizedStepwiseAdditionParsimonyTree(iqtree.pllInst, iqtree.pllPartitions, params.sprDist);
-        resetBranches(iqtree.pllInst);
-        pllTreeToNewick(iqtree.pllInst->tree_string, iqtree.pllInst, iqtree.pllPartitions, iqtree.pllInst->start->back,
-                PLL_TRUE, PLL_TRUE, PLL_FALSE, PLL_FALSE, PLL_FALSE, PLL_SUMMARIZE_LH, PLL_FALSE, PLL_FALSE);
-        iqtree.readTreeString(string(iqtree.pllInst->tree_string));
-        iqtree.initializeAllPartialPars();
-        iqtree.clearAllPartialLH();
-        iqtree.fixNegativeBranch(true);
-        cout << getCPUTime() - start << " seconds" << endl;
-        numInitTrees = params.numParsTrees;
-        break;
-    case STT_BIONJ:
-        // This is the old default option: using BIONJ as starting tree
-        iqtree.computeBioNJ(params, iqtree.aln, dist_file);
-        cout << getCPUTime() - start << " seconds" << endl;
-        numInitTrees = 1;
-        break;
+	case STT_PARSIMONY:
+		// Create parsimony tree using IQ-Tree kernel
+		cout << endl;
+		cout << "Creating initial parsimony tree by random order stepwise addition..." << endl;
+		iqtree.computeParsimonyTree(params.out_prefix, iqtree.aln);
+		iqtree.initializeAllPartialPars(params);
+		iqtree.clearAllPartialLH();
+		iqtree.fixNegativeBranch(true);
+		numInitTrees = params.numParsTrees;
+		break;
+	case STT_PLL_PARSIMONY:
+		cout << endl;
+		cout << "Create initial parsimony tree by phylogenetic likelihood library (PLL)... ";
+		// generate a parsimony tree for model optimization
+		iqtree.pllInst->randomNumberSeed = params.ran_seed;
+
+		// Diep: temporarily skip this
+		//		if(params.maximum_parsimony && params.spr_parsimony && params.gbo_replicates)
+//			_pllComputeRandomizedStepwiseAdditionParsimonyTree(iqtree.pllInst, iqtree.pllPartitions);
+//		else
+			pllComputeRandomizedStepwiseAdditionParsimonyTree(iqtree.pllInst, iqtree.pllPartitions, params.sprDist);
+		resetBranches(iqtree.pllInst);
+		pllTreeToNewick(iqtree.pllInst->tree_string, iqtree.pllInst, iqtree.pllPartitions, iqtree.pllInst->start->back,
+				PLL_TRUE, PLL_TRUE, PLL_FALSE, PLL_FALSE, PLL_FALSE, PLL_SUMMARIZE_LH, PLL_FALSE, PLL_FALSE);
+		iqtree.readTreeString(string(iqtree.pllInst->tree_string));
+		iqtree.initializeAllPartialPars(params);
+		iqtree.clearAllPartialLH();
+		iqtree.fixNegativeBranch(true);
+
+		cout << getCPUTime() - start << " seconds" << endl;
+		numInitTrees = params.numParsTrees;
+		break;
+	case STT_BIONJ:
+		// This is the old default option: using BIONJ as starting tree
+		iqtree.computeBioNJ(params, iqtree.aln, dist_file);
+		cout << getCPUTime() - start << " seconds" << endl;
+		numInitTrees = 1;
+		break;
     }
 
     /* Fix if negative branch lengths detected */
@@ -1182,8 +1192,15 @@ int initCandidateTreeSet(Params &params, IQTree &iqtree, int numInitTrees) {
         string curParsTree;
         if (params.start_tree == STT_PLL_PARSIMONY) {
 			iqtree.pllInst->randomNumberSeed = params.ran_seed + treeNr * 12345;
-	        pllComputeRandomizedStepwiseAdditionParsimonyTree(iqtree.pllInst, iqtree.pllPartitions, params.sprDist);
-			pllTreeToNewick(iqtree.pllInst->tree_string, iqtree.pllInst, iqtree.pllPartitions,
+
+			// Diep: temporarily skip this if SPR
+			//			if(params.spr_parsimony){
+//				_pllComputeRandomizedStepwiseAdditionParsimonyTree(iqtree.pllInst, iqtree.pllPartitions);
+//			}
+//			else
+				pllComputeRandomizedStepwiseAdditionParsimonyTree(iqtree.pllInst, iqtree.pllPartitions, params.sprDist);
+
+	        pllTreeToNewick(iqtree.pllInst->tree_string, iqtree.pllInst, iqtree.pllPartitions,
 					iqtree.pllInst->start->back, PLL_TRUE, PLL_TRUE, PLL_FALSE, PLL_FALSE, PLL_FALSE,
 					PLL_SUMMARIZE_LH, PLL_FALSE, PLL_FALSE);
 			curParsTree = string(iqtree.pllInst->tree_string);
@@ -1240,6 +1257,9 @@ int initCandidateTreeSet(Params &params, IQTree &iqtree, int numInitTrees) {
     double loglTime = getCPUTime() - startTime;
     cout << loglTime << " seconds" << endl;
     cout << "Average CPU time for computing log-likelihood of 1 tree: " << loglTime / (numInitTrees - 1) << endl;
+
+	// do not do anything for parsimony because tree was already optimized by SPR
+	if (params.maximum_parsimony) return -1;
 
     vector<string> bestTrees = iqtree.candidateTrees.getBestTrees(params.numNNITrees);
     iqtree.candidateTrees.clear();
@@ -1970,8 +1990,18 @@ void runPhyloAnalysis(Params &params) {
 		}
 		// this alignment will actually be of type SuperAlignment
 		alignment = tree->aln;
-	} else {
+	} else if(params.maximum_parsimony && params.sankoff_cost_file){
 		alignment = new Alignment(params.aln_file, params.sequence_type, params.intype);
+		tree = new ParsTree(alignment);
+		dynamic_cast<ParsTree *>(tree)->initParsData(&params);
+	}else {
+		alignment = new Alignment(params.aln_file, params.sequence_type, params.intype);
+		if (params.maximum_parsimony && !params.sankoff_cost_file && params.condense_parsimony_equiv_sites) {
+			Alignment *aln = new Alignment();
+			aln->condenseParsimonyEquivalentSites(alignment);
+			delete alignment;
+			alignment = aln;
+		}
 		tree = new IQTree(alignment);
 	}
 

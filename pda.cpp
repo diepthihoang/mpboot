@@ -64,6 +64,7 @@
 #include "timeutil.h"
 //#include <unistd.h>
 #include <stdlib.h>
+#include "sprparsimony.h"
 #include "vectorclass/vectorclass.h"
 
 #ifdef _OPENMP
@@ -2276,6 +2277,9 @@ int main(int argc, char *argv[])
 	//cout << "sizeof(int)=" << sizeof(int) << endl;
 	cout << endl << endl;
 
+	// Added by BQM 13.04.2014: for ultrafast Fitch algorithm
+	if(params.maximum_parsimony) precomputeFitchInfo();
+
 	cout.precision(3);
 	cout.setf(ios::fixed);
 
@@ -2284,7 +2288,11 @@ int main(int argc, char *argv[])
 		generateRandomTree(params);
 	} else if (params.do_pars_multistate) {
 		doParsMultiState(params);
-	} else if (params.rf_dist_mode != 0) {
+	}
+//	else if (params.test_site_pars) {
+//		testSiteParsimony(params);
+//	}
+	else if (params.rf_dist_mode != 0) {
 		computeRFDist(params);
 	} else if (params.test_input != TEST_NONE) {
 		params.intype = detectInputFile(params.user_file);

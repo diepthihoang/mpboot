@@ -765,6 +765,14 @@ void parseArg(int argc, char *argv[], Params &params) {
     params.bootlh_test = 0;
     params.bootlh_partitions = NULL;
     params.site_freq_file = NULL;
+
+    params.maximum_parsimony = false;
+    params.sankoff_cost_file = NULL;
+    params.condense_parsimony_equiv_sites = false;
+    params.spr_parsimony = false;
+    params.spr_mintrav = 1; // same as PLL
+    params.spr_maxtrav = 20; // same as PLL
+    params.test_site_pars = false;
 #ifdef _OPENMP
     params.num_threads = 0;
 #endif
@@ -2209,6 +2217,47 @@ void parseArg(int argc, char *argv[], Params &params) {
 				params.pll = true;
 				continue;
 			}
+			if(strcmp(argv[cnt], "-mpars") == 0){
+            	params.maximum_parsimony = true;
+            	params.nni5 = false;
+            	params.nni_type = NNI1;
+            	continue;
+            }
+			if(strcmp(argv[cnt], "-cost") == 0){
+            	cnt++;
+                if (cnt >= argc)
+                    throw "Use -cost <sankoff cost file name>";
+            	if(params.sankoff_cost_file == NULL)
+            		params.sankoff_cost_file = argv[cnt];
+            	continue;
+            }
+			if(strcmp(argv[cnt], "-mpcondense") == 0){
+            	params.condense_parsimony_equiv_sites = true;
+            	continue;
+            }
+			if(strcmp(argv[cnt], "-spr_pars") == 0){
+            	params.spr_parsimony = true;
+            	params.maximum_parsimony = true;
+            	continue;
+            }
+			if(strcmp(argv[cnt], "-spr_mintrav") == 0){
+            	cnt++;
+                if (cnt >= argc)
+                    throw "Use -spr_mintrav <minimal SPR radius>";
+            	params.spr_mintrav = convert_int(argv[cnt]);
+            	continue;
+            }
+			if(strcmp(argv[cnt], "-spr_maxtrav") == 0){
+            	cnt++;
+                if (cnt >= argc)
+                    throw "Use -spr_maxtrav <maximal SPR radius>";
+            	params.spr_maxtrav = convert_int(argv[cnt]);
+            	continue;
+            }
+			if(strcmp(argv[cnt], "-sitepars") == 0){
+            	params.test_site_pars = true;
+            	continue;
+            }
 			if (strcmp(argv[cnt], "-me") == 0) {
 				cnt++;
 				if (cnt >= argc)
@@ -2468,6 +2517,11 @@ void parseArg(int argc, char *argv[], Params &params) {
             params.out_prefix = params.ngs_mapped_reads;
         else
             params.out_prefix = params.user_file;
+    }
+
+    // Diep (for spr pars)
+    if(params.spr_parsimony && !params.snni){
+    	outError("-spr_pars must work with -snni");
     }
 }
 

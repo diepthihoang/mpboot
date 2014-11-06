@@ -1466,6 +1466,37 @@ struct Params {
      */
     char *site_freq_file;
 
+    /*
+     * Diep:
+     * to search using maximum parsimony search criterion
+     */
+    bool maximum_parsimony;
+
+    /** TRUE to condense parsimony equivalent sites, default: false */
+    bool condense_parsimony_equiv_sites;
+
+    /*
+     * Diep:
+     * Name of file storing Sankoff cost matrix
+     */
+    char * sankoff_cost_file;
+
+    /*
+     * Diep: to optimize the parsimony tree using SPR implemented in PLL
+     */
+    bool spr_parsimony;
+
+    /*
+     * Diep: SPR's radius as required by PLL
+     */
+    int spr_mintrav;
+    int spr_maxtrav;
+
+    /*
+     * Diep: option for comparing PLL site parsimony and IQTree
+     */
+    bool test_site_pars;
+
 #ifdef _OPENMP
     int num_threads;
 #endif

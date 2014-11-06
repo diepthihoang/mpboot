@@ -527,6 +527,73 @@ void Alignment::regroupSitePattern(int groups, IntVector& site_group)
 	//printPhylip("/dev/stdout");
 }
 
+void Alignment::condenseParsimonyEquivalentSites(Alignment *aln) {
+	if (aln->seq_type != SEQ_DNA) return; // TODO: right now only works for DNA
+	int site, nsite = aln->getNSite();
+    seq_names.insert(seq_names.begin(), aln->seq_names.begin(), aln->seq_names.end());
+    num_states = aln->num_states;
+    seq_type = aln->seq_type;
+    site_pattern.resize(nsite, -1);
+    clear();
+    pattern_index.clear();
+
+    char state_map[128];
+	int i;
+	for (site = 0; site < nsite; site++) {
+		Alignment::iterator it = aln->begin() + aln->site_pattern[site];
+		memset(state_map, -1, 128);
+		state_map[STATE_UNKNOWN] = STATE_UNKNOWN;
+		// first map unambiguous characters
+		char state = 0;
+		Pattern::iterator c;
+		Pattern pat_new;
+		pat_new.resize(getNSeq(), -1);
+		pat_new.is_const = it->is_const;
+		for (c = it->begin(); c != it->end(); c++)
+			if (*c < num_states && state_map[*c] < 0) {
+				state_map[*c] = state;
+				state++;
+			}
+		// now map ambiguous characters
+		for (c = it->begin(); c != it->end(); c++)
+			if (*c >= num_states && *c != STATE_UNKNOWN) {
+				char ch = (*c) - (num_states-1);
+				for (char state2 = 0; state2 < num_states; state2++)
+					if (ch & (1<<state2) && state_map[state2] < 0) {
+						state_map[state2] = state;
+						state++;
+					}
+			}
+		for (char state2 = 0; state2 < num_states; state2++)
+			if (state_map[state2] < 0)
+				state_map[state2] = state++;
+		int max_state = (1<<num_states)-1+num_states;
+		assert(state == num_states);
+		for (state = num_states; state < max_state; state++) {
+			char ch = state - (num_states-1);
+			state_map[state] = num_states-1;
+			for (char state2 = 0; state2 < num_states; state2++)
+				if (ch & (1<<state2))
+					state_map[state] += (1 << state_map[state2]);
+		}
+		// now convert current pattern
+		for (c = it->begin(), i = 0; c != it->end(); c++, i++)
+			pat_new[i] = state_map[*c];
+		addPattern(pat_new, site);
+		if (verbose_mode >= VB_MAX) {
+			for (c = it->begin(); c != it->end(); c++) {
+				cout << convertStateBackStr(*c);
+			}
+			cout << " -> ";
+			for (c = pat_new.begin(); c != pat_new.end(); c++) {
+				cout << convertStateBackStr(*c);
+			}
+			cout << endl;
+		}
+	}
+    countConstSite();
+    cout << "Alignment is condensed into " << size() << " patterns" << endl;
+}
 
 /**
 	detect the data type of the input sequences

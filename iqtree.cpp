@@ -27,6 +27,7 @@
 #include <numeric>
 #include "pll/pllInternal.h"
 #include "nnisearch.h"
+#include "sprparsimony.h"
 #include "vectorclass/vectorclass.h"
 #include "vectorclass/vectormath_common.h"
 
@@ -1004,17 +1005,33 @@ void IQTree::pllBuildIQTreePatternIndex(){
 	char * pll_site = new char[pllAlignment->sequenceCount + 1];
 	char * site = new char[pllAlignment->sequenceCount + 1];
     for(int i = 0; i < pllAlignment->sequenceLength; i++){
-        for(int j = 0; j < pllAlignment->sequenceCount; j++)
+    	bool check_base_subst = false; // Diep: (Sep 24, 2014) Temp solution to the irregular on/off base substitute of PLL
+        for(int j = 0; j < pllAlignment->sequenceCount; j++){
             pll_site[j]= pll_aln[j][i];
+            if((int)pll_site[j] > 23) check_base_subst = true;
+        }
         pll_site[pllAlignment->sequenceCount] = '\0';
+
+		if(check_base_subst){
+			pllBaseSubstitute(pll_site, pllPartitions->partitionData[0]->dataType);
+		}
 
         site[pllAlignment->sequenceCount] = '\0';
         for(int k = 0; k < aln->size(); k++){
             for(int p = 0; p < pllAlignment->sequenceCount; p++)
                 site[p] = aln->convertStateBack(aln->at(k)[p]);
+
             pllBaseSubstitute(site, pllPartitions->partitionData[0]->dataType);
+
             if(memcmp(pll_site,site, pllAlignment->sequenceCount) == 0){
                 pll2iqtree_pattern_index[i] = k;
+//                if(k == 104){
+//                	for(int p = 0; p < pllAlignment->sequenceCount; p++){
+//                        site[p] = aln->convertStateBack(aln->at(k)[p]);
+//                        cout << (char)site[p];
+//                	}
+//                	cout << "$$$$$$$$$$$$$$$$$$" << endl;
+//                }
             }
         }
     }
@@ -1431,7 +1448,18 @@ double IQTree::doTreeSearch() {
                 }
             }
 
-            if (params->pll) {
+            if(params->maximum_parsimony && params->spr_parsimony && (params->snni || params->pll)){ // SPR for mpars
+            	pllNewickTree *perturbTree = pllNewickParseString(perturb_tree_string.c_str());
+				assert(perturbTree != NULL);
+				pllTreeInitTopologyNewick(pllInst, perturbTree, PLL_FALSE);
+//				pllTreeToNewick(pllInst->tree_string, pllInst, pllPartitions, pllInst->start->back, PLL_TRUE,
+//						PLL_TRUE, 0, 0, 0, PLL_SUMMARIZE_LH, 0, 0);
+//				imd_tree = string(pllInst->tree_string);
+//				readTreeString(imd_tree);
+				initializeAllPartialPars();
+			    clearAllPartialLH();
+			    curScore = perturbScore = -computeParsimony();
+            }else if (params->pll) {
                 pllNewickTree *perturbTree = pllNewickParseString(perturb_tree_string.c_str());
                 assert(perturbTree != NULL);
                 pllTreeInitTopologyNewick(pllInst, perturbTree, PLL_FALSE);
@@ -1505,7 +1533,10 @@ double IQTree::doTreeSearch() {
             printTree(cur_tree_topo_ss, WT_TAXON_ID | WT_SORT_TAXA);
             if (cur_tree_topo_ss.str() != best_tree_topo) {
                 best_tree_topo = cur_tree_topo_ss.str();
-                imd_tree = optimizeModelParameters();
+                if (params->maximum_parsimony)
+                	imd_tree = best_tree_topo;
+                else
+                	imd_tree = optimizeModelParameters();
                 stop_rule.addImprovedIteration(curIt);
                 cout << "BETTER TREE FOUND at iteration " << curIt << ": " << curScore;
                 cout << " / CPU time: " << (int) round(getCPUTime() - params->startCPUTime) << "s" << endl << endl;
@@ -1536,7 +1567,7 @@ double IQTree::doTreeSearch() {
         }
 
         // DTH: make pllUFBootData usable in summarizeBootstrap
-        if(params->pll && params->online_bootstrap && (params->gbo_replicates > 0))
+        if((!params->maximum_parsimony) && (params->pll) && (params->online_bootstrap) && (params->gbo_replicates > 0))
             pllConvertUFBootData2IQTree();
         // DTH: Carefully watch the -pll case here
 
@@ -1579,9 +1610,14 @@ double IQTree::doTreeSearch() {
     }
 
     // DTH: pllUFBoot deallocation
-    if(params->pll) {
+    if(params->pll & !params->maximum_parsimony) {
         pllDestroyUFBootData();
     }
+
+//    if(params->maximum_parsimony && params->spr_parsimony && (params->snni || params->pll)){
+//    	_pllFreeParsimonyDataStructures(pllInst, pllPartitions);
+//    }
+
 
     return bestScore;
 }
@@ -1591,7 +1627,17 @@ double IQTree::doTreeSearch() {
  ****************************************************************************/
 string IQTree::doNNISearch(int& nniCount, int& nniSteps) {
 	string treeString;
-    if (params->pll) {
+//	if(params->maximum_parsimony && params->spr_parsimony && (params->snni || params->pll)){ // SPR for mpars
+//		pllOptimizeSprParsimony(pllInst, pllPartitions, params->spr_mintrav, params->spr_maxtrav, this);
+//		pllTreeToNewick(pllInst->tree_string, pllInst, pllPartitions, pllInst->start->back, PLL_TRUE,
+//				PLL_TRUE, 0, 0, 0, PLL_SUMMARIZE_LH, 0, 0);
+//		treeString = string(pllInst->tree_string);
+//		readTreeString(treeString);
+//		initializeAllPartialPars();
+//		clearAllPartialLH();
+//		curScore = -computeParsimony();
+//	}else
+	if (params->pll) {
     	if (params->partition_file)
     		outError("Unsupported -pll -sp combination!");
         curScore = pllOptimizeNNI(nniCount, nniSteps, searchinfo);
@@ -1693,6 +1739,9 @@ double IQTree::optimizeNNI(int &nni_count, int &nni_steps) {
             nni_count += numNNIs;
             rollBack = false;
         } else {
+        	// Diep: skip the 1NNI check if running weighted parsimony -mpars -cost <cost_file>
+        	if(globalParam->sankoff_cost_file) continue;
+
             /* tree cannot be worse if only 1 NNI is applied */
             if (numNNIs == 1 && curScore < nonConfNNIs.at(0).newloglh - 1.0) {
             	cout.precision(15);
@@ -1739,7 +1788,7 @@ void IQTree::updateBrans2Eval(vector<NNIMove> nnis) {
 
 
 double IQTree::pllOptimizeNNI(int &totalNNICount, int &nniSteps, SearchInfo &searchinfo) {
-    if((globalParam->online_bootstrap == PLL_TRUE) && (globalParam->gbo_replicates > 0)) {
+    if((globalParam->online_bootstrap == PLL_TRUE) && (globalParam->gbo_replicates > 0) && (!globalParam->maximum_parsimony)) {
         pllInitUFBootData();
     }
     searchinfo.numAppliedNNIs = 0;
@@ -2208,18 +2257,26 @@ void IQTree::saveCurrentTree(double cur_logl) {
     int nptn = getAlnNPattern();
     BootValType *pattern_lh = aligned_alloc<BootValType>(nptn);
 
-#ifdef BOOT_VAL_FLOAT
-    double *pattern_lh_orig = aligned_alloc_double(nptn);
-    computePatternLikelihood(pattern_lh_orig, &cur_logl);
-    for (int i = 0; i < nptn; i++)
-    	pattern_lh[i] = pattern_lh_orig[i];
+	// DTH: if spr search on parsimony
+	if ((params->maximum_parsimony && params->spr_parsimony)){
+		pllTreeToNewick(pllInst->tree_string, pllInst, pllPartitions, pllInst->start->back, PLL_TRUE, PLL_TRUE, 0, 0, 0, PLL_SUMMARIZE_LH, 0, 0);
+		string imd_tree = string(pllInst->tree_string);
+		readTreeString(imd_tree);
+	}
+
+    #ifdef BOOT_VAL_FLOAT
+	double *pattern_lh_orig = aligned_alloc_double(nptn);
+	computePatternLikelihood(pattern_lh_orig, &cur_logl);
+	for (int i = 0; i < nptn; i++)
+		pattern_lh[i] = pattern_lh_orig[i];
 #else
-    computePatternLikelihood(pattern_lh, &cur_logl);
+	computePatternLikelihood(pattern_lh, &cur_logl);
 #endif
 
 
     if (boot_samples.empty()) {
         // for runGuidedBootstrap
+    	if (pattern_lh)
 #ifdef BOOT_VAL_FLOAT
         treels_ptnlh.push_back(pattern_lh_orig);
 #else
@@ -2234,6 +2291,16 @@ void IQTree::saveCurrentTree(double cur_logl) {
         for (int sample = 0; sample < nsamples; sample++) {
             double rell = 0.0;
 
+			if (params->maximum_parsimony) {
+				// THIS is to speed up RELL computation for parsimony (int operations are much faster than double)
+				int reps = 0;
+				// This loop will be automatically vectorized if compiled with -O3
+				// here you can use Vec4i for vector of 4 integers!
+            	BootValType *boot_sample = boot_samples[sample];
+				for (int ptn = 0; ptn < nptn; ptn++)
+					reps += _pattern_pars[ptn] * boot_sample[ptn]; // TODO: this is very slow due to numerical conversion!!
+				rell = -(double)reps;
+			} else {
             // TODO: The following parallel is not very efficient, should wrap the above loop
 //#ifdef _OPENMP
 //#pragma omp parallel for reduction(+: rell)
@@ -2264,6 +2331,7 @@ void IQTree::saveCurrentTree(double cur_logl) {
 					res += pattern_lh[ptn] * boot_sample[ptn];
 				rell = res;
             }
+			}
 
             if (rell > boot_logl[sample] + params->ufboot_epsilon
                     || (rell > boot_logl[sample] - params->ufboot_epsilon
@@ -2305,7 +2373,7 @@ void IQTree::saveCurrentTree(double cur_logl) {
         printTree(ostr, WT_TAXON_ID | WT_SORT_TAXA | WT_BR_LEN | WT_BR_SCALE | WT_BR_LEN_ROUNDING);
         treels_newick.push_back(ostr.str());
     }
-    if (print_tree_lh) {
+    if (print_tree_lh && pattern_lh) {
         out_treelh << cur_logl;
         double prob;
 #ifdef BOOT_VAL_FLOAT

@@ -511,6 +511,9 @@ public:
 
     int getCurIteration() { return curIt; }
 
+    // Diep: move from protected to public to be callable from sprparsimony.cpp
+    virtual void saveCurrentTree(double logl); // save current tree
+
     /**
      * Do memory allocation and initialize parameter for UFBoot to run with PLL
      */
@@ -758,8 +761,6 @@ protected:
     ofstream out_treels, out_treelh, out_sitelh, out_treebetter;
 
     void estimateNNICutoff(Params* params);
-
-    virtual void saveCurrentTree(double logl); // save current tree
 
     void saveNNITrees(PhyloNode *node = NULL, PhyloNode *dad = NULL);
 

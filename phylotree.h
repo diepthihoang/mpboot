@@ -231,6 +231,13 @@ struct LeafFreq {
 };
 
 /**
+ * PLEASE CALL THIS AT THE BEGINNING OF PROGRAM:
+ * Precompute some information for fast Fitch parsimony algorithm
+ */
+void precomputeFitchInfo();
+
+/**
+/**
 Phylogenetic Tree class
 
         @author BUI Quang Minh, Steffen Klaere, Arndt von Haeseler <minh.bui@univie.ac.at>
@@ -343,6 +350,10 @@ public:
         return false;
     }
 
+    virtual bool isParsimonyTree() {
+        return false;
+    }
+
     /**
             allocate a new node. Override this if you have an inherited Node class.
             @param node_id node ID
@@ -393,6 +404,12 @@ public:
     double computeCorrectedParsimonyBranch(PhyloNeighbor *dad_branch, PhyloNode *dad);
 
     /**
+     *		Diep: add this to set this->params if needed
+            initialize partial_pars vector of all PhyloNeighbors, allocating central_partial_pars
+     */
+    virtual void initializeAllPartialPars(Params& params);
+
+    /**
             initialize partial_pars vector of all PhyloNeighbors, allocating central_partial_pars
      */
     virtual void initializeAllPartialPars();
@@ -409,14 +426,14 @@ public:
             compute the tree parsimony score
             @return parsimony score of the tree
      */
-    int computeParsimony();
+    virtual int computeParsimony();
 
     /**
             TODO: Compute partial parsimony score of the subtree rooted at dad
             @param dad_branch the branch leading to the subtree
             @param dad its dad, used to direct the tranversal
      */
-    void computePartialParsimony(PhyloNeighbor *dad_branch, PhyloNode *dad);
+    virtual void computePartialParsimony(PhyloNeighbor *dad_branch, PhyloNode *dad);
 
 
     /**
@@ -426,7 +443,7 @@ public:
             @param branch_subst (OUT) if not NULL, the number of substitutions on this branch
             @return parsimony score of the tree
      */
-    int computeParsimonyBranch(PhyloNeighbor *dad_branch, PhyloNode *dad, int *branch_subst = NULL);
+    virtual int computeParsimonyBranch(PhyloNeighbor *dad_branch, PhyloNode *dad, int *branch_subst = NULL);
 
     void printParsimonyStates(PhyloNeighbor *dad_branch = NULL, PhyloNode *dad = NULL);
 
@@ -486,6 +503,11 @@ public:
             allocate memory for a partial likelihood vector
      */
     double *newPartialLh();
+
+    /**
+            allocate memory for a partial parsimony vector
+     */
+    virtual UINT *newPartialPars();
 
     /** get the number of bytes occupied by partial_lh */
     int getPartialLhBytes();
@@ -595,6 +617,14 @@ public:
      */
     virtual void computePatternLikelihood(double *pattern_lh, double *cur_logl = NULL,
     		double *pattern_lh_cat = NULL);
+
+    /**
+     * compute the array of pattern parsimony
+     * to be serving the parsimony UFBoot
+     * @param ptn_npars: array to store negative pattern parsimony
+     * @cur_npars: pointer to the variable storing tree's negative parsimony score
+     */
+    virtual void computePatternParsimony(double *ptn_npars, double *cur_npars = NULL);
 
     /**
             Compute the variance in tree log-likelihood
@@ -1318,6 +1348,11 @@ protected:
             If you want to get real pattern log-likelihoods, please use computePatternLikelihood()
      */
     double *_pattern_lh;
+
+    /**
+     * Store array of pattern parsimony computed in computeParsimonyBranch()
+     */
+    int* _pattern_pars;
 
     /**
             internal pattern likelihoods per category, always stored after calling computeLikelihood()
