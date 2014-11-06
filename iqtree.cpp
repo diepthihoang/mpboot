@@ -1614,7 +1614,6 @@ double IQTree::doTreeSearch() {
     	_pllFreeParsimonyDataStructures(pllInst, pllPartitions);
     }
 
-
     return bestScore;
 }
 

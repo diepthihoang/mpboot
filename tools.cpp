@@ -2252,6 +2252,7 @@ void parseArg(int argc, char *argv[], Params &params) {
                 if (cnt >= argc)
                     throw "Use -spr_maxtrav <maximal SPR radius>";
             	params.spr_maxtrav = convert_int(argv[cnt]);
+            	params.sprDist = params.spr_maxtrav; // Diep: hopefully this speed the pllMakeParsimonyTreeFast...
             	continue;
             }
 			if(strcmp(argv[cnt], "-sitepars") == 0){

@@ -68,6 +68,7 @@ extern "C" {
 #include <pmmintrin.h>
 
 #define PLL_BYTE_ALIGNMENT 32
+#define PLL_VECTOR_WIDTH 4
 
 #else
 
@@ -77,9 +78,11 @@ extern "C" {
 #include <pmmintrin.h>
 
 #define PLL_BYTE_ALIGNMENT 16
+#define PLL_VECTOR_WIDTH 2
 
 #else
 #define PLL_BYTE_ALIGNMENT 1
+#define PLL_VECTOR_WIDTH 1
 #endif
 #endif
 
@@ -222,7 +225,7 @@ extern double exp_approx (double x);
 #define PLL_LIB_VERSION                         "1.0.0"
 #define PLL_LIB_DATE                            "September 2013"
 
-
+/* aminoacid substitution models */
 #define PLL_DAYHOFF                             0
 #define PLL_DCMUT                               1
 #define PLL_JTT                                 2
@@ -251,11 +254,12 @@ extern double exp_approx (double x);
 
 #define PLL_BIPARTITIONS_RF                     4
 
-
+/* scenarios for likelihood computation */
 #define PLL_TIP_TIP                             0
 #define PLL_TIP_INNER                           1
 #define PLL_INNER_INNER                         2
 
+/* available data types in PLL */
 #define PLL_MIN_MODEL                          -1
 #define PLL_BINARY_DATA                         0
 #define PLL_DNA_DATA                            1
@@ -295,6 +299,7 @@ extern double exp_approx (double x);
 #define PLL_MK_MULTI_STATE                      1
 #define PLL_GTR_MULTI_STATE                     2
 
+/* available models of rate heterogeneity in PLL */
 #define PLL_CAT                                 0
 #define PLL_GAMMA                               1
 
