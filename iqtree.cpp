@@ -1452,10 +1452,6 @@ double IQTree::doTreeSearch() {
             	pllNewickTree *perturbTree = pllNewickParseString(perturb_tree_string.c_str());
 				assert(perturbTree != NULL);
 				pllTreeInitTopologyNewick(pllInst, perturbTree, PLL_FALSE);
-//				pllTreeToNewick(pllInst->tree_string, pllInst, pllPartitions, pllInst->start->back, PLL_TRUE,
-//						PLL_TRUE, 0, 0, 0, PLL_SUMMARIZE_LH, 0, 0);
-//				imd_tree = string(pllInst->tree_string);
-//				readTreeString(imd_tree);
 				initializeAllPartialPars();
 			    clearAllPartialLH();
 			    curScore = perturbScore = -computeParsimony();
@@ -1614,9 +1610,9 @@ double IQTree::doTreeSearch() {
         pllDestroyUFBootData();
     }
 
-//    if(params->maximum_parsimony && params->spr_parsimony && (params->snni || params->pll)){
-//    	_pllFreeParsimonyDataStructures(pllInst, pllPartitions);
-//    }
+    if(params->maximum_parsimony && params->spr_parsimony && (params->snni || params->pll)){
+    	_pllFreeParsimonyDataStructures(pllInst, pllPartitions);
+    }
 
 
     return bestScore;
@@ -1627,16 +1623,16 @@ double IQTree::doTreeSearch() {
  ****************************************************************************/
 string IQTree::doNNISearch(int& nniCount, int& nniSteps) {
 	string treeString;
-//	if(params->maximum_parsimony && params->spr_parsimony && (params->snni || params->pll)){ // SPR for mpars
-//		pllOptimizeSprParsimony(pllInst, pllPartitions, params->spr_mintrav, params->spr_maxtrav, this);
-//		pllTreeToNewick(pllInst->tree_string, pllInst, pllPartitions, pllInst->start->back, PLL_TRUE,
-//				PLL_TRUE, 0, 0, 0, PLL_SUMMARIZE_LH, 0, 0);
-//		treeString = string(pllInst->tree_string);
-//		readTreeString(treeString);
-//		initializeAllPartialPars();
-//		clearAllPartialLH();
-//		curScore = -computeParsimony();
-//	}else
+	if(params->maximum_parsimony && params->spr_parsimony && (params->snni || params->pll)){ // SPR for mpars
+		pllOptimizeSprParsimony(pllInst, pllPartitions, params->spr_mintrav, params->spr_maxtrav, this);
+		pllTreeToNewick(pllInst->tree_string, pllInst, pllPartitions, pllInst->start->back, PLL_TRUE,
+				PLL_TRUE, 0, 0, 0, PLL_SUMMARIZE_LH, 0, 0);
+		treeString = string(pllInst->tree_string);
+		readTreeString(treeString);
+		initializeAllPartialPars();
+		clearAllPartialLH();
+		curScore = -computeParsimony();
+	}else
 	if (params->pll) {
     	if (params->partition_file)
     		outError("Unsupported -pll -sp combination!");
@@ -2301,36 +2297,36 @@ void IQTree::saveCurrentTree(double cur_logl) {
 					reps += _pattern_pars[ptn] * boot_sample[ptn]; // TODO: this is very slow due to numerical conversion!!
 				rell = -(double)reps;
 			} else {
-            // TODO: The following parallel is not very efficient, should wrap the above loop
-//#ifdef _OPENMP
-//#pragma omp parallel for reduction(+: rell)
-//#endif
-//            if (sse == LK_NORMAL || sse == LK_EIGEN) {
-            if (false) {
-            	BootValType *boot_sample = boot_samples[sample];
-				for (ptn = 0; ptn < nptn; ptn++)
-					rell += pattern_lh[ptn] * boot_sample[ptn];
-            } else {
-            	// SSE optimized version of the above loop
-				BootValType *boot_sample = boot_samples[sample];
-#ifdef BOOT_VAL_FLOAT
-				VectorClassFloat vc_rell = 0.0;
-				int maxptn = nptn - VCSIZE_FLOAT;
-				for (ptn = 0; ptn < maxptn; ptn+=VCSIZE_FLOAT)
-					vc_rell = mul_add(VectorClassFloat().load_a(&pattern_lh[ptn]), VectorClassFloat().load_a(&boot_sample[ptn]), vc_rell);
-#else
-				VectorClassMaster vc_rell = 0.0;
-				int maxptn = nptn - VCSIZE_MASTER;
-				for (ptn = 0; ptn < maxptn; ptn+=VCSIZE_MASTER)
-					vc_rell = mul_add(VectorClassMaster().load_a(&pattern_lh[ptn]), VectorClassMaster().load_a(&boot_sample[ptn]), vc_rell);
-#endif
+				// TODO: The following parallel is not very efficient, should wrap the above loop
+	//#ifdef _OPENMP
+	//#pragma omp parallel for reduction(+: rell)
+	//#endif
+	//            if (sse == LK_NORMAL || sse == LK_EIGEN) {
+				if (false) {
+					BootValType *boot_sample = boot_samples[sample];
+					for (ptn = 0; ptn < nptn; ptn++)
+						rell += pattern_lh[ptn] * boot_sample[ptn];
+				} else {
+					// SSE optimized version of the above loop
+					BootValType *boot_sample = boot_samples[sample];
+	#ifdef BOOT_VAL_FLOAT
+					VectorClassFloat vc_rell = 0.0;
+					int maxptn = nptn - VCSIZE_FLOAT;
+					for (ptn = 0; ptn < maxptn; ptn+=VCSIZE_FLOAT)
+						vc_rell = mul_add(VectorClassFloat().load_a(&pattern_lh[ptn]), VectorClassFloat().load_a(&boot_sample[ptn]), vc_rell);
+	#else
+					VectorClassMaster vc_rell = 0.0;
+					int maxptn = nptn - VCSIZE_MASTER;
+					for (ptn = 0; ptn < maxptn; ptn+=VCSIZE_MASTER)
+						vc_rell = mul_add(VectorClassMaster().load_a(&pattern_lh[ptn]), VectorClassMaster().load_a(&boot_sample[ptn]), vc_rell);
+	#endif
 
-				BootValType res = horizontal_add(vc_rell);
-				// add the remaining ptn
-				for (; ptn < nptn; ptn++)
-					res += pattern_lh[ptn] * boot_sample[ptn];
-				rell = res;
-            }
+					BootValType res = horizontal_add(vc_rell);
+					// add the remaining ptn
+					for (; ptn < nptn; ptn++)
+						res += pattern_lh[ptn] * boot_sample[ptn];
+					rell = res;
+				}
 			}
 
             if (rell > boot_logl[sample] + params->ufboot_epsilon

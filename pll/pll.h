@@ -1001,6 +1001,7 @@ typedef struct {
   /* Parsimony vectors at each node */
   size_t parsimonyLength;
   parsimonyNumber *parsVect; 
+  parsimonyNumber *perSiteParsScores;
 
   /* This buffer of size width is used to store intermediate values for the branch length optimization under 
      newton-raphson. The data in here can be re-used for all iterations irrespective of the branch length.
@@ -1668,6 +1669,12 @@ nodeptr pllGetRandomSubtree(pllInstance *);
 extern void pllFreeParsimonyDataStructures(pllInstance *tr, partitionList *pr);
 void pllDestroyInstance (pllInstance *);
 extern void pllGetAncestralState(pllInstance *tr, partitionList *pr, nodeptr p, double * outProbs, char * outSequence);
+unsigned int pllEvaluateParsimony(pllInstance *tr, partitionList *pr, nodeptr p, pllBoolean full, pllBoolean perSiteScores);
+void pllInitParsimonyStructures(pllInstance *tr, partitionList *pr, pllBoolean perSiteScores);
+
+/* Diep: additional functions to map the compressed to normal PLL site ID */
+int pllGetNonCompressedId(int model, int compressedId);
+void pllDestroyDecompressArray(pllInstance *tr, partitionList *pr);
 
 /* rearrange functions (NNI and SPR) */
 pllRearrangeList * pllCreateRearrangeList (int max);

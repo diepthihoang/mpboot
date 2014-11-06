@@ -1091,10 +1091,9 @@ void computeInitialTree(Params &params, IQTree &iqtree, string &dist_file, int &
 		// generate a parsimony tree for model optimization
 		iqtree.pllInst->randomNumberSeed = params.ran_seed;
 
-		// Diep: temporarily skip this
-		//		if(params.maximum_parsimony && params.spr_parsimony && params.gbo_replicates)
-//			_pllComputeRandomizedStepwiseAdditionParsimonyTree(iqtree.pllInst, iqtree.pllPartitions);
-//		else
+		if(params.maximum_parsimony && params.spr_parsimony && params.gbo_replicates)
+			_pllComputeRandomizedStepwiseAdditionParsimonyTree(iqtree.pllInst, iqtree.pllPartitions, params.sprDist);
+		else
 			pllComputeRandomizedStepwiseAdditionParsimonyTree(iqtree.pllInst, iqtree.pllPartitions, params.sprDist);
 		resetBranches(iqtree.pllInst);
 		pllTreeToNewick(iqtree.pllInst->tree_string, iqtree.pllInst, iqtree.pllPartitions, iqtree.pllInst->start->back,
@@ -1192,12 +1191,10 @@ int initCandidateTreeSet(Params &params, IQTree &iqtree, int numInitTrees) {
         string curParsTree;
         if (params.start_tree == STT_PLL_PARSIMONY) {
 			iqtree.pllInst->randomNumberSeed = params.ran_seed + treeNr * 12345;
-
-			// Diep: temporarily skip this if SPR
-			//			if(params.spr_parsimony){
-//				_pllComputeRandomizedStepwiseAdditionParsimonyTree(iqtree.pllInst, iqtree.pllPartitions);
-//			}
-//			else
+			if(params.spr_parsimony){
+				_pllComputeRandomizedStepwiseAdditionParsimonyTree(iqtree.pllInst, iqtree.pllPartitions, params.sprDist);
+			}
+			else
 				pllComputeRandomizedStepwiseAdditionParsimonyTree(iqtree.pllInst, iqtree.pllPartitions, params.sprDist);
 
 	        pllTreeToNewick(iqtree.pllInst->tree_string, iqtree.pllInst, iqtree.pllPartitions,
