@@ -182,17 +182,28 @@ void IQTree::setParams(Params &params) {
 
     if (params.online_bootstrap && params.gbo_replicates > 0) {
         cout << "Generating " << params.gbo_replicates << " samples for ultrafast bootstrap..." << endl;
+        size_t nptn;
         // allocate memory for boot_samples
-        boot_samples.resize(params.gbo_replicates);
+        if(!params.maximum_parsimony){
+        	boot_samples.resize(params.gbo_replicates);
 #ifdef BOOT_VAL_FLOAT
-        size_t nptn = get_safe_upper_limit_float(getAlnNPattern());
+        	nptn = get_safe_upper_limit_float(getAlnNPattern());
 #else
-        size_t nptn = get_safe_upper_limit(getAlnNPattern());
+        	nptn = get_safe_upper_limit(getAlnNPattern());
 #endif
-        BootValType *mem = aligned_alloc<BootValType>(nptn * (size_t)(params.gbo_replicates));
-        memset(mem, 0, nptn * (size_t)(params.gbo_replicates) * sizeof(BootValType));
-        for (i = 0; i < params.gbo_replicates; i++)
-        	boot_samples[i] = mem + i*nptn;
+			BootValType *mem = aligned_alloc<BootValType>(nptn * (size_t)(params.gbo_replicates));
+			memset(mem, 0, nptn * (size_t)(params.gbo_replicates) * sizeof(BootValType));
+			for (i = 0; i < params.gbo_replicates; i++)
+				boot_samples[i] = mem + i*nptn;
+        }else{
+        	// Diep: For parsimony bootstrap
+        	boot_samples_pars.resize(params.gbo_replicates);
+        	nptn = get_safe_upper_limit(getAlnNPattern());
+			BootValTypePars *mem = aligned_alloc<BootValTypePars>(nptn * (size_t)(params.gbo_replicates));
+			memset(mem, 0, nptn * (size_t)(params.gbo_replicates) * sizeof(BootValTypePars));
+			for (i = 0; i < params.gbo_replicates; i++)
+				boot_samples_pars[i] = mem + i*nptn;
+        }
 
         boot_logl.resize(params.gbo_replicates, -DBL_MAX);
         boot_trees.resize(params.gbo_replicates, -1);
@@ -208,15 +219,24 @@ void IQTree::setParams(Params &params) {
     				bootstrap_alignment = new Alignment;
     			IntVector this_sample;
     			bootstrap_alignment->createBootstrapAlignment(aln, &this_sample, params.bootstrap_spec);
-    			for (size_t j = 0; j < nptn; j++)
-    				boot_samples[i][j] = this_sample[j];
+    			for (size_t j = 0; j < nptn; j++){
+    				if(params.maximum_parsimony)
+    					boot_samples_pars[i][j] = this_sample[j];
+    				else
+    					boot_samples[i][j] = this_sample[j];
+    			}
+
 				bootstrap_alignment->printPhylip(bootaln_name.c_str(), true);
 				delete bootstrap_alignment;
         	} else {
     			IntVector this_sample;
         		aln->createBootstrapAlignment(this_sample, params.bootstrap_spec);
-    			for (size_t j = 0; j < nptn; j++)
-    				boot_samples[i][j] = this_sample[j];
+    			for (size_t j = 0; j < nptn; j++){
+    				if(params.maximum_parsimony)
+    					boot_samples_pars[i][j] = this_sample[j];
+    				else
+    					boot_samples[i][j] = this_sample[j];
+    			}
         	}
         }
         verbose_mode = saved_mode;
@@ -273,6 +293,9 @@ IQTree::~IQTree() {
 
     if (!boot_samples.empty())
     	aligned_free(boot_samples[0]); // free memory
+
+    if(!boot_samples_pars.empty())
+    	aligned_free(boot_samples_pars[0]); // Diep added
 }
 
 void IQTree::createPLLPartition(Params &params, ostream &pllPartitionFileHandle) {
@@ -2228,10 +2251,14 @@ void IQTree::saveCurrentTree(double cur_logl) {
             printTree(ostr, WT_TAXON_ID | WT_SORT_TAXA | WT_BR_LEN | WT_BR_SCALE | WT_BR_LEN_ROUNDING);
             treels_newick[it->second] = ostr.str();
         }
-        if (boot_samples.empty()) {
+        if ((!params->maximum_parsimony) && boot_samples.empty()) {
             computePatternLikelihood(treels_ptnlh[it->second], &cur_logl);
             return;
         }
+        if (params->maximum_parsimony && boot_samples_pars.empty()) {
+			computePatternLikelihood(treels_ptnlh[it->second], &cur_logl);
+			return;
+		}
         if (verbose_mode >= VB_MAX)
             cout << "Update treels_logl[" << tree_index << "] := " << cur_logl << endl;
     } else {
@@ -2258,7 +2285,7 @@ void IQTree::saveCurrentTree(double cur_logl) {
 		readTreeString(imd_tree);
 	}
 
-    #ifdef BOOT_VAL_FLOAT
+#ifdef BOOT_VAL_FLOAT
 	double *pattern_lh_orig = aligned_alloc_double(nptn);
 	computePatternLikelihood(pattern_lh_orig, &cur_logl);
 	for (int i = 0; i < nptn; i++)
@@ -2268,7 +2295,7 @@ void IQTree::saveCurrentTree(double cur_logl) {
 #endif
 
 
-    if (boot_samples.empty()) {
+    if (!params->maximum_parsimony && boot_samples.empty()) {
         // for runGuidedBootstrap
     	if (pattern_lh)
 #ifdef BOOT_VAL_FLOAT
@@ -2280,7 +2307,7 @@ void IQTree::saveCurrentTree(double cur_logl) {
         // online bootstrap
         int ptn, nptn = getAlnNPattern();
         int updated = 0;
-        int nsamples = boot_samples.size();
+        int nsamples = (params->maximum_parsimony) ? boot_samples_pars.size() : boot_samples.size();
 
         for (int sample = 0; sample < nsamples; sample++) {
             double rell = 0.0;
@@ -2290,7 +2317,7 @@ void IQTree::saveCurrentTree(double cur_logl) {
 				int reps = 0;
 				// This loop will be automatically vectorized if compiled with -O3
 				// here you can use Vec4i for vector of 4 integers!
-            	BootValType *boot_sample = boot_samples[sample];
+            	BootValTypePars *boot_sample = boot_samples_pars[sample];
 				for (int ptn = 0; ptn < nptn; ptn++)
 					reps += _pattern_pars[ptn] * boot_sample[ptn]; // TODO: this is very slow due to numerical conversion!!
 				rell = -(double)reps;
@@ -2385,7 +2412,7 @@ void IQTree::saveCurrentTree(double cur_logl) {
         out_sitelh << endl;
     }
 
-    if (!boot_samples.empty()) {
+    if (!params->maximum_parsimony && !boot_samples.empty()) {
 #ifdef BOOT_VAL_FLOAT
     	aligned_free(pattern_lh_orig);
 #endif
@@ -2396,6 +2423,8 @@ void IQTree::saveCurrentTree(double cur_logl) {
 #endif
     }
 
+    if (params->maximum_parsimony && boot_samples_pars.empty())
+    	aligned_free(pattern_lh_orig);
 }
 
 void IQTree::saveNNITrees(PhyloNode *node, PhyloNode *dad) {
