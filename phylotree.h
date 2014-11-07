@@ -118,7 +118,7 @@ inline void aligned_free(void *mem) {
 #define VectorClassInt Vec4i
 #define VCSIZE_MASTER 2
 #define VCSIZE_FLOAT 4
-#define VCSIZE_INT 8
+#define VCSIZE_INT 4
 //#pragma message "Using SS3 instructions"
 #endif
 

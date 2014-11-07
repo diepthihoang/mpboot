@@ -2333,7 +2333,7 @@ void IQTree::saveCurrentTree(double cur_logl) {
 					BootValTypePars res = horizontal_add(vc_rell);
 					// add the remaining ptn
 					for (; ptn < nptn; ptn++)
-						res += pattern_lh[ptn] * boot_sample[ptn];
+						res += _pattern_pars[ptn] * boot_sample[ptn];
 					rell = -(double)res;
 				}
 			} else {
