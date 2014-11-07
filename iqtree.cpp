@@ -2321,7 +2321,7 @@ void IQTree::saveCurrentTree(double cur_logl) {
 					// here you can use Vec4i for vector of 4 integers!
 					BootValTypePars *boot_sample = boot_samples_pars[sample];
 					for (int ptn = 0; ptn < nptn; ptn++)
-						reps += _pattern_pars[ptn] * boot_sample[ptn]; // TODO: this is very slow due to numerical conversion!!
+						reps += _pattern_pars[ptn] * boot_sample[ptn];
 					rell = -(double)reps;
 				}else{
 					// SSE optimized version of the above loop

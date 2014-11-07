@@ -135,7 +135,7 @@ PhyloTree::~PhyloTree() {
     if (_pattern_lh)
         aligned_free(_pattern_lh);
     if(_pattern_pars){
-    	delete [] _pattern_pars;
+    	aligned_free(_pattern_pars);
     	_pattern_pars = NULL;
     }
     //if (state_freqs)
@@ -937,7 +937,7 @@ int PhyloTree::computeParsimonyBranch(PhyloNeighbor *dad_branch, PhyloNode *dad,
     }
 
     int nptn = aln->size();
-    if(!_pattern_pars) _pattern_pars = new int[nptn];
+    if(!_pattern_pars) _pattern_pars = aligned_alloc_int(nptn);
     memset(_pattern_pars, 0, sizeof(int) * nptn);
 
     if ((dad_branch->partial_lh_computed & 2) == 0)
@@ -1038,7 +1038,7 @@ int PhyloTree::computeParsimony() {
     assert(current_it_back);
 
     int nptn = aln->size();
-    if(_pattern_pars == NULL) _pattern_pars = new int[nptn];
+    if(_pattern_pars == NULL) _pattern_pars = aligned_alloc_int(nptn);
 
     return computeParsimonyBranch((PhyloNeighbor*) root->neighbors[0], (PhyloNode*) root);
 }
