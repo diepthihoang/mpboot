@@ -84,16 +84,6 @@ inline double *aligned_alloc_double(size_t size) {
 #endif
 }
 
-inline int *aligned_alloc_int(size_t size) {
-#if defined WIN32 || defined _WIN32 || defined __WIN32__
-	return (int*)_aligned_malloc(size*sizeof(int), MEM_ALIGNMENT);
-#else
-	void *res;
-	posix_memalign(&res, MEM_ALIGNMENT, size*sizeof(int));
-	return (int*)res;
-#endif
-}
-
 template< class T>
 inline T *aligned_alloc(size_t size) {
 #if defined WIN32 || defined _WIN32 || defined __WIN32__
