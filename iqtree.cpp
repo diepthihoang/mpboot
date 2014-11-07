@@ -184,7 +184,16 @@ void IQTree::setParams(Params &params) {
         cout << "Generating " << params.gbo_replicates << " samples for ultrafast bootstrap..." << endl;
         size_t nptn;
         // allocate memory for boot_samples
-        if(!params.maximum_parsimony){
+        if(params.maximum_parsimony)
+        {
+			// Diep: For parsimony bootstrap
+			boot_samples_pars.resize(params.gbo_replicates);
+			nptn = get_safe_upper_limit_float(getAlnNPattern());
+			BootValTypePars *mem = aligned_alloc<BootValTypePars>(nptn * (size_t)(params.gbo_replicates));
+			memset(mem, 0, nptn * (size_t)(params.gbo_replicates) * sizeof(BootValTypePars));
+			for (i = 0; i < params.gbo_replicates; i++)
+				boot_samples_pars[i] = mem + i*nptn;
+		} else{
         	boot_samples.resize(params.gbo_replicates);
 #ifdef BOOT_VAL_FLOAT
         	nptn = get_safe_upper_limit_float(getAlnNPattern());
@@ -195,14 +204,6 @@ void IQTree::setParams(Params &params) {
 			memset(mem, 0, nptn * (size_t)(params.gbo_replicates) * sizeof(BootValType));
 			for (i = 0; i < params.gbo_replicates; i++)
 				boot_samples[i] = mem + i*nptn;
-        }else{
-        	// Diep: For parsimony bootstrap
-        	boot_samples_pars.resize(params.gbo_replicates);
-        	nptn = get_safe_upper_limit_float(getAlnNPattern());
-			BootValTypePars *mem = aligned_alloc<BootValTypePars>(nptn * (size_t)(params.gbo_replicates));
-			memset(mem, 0, nptn * (size_t)(params.gbo_replicates) * sizeof(BootValTypePars));
-			for (i = 0; i < params.gbo_replicates; i++)
-				boot_samples_pars[i] = mem + i*nptn;
         }
 
         boot_logl.resize(params.gbo_replicates, -DBL_MAX);
@@ -2325,13 +2326,10 @@ void IQTree::saveCurrentTree(double cur_logl) {
 				}else{
 					// SSE optimized version of the above loop
 					BootValTypePars *boot_sample = boot_samples_pars[sample];
-	#ifdef BOOT_VAL_FLOAT
 					VectorClassInt vc_rell = 0;
 					int maxptn = nptn - VCSIZE_INT;
 					for (ptn = 0; ptn < maxptn; ptn+=VCSIZE_INT)
 						vc_rell = VectorClassInt().load_a(&_pattern_pars[ptn]) * VectorClassInt().load_a(&boot_sample[ptn]) + vc_rell;
-	#endif
-
 					BootValTypePars res = horizontal_add(vc_rell);
 					// add the remaining ptn
 					for (; ptn < nptn; ptn++)
