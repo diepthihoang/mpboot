@@ -404,12 +404,6 @@ public:
     double computeCorrectedParsimonyBranch(PhyloNeighbor *dad_branch, PhyloNode *dad);
 
     /**
-     *		Diep: add this to set this->params if needed
-            initialize partial_pars vector of all PhyloNeighbors, allocating central_partial_pars
-     */
-    virtual void initializeAllPartialPars(Params& params);
-
-    /**
             initialize partial_pars vector of all PhyloNeighbors, allocating central_partial_pars
      */
     virtual void initializeAllPartialPars();

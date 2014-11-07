@@ -2244,6 +2244,7 @@ void testSiteParsimony(Params &params) {
 	iqtree->readTree(params.user_file, params.is_rooted);
 	Alignment alignment(params.aln_file, params.sequence_type, params.intype);
 	iqtree->setAlignment(&alignment);
+	iqtree->setParams(params);
 
 	/* Initialized all data structure for PLL*/
 	iqtree->pllAttr.rateHetModel = PLL_GAMMA;
@@ -2355,7 +2356,7 @@ void testSiteParsimony(Params &params) {
     pllTreeToNewick(iqtree->pllInst->tree_string, iqtree->pllInst, iqtree->pllPartitions, iqtree->pllInst->start->back,
             PLL_FALSE, PLL_TRUE, PLL_FALSE, PLL_FALSE, PLL_FALSE, PLL_SUMMARIZE_LH, PLL_FALSE, PLL_FALSE);
     iqtree->readTreeString(string(iqtree->pllInst->tree_string));
-    iqtree->initializeAllPartialPars(params);
+    iqtree->initializeAllPartialPars();
     iqtree->clearAllPartialLH();
 
 	cout << "Tree score = " << iqtree->computeParsimony() << endl;

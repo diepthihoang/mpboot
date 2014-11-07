@@ -198,7 +198,7 @@ void IQTree::setParams(Params &params) {
         }else{
         	// Diep: For parsimony bootstrap
         	boot_samples_pars.resize(params.gbo_replicates);
-        	nptn = get_safe_upper_limit(getAlnNPattern());
+        	nptn = get_safe_upper_limit_float(getAlnNPattern());
 			BootValTypePars *mem = aligned_alloc<BootValTypePars>(nptn * (size_t)(params.gbo_replicates));
 			memset(mem, 0, nptn * (size_t)(params.gbo_replicates) * sizeof(BootValTypePars));
 			for (i = 0; i < params.gbo_replicates; i++)
@@ -2412,7 +2412,7 @@ void IQTree::saveCurrentTree(double cur_logl) {
         out_sitelh << endl;
     }
 
-    if (!params->maximum_parsimony && !boot_samples.empty()) {
+    if (!boot_samples.empty() || !boot_samples_pars.empty()) {
 #ifdef BOOT_VAL_FLOAT
     	aligned_free(pattern_lh_orig);
 #endif
@@ -2422,9 +2422,6 @@ void IQTree::saveCurrentTree(double cur_logl) {
     	aligned_free(pattern_lh);
 #endif
     }
-
-    if (params->maximum_parsimony && boot_samples_pars.empty())
-    	aligned_free(pattern_lh_orig);
 }
 
 void IQTree::saveNNITrees(PhyloNode *node, PhyloNode *dad) {

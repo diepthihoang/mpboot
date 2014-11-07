@@ -1080,7 +1080,7 @@ void computeInitialTree(Params &params, IQTree &iqtree, string &dist_file, int &
 		cout << endl;
 		cout << "Creating initial parsimony tree by random order stepwise addition..." << endl;
 		iqtree.computeParsimonyTree(params.out_prefix, iqtree.aln);
-		iqtree.initializeAllPartialPars(params);
+		iqtree.initializeAllPartialPars();
 		iqtree.clearAllPartialLH();
 		iqtree.fixNegativeBranch(true);
 		numInitTrees = params.numParsTrees;
@@ -1099,7 +1099,7 @@ void computeInitialTree(Params &params, IQTree &iqtree, string &dist_file, int &
 		pllTreeToNewick(iqtree.pllInst->tree_string, iqtree.pllInst, iqtree.pllPartitions, iqtree.pllInst->start->back,
 				PLL_TRUE, PLL_TRUE, PLL_FALSE, PLL_FALSE, PLL_FALSE, PLL_SUMMARIZE_LH, PLL_FALSE, PLL_FALSE);
 		iqtree.readTreeString(string(iqtree.pllInst->tree_string));
-		iqtree.initializeAllPartialPars(params);
+		iqtree.initializeAllPartialPars();
 		iqtree.clearAllPartialLH();
 		iqtree.fixNegativeBranch(true);
 

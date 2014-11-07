@@ -353,15 +353,6 @@ string PhyloTree::getModelNameParams() {
  }
  */
 
-void PhyloTree::initializeAllPartialPars(Params &p) {
-	if(!this->params) this->params = &p;
-    if(params->maximum_parsimony && (_pattern_pars == NULL))
-    	_pattern_pars = new int[aln->size()];
-    int index = 0;
-    initializeAllPartialPars(index);
-    //assert(index == (nodeNum - 1)*2);
-}
-
 void PhyloTree::initializeAllPartialPars() {
     int index = 0;
     initializeAllPartialPars(index);
@@ -1045,6 +1036,9 @@ int PhyloTree::computeParsimony() {
     assert(current_it);
     current_it_back = (PhyloNeighbor*) nei->node->findNeighbor(root);
     assert(current_it_back);
+
+    int nptn = aln->size();
+    if(_pattern_pars == NULL) _pattern_pars = new int[nptn];
 
     return computeParsimonyBranch((PhyloNeighbor*) root->neighbors[0], (PhyloNode*) root);
 }
@@ -1832,6 +1826,9 @@ void PhyloTree::computePatternLikelihood(double *ptn_lh, double *cur_logl, doubl
 void PhyloTree::computePatternParsimony(double *ptn_npars, double *cur_npars){
 	if(!ptn_npars)
 		outError("ERROR: No space allocated for the pattern parsimony vector.\n");
+
+	if(!params)
+		outError("No params detected!");
 
 	if(params->snni && params->spr_parsimony){
 		// Need to call pllComputePatternParsimony of sprparsimony.cpp
