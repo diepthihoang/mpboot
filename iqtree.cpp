@@ -2313,14 +2313,31 @@ void IQTree::saveCurrentTree(double cur_logl) {
             double rell = 0.0;
 
 			if (params->maximum_parsimony) {
-				// THIS is to speed up RELL computation for parsimony (int operations are much faster than double)
-				int reps = 0;
-				// This loop will be automatically vectorized if compiled with -O3
-				// here you can use Vec4i for vector of 4 integers!
-            	BootValTypePars *boot_sample = boot_samples_pars[sample];
-				for (int ptn = 0; ptn < nptn; ptn++)
-					reps += _pattern_pars[ptn] * boot_sample[ptn]; // TODO: this is very slow due to numerical conversion!!
-				rell = -(double)reps;
+				if(false){
+					// THIS is to speed up RELL computation for parsimony (int operations are much faster than double)
+					int reps = 0;
+					// This loop will be automatically vectorized if compiled with -O3
+					// here you can use Vec4i for vector of 4 integers!
+					BootValTypePars *boot_sample = boot_samples_pars[sample];
+					for (int ptn = 0; ptn < nptn; ptn++)
+						reps += _pattern_pars[ptn] * boot_sample[ptn]; // TODO: this is very slow due to numerical conversion!!
+					rell = -(double)reps;
+				}else{
+					// SSE optimized version of the above loop
+					BootValTypePars *boot_sample = boot_samples_pars[sample];
+	#ifdef BOOT_VAL_FLOAT
+					VectorClassInt vc_rell = 0;
+					int maxptn = nptn - VCSIZE_INT;
+					for (ptn = 0; ptn < maxptn; ptn+=VCSIZE_INT)
+						vc_rell = VectorClassInt().load_a(&_pattern_pars[ptn]) * VectorClassInt().load_a(&boot_sample[ptn]) + vc_rell;
+	#endif
+
+					BootValTypePars res = horizontal_add(vc_rell);
+					// add the remaining ptn
+					for (; ptn < nptn; ptn++)
+						res += pattern_lh[ptn] * boot_sample[ptn];
+					rell = -(double)res;
+				}
 			} else {
 				// TODO: The following parallel is not very efficient, should wrap the above loop
 	//#ifdef _OPENMP
