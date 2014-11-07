@@ -1529,9 +1529,8 @@ double IQTree::doTreeSearch() {
             printTree(cur_tree_topo_ss, WT_TAXON_ID | WT_SORT_TAXA);
             if (cur_tree_topo_ss.str() != best_tree_topo) {
                 best_tree_topo = cur_tree_topo_ss.str();
-                if (params->maximum_parsimony)
-                	imd_tree = best_tree_topo;
-                else
+                // Diep: fix Minh's old if which wrongly set imd_tree = best_tree_topo for mpars
+                if (!params->maximum_parsimony)
                 	imd_tree = optimizeModelParameters();
                 stop_rule.addImprovedIteration(curIt);
                 cout << "BETTER TREE FOUND at iteration " << curIt << ": " << curScore;
