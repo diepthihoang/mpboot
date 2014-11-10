@@ -192,7 +192,6 @@ void IQTree::setParams(Params &params) {
 				nunit = get_safe_upper_limit_float(getAlnNSite());
 			else
 				nunit = get_safe_upper_limit_float(getAlnNPattern());
-			cout << "nunit = " << nunit << endl;
 			BootValTypePars *mem = aligned_alloc<BootValTypePars>(nunit * (size_t)(params.gbo_replicates));
 			memset(mem, 0, nunit * (size_t)(params.gbo_replicates) * sizeof(BootValTypePars));
 			for (i = 0; i < params.gbo_replicates; i++)

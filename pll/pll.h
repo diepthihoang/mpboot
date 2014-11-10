@@ -1007,6 +1007,8 @@ typedef struct {
   size_t parsimonyLength;
   parsimonyNumber *parsVect; 
   parsimonyNumber *perSiteParsScores;
+  parsimonyNumber *perSitePartialPars;
+
 
   /* This buffer of size width is used to store intermediate values for the branch length optimization under 
      newton-raphson. The data in here can be re-used for all iterations irrespective of the branch length.

@@ -1162,6 +1162,7 @@ createPartitions (pllQueue * parts, int * bounds)
      pl->partitionData[i]->optimizeAlphaParameter    = PLL_TRUE;
      pl->partitionData[i]->optimizeSubstitutionRates = PLL_TRUE;
      pl->partitionData[i]->parsVect                  = NULL; // Diep: added this according to new PLL version
+     pl->partitionData[i]->perSitePartialPars		= NULL; // Diep: added this according to new PLL version
 
      if (pi->dataType == PLL_DNA_DATA)
       {
