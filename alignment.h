@@ -325,6 +325,12 @@ public:
     void extractPatternFreqs(Alignment *aln, IntVector &ptn_freq);
 
     /**
+     * Diep: this is to resample site
+     * to be used in parsimony SPR bootstrap
+     */
+    virtual void createBootstrapAlignmentSite(IntVector& site_freq, const char *spec = NULL);
+
+    /**
             create a non-parametric bootstrap alignment from an input alignment
             @param aln input alignment
             @param pattern_freq (OUT) resampled pattern frequencies if not NULL

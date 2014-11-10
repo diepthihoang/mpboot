@@ -1677,10 +1677,6 @@ extern void pllGetAncestralState(pllInstance *tr, partitionList *pr, nodeptr p, 
 unsigned int pllEvaluateParsimony(pllInstance *tr, partitionList *pr, nodeptr p, pllBoolean full, pllBoolean perSiteScores);
 void pllInitParsimonyStructures(pllInstance *tr, partitionList *pr, pllBoolean perSiteScores);
 
-/* Diep: additional functions to map the compressed to normal PLL site ID */
-int pllGetNonCompressedId(int model, int compressedId);
-void pllDestroyDecompressArray(pllInstance *tr, partitionList *pr);
-
 /* rearrange functions (NNI and SPR) */
 pllRearrangeList * pllCreateRearrangeList (int max);
 void pllDestroyRearrangeList (pllRearrangeList ** bestList);

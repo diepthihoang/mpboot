@@ -1395,18 +1395,18 @@ static void testInsertParsimony (pllInstance *tr, partitionList *pr, nodeptr p, 
 		if(globalParam->gbo_replicates > 0){
 			// If UFBoot is enabled ...
 
-			if(pll_persite){
-				// check site pars
-				// TODO: print out the site pars
-				// TODO: calc the sum of site pars
-				int sum = 0;
-				for(int i = 0; i < pr->numberOfPartitions; i++){
-					int partial_pars_length = pr->partitionData[i]->parsimonyLength * PLL_PCF;
-					for(int k = 0; k < partial_pars_length; k++)
-						sum += pll_partial_pars[i][tr->start->number][k];
-				}
-				if(sum != mp) cout << "BAD: something went wrong with site pars calculation." << endl;
-			}
+//			if(pll_persite){
+//				// check site pars
+//				// TODO: print out the site pars
+//				// TODO: calc the sum of site pars
+//				int sum = 0;
+//				for(int i = 0; i < pr->numberOfPartitions; i++){
+//					int partial_pars_length = pr->partitionData[i]->parsimonyLength * PLL_PCF;
+//					for(int k = 0; k < partial_pars_length; k++)
+//						sum += pll_partial_pars[i][tr->start->number][k];
+//				}
+//				if(sum != mp) cout << "BAD: something went wrong with site pars calculation." << endl;
+//			}
 
 			pllSaveCurrentTreeSprParsimony(tr, pr, mp); // run UFBoot
 		}
@@ -2187,7 +2187,7 @@ void _pllComputeRandomizedStepwiseAdditionParsimonyTree(pllInstance * tr, partit
  * @return best parsimony score found
  */
 int pllOptimizeSprParsimony(pllInstance * tr, partitionList * pr, int mintrav, int maxtrav, IQTree *_iqtree){
-//	if(globalParam->gbo_replicates > 0) pll_persite = PLL_TRUE;
+	if(globalParam->gbo_replicates > 0) pll_persite = PLL_TRUE;
 	if(!iqtree){
 		iqtree = _iqtree;
 		_allocateParsimonyDataStructures(tr, pr); // called once
@@ -2236,6 +2236,24 @@ void pllComputePatternParsimony(pllInstance * tr, partitionList * pr, double *pt
 	if(cur_npars) *cur_npars = -(iqtree->computeParsimony());
 	else
 		iqtree->computeParsimony();
+}
+
+void pllComputeSiteParsimony(pllInstance * tr, partitionList * pr, int *site_pars, int *cur_pars){
+	int ptn = 0;
+	int sum = 0;
+	for(int i = 0; i < pr->numberOfPartitions; i++){
+		int partial_pars_length = pr->partitionData[i]->parsimonyLength * PLL_PCF;
+		parsimonyNumber * p = pll_partial_pars[i][tr->start->number];
+		for(int k = 0; k < partial_pars_length; k++){
+			site_pars[ptn] = p[k];
+			if(site_pars[ptn] > 0){
+				sum += site_pars[ptn];
+				ptn++;
+			}
+		}
+	}
+
+	if(cur_pars) *cur_pars = sum;
 }
 
 void testSiteParsimony(Params &params) {

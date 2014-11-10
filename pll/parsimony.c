@@ -110,8 +110,6 @@
 
 extern const unsigned int mask32[32]; 
 
-int ** compressed_to_normal_id = NULL;
-
 static inline unsigned int vectorPopcount(INT_TYPE v)
 {
   unsigned long
@@ -247,8 +245,6 @@ static void compressDNA(pllInstance *tr, partitionList *pr, int *informative, in
    
   totalNodes = 2 * (size_t)tr->mxtips;
 
- 
-  compressed_to_normal_id = (int **)malloc(pr->numberOfPartitions * sizeof(int *));
 
   for(model = 0; model < (size_t) pr->numberOfPartitions; model++)
     {
@@ -293,15 +289,6 @@ static void compressDNA(pllInstance *tr, partitionList *pr, int *informative, in
         	 pr->partitionData[model]->perSiteParsScores[i] = 0;
        }
 
-
-      /******************************* Diep: begin *****************************************/
-      compressed_to_normal_id[model] = (int*) malloc((lower + compressedEntriesPadded * PLL_PCF) * sizeof(int));
-		for(i = lower; i < lower + compressedEntriesPadded * PLL_PCF; i++){
-			compressed_to_normal_id[model][i] = -1;
-		}
-
-      /******************************* Diep: end *****************************************/
-
       for(i = 0; i < compressedEntriesPadded * states * totalNodes; i++)      
         pr->partitionData[model]->parsVect[i] = 0;
 
@@ -345,8 +332,6 @@ static void compressDNA(pllInstance *tr, partitionList *pr, int *informative, in
                             {
                               compressedTips[k][compressedIndex] = compressedValues[k];
                               compressedValues[k] = 0;
-//                              printf("compressedIndex = %d, index = %d\n", compressedIndex, index);
-//                              compressed_to_normal_id[model][compressedIndex * PLL_PCF] = index; // Diep
                             }                    
                           
                           compressedCounter = 0;
@@ -366,7 +351,6 @@ static void compressDNA(pllInstance *tr, partitionList *pr, int *informative, in
                 {
                   compressedTips[k][compressedIndex] = compressedValues[k];
                   compressedValues[k] = 0;
-//                  compressed_to_normal_id[model][compressedIndex * PLL_PCF] = index; // Diep
                 }                     
               
               compressedCounter = 0;
@@ -374,7 +358,6 @@ static void compressDNA(pllInstance *tr, partitionList *pr, int *informative, in
         }
   
       pr->partitionData[model]->parsimonyLength = compressedEntriesPadded;
-//      printf("model %d has length = %d\n", model, compressedEntriesPadded);
 
       rax_free(compressedTips);
       rax_free(compressedValues);
@@ -411,7 +394,6 @@ static void determineUninformativeSites(pllInstance *tr, partitionList *pr, int 
     {
       for(i = pr->partitionData[model]->lower; i < pr->partitionData[model]->upper; i++)
         {
-//    	  informative[i] = 1; // Diep: to avoid wrong mappin between iqtree & pll sites
            if(isInformative(tr, pr->partitionData[model]->dataType, i))
              informative[i] = 1;
            else
@@ -944,21 +926,6 @@ unsigned int pllEvaluateParsimony(pllInstance *tr, partitionList *pr, nodeptr p,
   result = evaluateParsimonyIterativeFast(tr, pr, perSiteScores);
 
   return result;
-}
-
-int pllGetNonCompressedId(int model, int compressedId){
-	return compressed_to_normal_id[model][compressedId];
-}
-
-void pllDestroyDecompressArray(pllInstance *tr, partitionList *pr){
-//	if(compressed_to_normal_id != NULL){
-//		int model;
-//		for(model = 0; model < (size_t) pr->numberOfPartitions; model++){
-//			if(compressed_to_normal_id[model] != NULL) free(compressed_to_normal_id[model]);
-//			compressed_to_normal_id[model] = NULL;
-//		}
-//		free(compressed_to_normal_id);
-//	}
 }
 
 /*

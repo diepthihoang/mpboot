@@ -1583,6 +1583,19 @@ void Alignment::extractSites(Alignment *aln, const char* spec) {
     extractSites(aln, site_id);
 }
 
+void Alignment::createBootstrapAlignmentSite(IntVector& site_freq, const char *spec) {
+    int site, nsite = getNSite();
+    site_freq.resize(nsite, 0);
+
+    if (!spec) {
+		// standard bootstrap
+		for (site = 0; site < nsite; site++) {
+			int site_id = random_int(nsite);
+			site_freq[site_id]++;
+		}
+    } else outError("Your bootstrap specification is not supported.");
+}
+
 void Alignment::createBootstrapAlignment(Alignment *aln, IntVector* pattern_freq, const char *spec) {
     if (aln->isSuperAlignment()) outError("Internal error: ", __func__);
     int site, nsite = aln->getNSite();
