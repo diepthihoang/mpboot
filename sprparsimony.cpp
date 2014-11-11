@@ -170,31 +170,29 @@ static inline unsigned int vectorPopcount(INT_TYPE v)
 // store per site score to nodeNumber
 static inline void storePerSiteNodeScores (partitionList * pr, int model, INT_TYPE v, unsigned int offset , int nodeNumber)
 {
-  unsigned long
-    counts[LONG_INTS_PER_VECTOR] __attribute__ ((aligned (PLL_BYTE_ALIGNMENT)));
-  parsimonyNumber * buf;
+	unsigned long
+		counts[LONG_INTS_PER_VECTOR] __attribute__ ((aligned (PLL_BYTE_ALIGNMENT)));
+		parsimonyNumber * buf;
 
-  int
-    i,
-    j;
+	int
+		i,
+		j;
 
-  VECTOR_STORE((CAST)counts, v);
+	VECTOR_STORE((CAST)counts, v);
 
-  int partialParsLength = pr->partitionData[model]->parsimonyLength * PLL_PCF;
-  int nodeStart = partialParsLength * nodeNumber;
-  for (i = 0; i < LONG_INTS_PER_VECTOR; ++i)
-   {
-     buf = &(pr->partitionData[model]->perSitePartialPars[nodeStart + offset * PLL_PCF + i * ULINT_SIZE]);
-     for (j = 0; j < ULINT_SIZE; ++ j)
-        buf[j] += ((counts[i] >> j) & 1);
-   }
-
+	int partialParsLength = pr->partitionData[model]->parsimonyLength * PLL_PCF;
+	int nodeStart = partialParsLength * nodeNumber;
+	for (i = 0; i < LONG_INTS_PER_VECTOR; ++i){
+		buf = &(pr->partitionData[model]->perSitePartialPars[nodeStart + offset * PLL_PCF + i * ULINT_SIZE]);
+		for (j = 0; j < ULINT_SIZE; ++ j)
+			buf[j] += ((counts[i] >> j) & 1);
+	}
 }
 
 // Diep:
 // Add site scores in q and r to p
 // q and r are children of p
-void addSubTreesPerSiteScores(partitionList *pr, int pNumber, int qNumber, int rNumber){
+void addPerSiteSubtreeScores(partitionList *pr, int pNumber, int qNumber, int rNumber){
 	parsimonyNumber * pBuf, * qBuf, *rBuf;
 	for(int i = 0; i < pr->numberOfPartitions; i++){
 		int partialParsLength = pr->partitionData[i]->parsimonyLength * PLL_PCF;
@@ -208,15 +206,13 @@ void addSubTreesPerSiteScores(partitionList *pr, int pNumber, int qNumber, int r
 
 // Diep:
 // Reset site scores of p
-void resetPerSiteScoresNode(partitionList *pr, int pNumber){
+void resetPerSiteNodeScores(partitionList *pr, int pNumber){
 	parsimonyNumber * pBuf;
 	for(int i = 0; i < pr->numberOfPartitions; i++){
 		int partialParsLength = pr->partitionData[i]->parsimonyLength * PLL_PCF;
 		pBuf = &(pr->partitionData[i]->perSitePartialPars[partialParsLength * pNumber]);
-		for(int k = 0; k < partialParsLength; k++)
-			pBuf[k] = 0;
+		memset(pBuf, 0, partialParsLength * sizeof(parsimonyNumber));
 	}
-
 }
 
 
@@ -278,36 +274,33 @@ static void getxnodeLocal (nodeptr p)
 static void computeTraversalInfoParsimony(nodeptr p, int *ti, int *counter, int maxTips, pllBoolean full, int perSiteScores)
 {
 	if(perSiteScores){
-		resetPerSiteScoresNode(iqtree->pllPartitions, p->number);
+		resetPerSiteNodeScores(iqtree->pllPartitions, p->number);
 	}
-  nodeptr
-    q = p->next->back,
-    r = p->next->next->back;
+	nodeptr
+		q = p->next->back,
+		r = p->next->next->back;
 
-  if(! p->xPars)
-    getxnodeLocal(p);
+	if(! p->xPars)
+		getxnodeLocal(p);
 
-  if(full)
-    {
-       if(q->number > maxTips)
-         computeTraversalInfoParsimony(q, ti, counter, maxTips, full, perSiteScores);
+	if(full){
+		if(q->number > maxTips)
+			computeTraversalInfoParsimony(q, ti, counter, maxTips, full, perSiteScores);
 
-      if(r->number > maxTips)
-        computeTraversalInfoParsimony(r, ti, counter, maxTips, full, perSiteScores);
-    }
-  else
-    {
-      if(q->number > maxTips && !q->xPars)
-        computeTraversalInfoParsimony(q, ti, counter, maxTips, full, perSiteScores);
+		if(r->number > maxTips)
+			computeTraversalInfoParsimony(r, ti, counter, maxTips, full, perSiteScores);
+	}else{
+		if(q->number > maxTips && !q->xPars)
+			computeTraversalInfoParsimony(q, ti, counter, maxTips, full, perSiteScores);
 
-      if(r->number > maxTips && !r->xPars)
-        computeTraversalInfoParsimony(r, ti, counter, maxTips, full, perSiteScores);
-    }
+		if(r->number > maxTips && !r->xPars)
+			computeTraversalInfoParsimony(r, ti, counter, maxTips, full, perSiteScores);
+	}
 
-  ti[*counter]     = p->number;
-  ti[*counter + 1] = q->number;
-  ti[*counter + 2] = r->number;
-  *counter = *counter + 4;
+	ti[*counter]     = p->number;
+	ti[*counter + 1] = q->number;
+	ti[*counter + 2] = r->number;
+	*counter = *counter + 4;
 }
 
 
@@ -335,8 +328,8 @@ static void newviewParsimonyIterativeFast(pllInstance *tr, partitionList *pr, in
         rNumber = (size_t)ti[index + 2];
 
       if(perSiteScores){
-		  if(qNumber <= tr->mxtips) resetPerSiteScoresNode(pr, qNumber);
-		  if(rNumber <= tr->mxtips) resetPerSiteScoresNode(pr, rNumber);
+		  if(qNumber <= tr->mxtips) resetPerSiteNodeScores(pr, qNumber);
+		  if(rNumber <= tr->mxtips) resetPerSiteNodeScores(pr, rNumber);
       }
 
       for(model = 0; model < pr->numberOfPartitions; model++)
@@ -548,7 +541,7 @@ static void newviewParsimonyIterativeFast(pllInstance *tr, partitionList *pr, in
 
       tr->parsimonyScore[pNumber] = totalScore + tr->parsimonyScore[rNumber] + tr->parsimonyScore[qNumber];
       if (perSiteScores)
-    	  addSubTreesPerSiteScores(pr, pNumber, qNumber, rNumber); // Diep: add rNumber and qNumber to pNumber
+    	  addPerSiteSubtreeScores(pr, pNumber, qNumber, rNumber); // Diep: add rNumber and qNumber to pNumber
     }
 }
 
@@ -576,8 +569,8 @@ static unsigned int evaluateParsimonyIterativeFast(pllInstance *tr, partitionLis
   sum = tr->parsimonyScore[pNumber] + tr->parsimonyScore[qNumber];
 
   if(perSiteScores){
-	  resetPerSiteScoresNode(pr, tr->start->number);
-	  addSubTreesPerSiteScores(pr, tr->start->number, pNumber, qNumber);
+	  resetPerSiteNodeScores(pr, tr->start->number);
+	  addPerSiteSubtreeScores(pr, tr->start->number, pNumber, qNumber);
   }
 
   for(model = 0; model < pr->numberOfPartitions; model++)
@@ -1111,35 +1104,32 @@ static unsigned int evaluateParsimonyIterativeFast(pllInstance *tr, partitionLis
 
 static unsigned int evaluateParsimony(pllInstance *tr, partitionList *pr, nodeptr p, pllBoolean full, int perSiteScores)
 {
-	  volatile unsigned int result;
-	  nodeptr q = p->back;
-	  int
-	    *ti = tr->ti,
-	    counter = 4;
+	volatile unsigned int result;
+	nodeptr q = p->back;
+	int
+		*ti = tr->ti,
+		counter = 4;
 
-	  ti[1] = p->number;
-	  ti[2] = q->number;
+	ti[1] = p->number;
+	ti[2] = q->number;
 
-	  if(full)
-	    {
-	      if(p->number > tr->mxtips)
-	        computeTraversalInfoParsimony(p, ti, &counter, tr->mxtips, full, perSiteScores);
-	      if(q->number > tr->mxtips)
-	        computeTraversalInfoParsimony(q, ti, &counter, tr->mxtips, full, perSiteScores);
-	    }
-	  else
-	    {
-	      if(p->number > tr->mxtips && !p->xPars)
-	        computeTraversalInfoParsimony(p, ti, &counter, tr->mxtips, full, perSiteScores);
-	      if(q->number > tr->mxtips && !q->xPars)
-	        computeTraversalInfoParsimony(q, ti, &counter, tr->mxtips, full, perSiteScores);
-	    }
+	if(full){
+		if(p->number > tr->mxtips)
+			computeTraversalInfoParsimony(p, ti, &counter, tr->mxtips, full, perSiteScores);
+		if(q->number > tr->mxtips)
+			computeTraversalInfoParsimony(q, ti, &counter, tr->mxtips, full, perSiteScores);
+	}else{
+		if(p->number > tr->mxtips && !p->xPars)
+			computeTraversalInfoParsimony(p, ti, &counter, tr->mxtips, full, perSiteScores);
+		if(q->number > tr->mxtips && !q->xPars)
+			computeTraversalInfoParsimony(q, ti, &counter, tr->mxtips, full, perSiteScores);
+	}
 
-	  ti[0] = counter;
+	ti[0] = counter;
 
-	  result = evaluateParsimonyIterativeFast(tr, pr, perSiteScores);
+	result = evaluateParsimonyIterativeFast(tr, pr, perSiteScores);
 
-	  return result;
+	return result;
 }
 
 
@@ -1271,15 +1261,12 @@ static pllBoolean _restoreTree (topol *tpl, pllInstance *tr, partitionList *pr)
 
 static void reorderNodes(pllInstance *tr, nodeptr *np, nodeptr p, int *count)
 {
-//	cout << "p->number = " << p->number << endl;
-//	cout << "tr->mxtips = " << tr->mxtips << endl;
   int i, found = 0;
 
   if((p->number <= tr->mxtips))
     return;
   else
     {
-//	  cout << "before the for loop" << endl;
       for(i = tr->mxtips + 1; (i <= (tr->mxtips + tr->mxtips - 1)) && (found == 0); i++)
         {
           if (p == np[i] || p == np[i]->next || p == np[i]->next->next)
@@ -1298,8 +1285,6 @@ static void reorderNodes(pllInstance *tr, nodeptr *np, nodeptr p, int *count)
               *count = *count + 1;
             }
         }
-
-//      cout << "after the for loop" << endl;
 
       assert(found != 0);
 
@@ -2169,11 +2154,9 @@ int pllOptimizeSprParsimony(pllInstance * tr, partitionList * pr, int mintrav, i
 	do{
 		startMP = randomMP;
 //		nodeRectifierPars(tr);
-		for(i = 1; i <= tr->mxtips + tr->mxtips - 2; i++)
-		{
+		for(i = 1; i <= tr->mxtips + tr->mxtips - 2; i++){
 			rearrangeParsimony(tr, pr, tr->nodep[i], mintrav, maxtrav, PLL_FALSE, perSiteScores);
-			if(tr->bestParsimony < randomMP)
-			{
+			if(tr->bestParsimony < randomMP){
 				restoreTreeRearrangeParsimony(tr, pr, perSiteScores);
 				randomMP = tr->bestParsimony;
 			}
