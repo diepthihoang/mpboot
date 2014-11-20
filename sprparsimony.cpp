@@ -2145,7 +2145,7 @@ int pllOptimizeSprParsimony(pllInstance * tr, partitionList * pr, int mintrav, i
 
 	assert(!tr->constrained);
 
-//	nodeRectifierPars(tr);
+	nodeRectifierPars(tr);
 	tr->bestParsimony = UINT_MAX;
 	tr->bestParsimony = evaluateParsimony(tr, pr, tr->start, PLL_TRUE, perSiteScores);
 	randomMP = tr->bestParsimony;
@@ -2153,7 +2153,7 @@ int pllOptimizeSprParsimony(pllInstance * tr, partitionList * pr, int mintrav, i
 
 	do{
 		startMP = randomMP;
-//		nodeRectifierPars(tr);
+		nodeRectifierPars(tr);
 		for(i = 1; i <= tr->mxtips + tr->mxtips - 2; i++){
 			rearrangeParsimony(tr, pr, tr->nodep[i], mintrav, maxtrav, PLL_FALSE, perSiteScores);
 			if(tr->bestParsimony < randomMP){
@@ -2181,7 +2181,7 @@ void pllComputePatternParsimony(pllInstance * tr, partitionList * pr, double *pt
 		iqtree->computeParsimony();
 }
 
-void pllComputeSiteParsimony(pllInstance * tr, partitionList * pr, int *site_pars, int *cur_pars){
+void pllComputeSiteParsimony(pllInstance * tr, partitionList * pr, int *site_pars, int *cur_pars, int * ninformative){
 	int site = 0;
 	int sum = 0;
 
@@ -2196,8 +2196,8 @@ void pllComputeSiteParsimony(pllInstance * tr, partitionList * pr, int *site_par
 			}
 		}
 	}
-
 	if(cur_pars) *cur_pars = sum;
+	if(ninformative) *ninformative = site;
 }
 
 void testSiteParsimony(Params &params) {
