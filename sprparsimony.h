@@ -31,7 +31,7 @@ int pllOptimizeSprParsimony(pllInstance * tr, partitionList * pr, int mintrav, i
 int pllSaveCurrentTreeSprParsimony(pllInstance * tr, partitionList * pr, int cur_search_pars);
 
 void pllComputePatternParsimony(pllInstance * tr, partitionList * pr, double *ptn_npars, double *cur_npars);
-void pllComputeSiteParsimony(pllInstance * tr, partitionList * pr, int *site_pars, int *cur_pars = NULL);
+void pllComputeSiteParsimony(pllInstance * tr, partitionList * pr, int *site_pars, int nsite, int *cur_pars = NULL);
 
 // Diep: for testing site parsimony computed by PLL vs IQTree on the same tree
 // this is called if params.test_site_pars == true

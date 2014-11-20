@@ -2181,14 +2181,15 @@ void pllComputePatternParsimony(pllInstance * tr, partitionList * pr, double *pt
 		iqtree->computeParsimony();
 }
 
-void pllComputeSiteParsimony(pllInstance * tr, partitionList * pr, int *site_pars, int *cur_pars){
+void pllComputeSiteParsimony(pllInstance * tr, partitionList * pr, int *site_pars, int nsite, int *cur_pars){
 	int site = 0;
 	int sum = 0;
 
 	for(int i = 0; i < pr->numberOfPartitions; i++){
 		int partialParsLength = pr->partitionData[i]->parsimonyLength * PLL_PCF;
+		int maxNSites = partialParsLength > nsite ? nsite : partialParsLength;
 		parsimonyNumber * p = &(pr->partitionData[i]->perSitePartialPars[partialParsLength * tr->start->number]);
-		for(int k = 0; k < partialParsLength; k++){
+		for(int k = 0; k < maxNSites; k++){
 			site_pars[site] = p[k];
 			sum += site_pars[site];
 			site++;

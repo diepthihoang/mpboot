@@ -2306,7 +2306,7 @@ void IQTree::saveCurrentTree(double cur_logl) {
 		if(params->spr_parsimony){
 			site_pars = aligned_alloc<BootValTypePars>(nsite);
 			int test_pars = 0;
-			pllComputeSiteParsimony(pllInst, pllPartitions, site_pars, &test_pars);
+			pllComputeSiteParsimony(pllInst, pllPartitions, site_pars, nsite, &test_pars);
 			if(test_pars != -int(cur_logl))
 				outError("WRONG pllComputeSiteParsimony: sum of site parsimony is different from alignment parsimony");
 		}
