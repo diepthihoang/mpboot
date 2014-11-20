@@ -2297,7 +2297,6 @@ void IQTree::saveCurrentTree(double cur_logl) {
 
     int nptn = getAlnNPattern();
     int nsite = getAlnNSite();
-    int ninformative = 0;
     BootValType *pattern_lh = NULL;
     double *pattern_lh_orig = NULL;
     BootValTypePars *site_pars = NULL;
@@ -2307,7 +2306,7 @@ void IQTree::saveCurrentTree(double cur_logl) {
 		if(params->spr_parsimony){
 			site_pars = aligned_alloc<BootValTypePars>(nsite);
 			int test_pars = 0;
-			pllComputeSiteParsimony(pllInst, pllPartitions, site_pars, &test_pars, &ninformative);
+			pllComputeSiteParsimony(pllInst, pllPartitions, site_pars, &test_pars);
 			if(test_pars != -int(cur_logl))
 				outError("WRONG pllComputeSiteParsimony: sum of site parsimony is different from alignment parsimony");
 		}
@@ -2343,14 +2342,14 @@ void IQTree::saveCurrentTree(double cur_logl) {
 			if (params->spr_parsimony) {
 				BootValTypePars *boot_sample = boot_samples_pars[sample];
 				VectorClassInt vc_rell = 0;
-				int site, maxsite = ninformative - VCSIZE_INT;
+				int site, maxsite = nsite - VCSIZE_INT;
 				for (site = 0; site < maxsite; site+=VCSIZE_INT)
 					vc_rell = VectorClassInt().load_a(&site_pars[site]) *
 						VectorClassInt().load_a(&boot_sample[site]) +
 						vc_rell;
 				BootValTypePars res = horizontal_add(vc_rell);
 				// add the remaining site
-				for (; site < ninformative; site++)
+				for (; site < nsite; site++)
 					res += site_pars[site] * boot_sample[site];
 				rell = -(double)res;
 			}else if (params->maximum_parsimony && !params->spr_parsimony) {
