@@ -183,7 +183,8 @@ static inline void storePerSiteNodeScores (partitionList * pr, int model, INT_TY
 	int partialParsLength = pr->partitionData[model]->parsimonyLength * PLL_PCF;
 	int nodeStart = partialParsLength * nodeNumber;
 	for (i = 0; i < LONG_INTS_PER_VECTOR; ++i){
-		buf = &(pr->partitionData[model]->perSitePartialPars[nodeStart + offset * PLL_PCF + i * ULINT_SIZE]);
+//		buf = &(pr->partitionData[model]->perSitePartialPars[nodeStart + offset * PLL_PCF + i * ULINT_SIZE]);
+		buf = &(pr->partitionData[model]->perSitePartialPars[nodeStart + offset * PLL_PCF + i]);
 		for (j = 0; j < ULINT_SIZE; ++ j)
 			buf[j] += ((counts[i] >> j) & 1);
 	}
@@ -2187,9 +2188,10 @@ void pllComputeSiteParsimony(pllInstance * tr, partitionList * pr, int *site_par
 
 	for(int i = 0; i < pr->numberOfPartitions; i++){
 		int partialParsLength = pr->partitionData[i]->parsimonyLength * PLL_PCF;
-		int maxNSites = partialParsLength > nsite ? nsite : partialParsLength;
+		int maxNSite = partialParsLength > nsite ? nsite : partialParsLength;
 		parsimonyNumber * p = &(pr->partitionData[i]->perSitePartialPars[partialParsLength * tr->start->number]);
-		for(int k = 0; k < maxNSites; k++){
+
+		for(int k = 0; k < maxNSite; k++){
 			site_pars[site] = p[k];
 			sum += site_pars[site];
 			site++;
