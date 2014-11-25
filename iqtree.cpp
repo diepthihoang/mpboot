@@ -220,8 +220,22 @@ void IQTree::setParams(Params &params) {
         			outError("Bootstrap with SPR parsimony hasn't supported printing bootstrap alignment yet.");
     			IntVector this_sample;
         		aln->createBootstrapAlignmentSite(this_sample, params.bootstrap_spec);
+
+    			for (size_t j = 0; j < nunit; j++){
+    				if(params.maximum_parsimony)
+    					boot_samples_pars[i][j] = this_sample[j];
+    				else
+    					boot_samples[i][j] = this_sample[j];
+    			}
+
+//    			for (size_t j = 0; j < nunit; j++)
+//    				boot_samples_pars[i][j] = this_sample[j];
+
+        		// Diep: new method - storing index of original site instead of frequency
+        		int s = 0, k;
     			for (size_t j = 0; j < nunit; j++)
-    				boot_samples_pars[i][j] = this_sample[j];
+    				for(k = 0; k < this_sample[j]; k++, s++)
+    					boot_samples_pars[i][s] = j;
         		continue;
         	}
 
@@ -2302,6 +2316,7 @@ void IQTree::saveCurrentTree(double cur_logl) {
     BootValType *pattern_lh = NULL;
     double *pattern_lh_orig = NULL;
     BootValTypePars *site_pars = NULL;
+    BootValTypePars *boot_site_pars = NULL;
 
 	// DTH: if spr search on parsimony
 	if (params->maximum_parsimony){
@@ -2311,6 +2326,8 @@ void IQTree::saveCurrentTree(double cur_logl) {
 			pllComputeSiteParsimony(pllInst, pllPartitions, site_pars, nsite, &test_pars);
 			if(test_pars != -int(cur_logl))
 				outError("WRONG pllComputeSiteParsimony: sum of site parsimony is different from alignment parsimony");
+			boot_site_pars = aligned_alloc<BootValTypePars>(nsite+VCSIZE_INT);
+			memset(boot_site_pars, 0, sizeof(nsite+VCSIZE_INT) * (nsite+VCSIZE_INT));
 		}
 	}else{
 		pattern_lh = aligned_alloc<BootValType>(nptn);
@@ -2343,32 +2360,42 @@ void IQTree::saveCurrentTree(double cur_logl) {
 
 			if (params->spr_parsimony) {
 				BootValTypePars *boot_sample = boot_samples_pars[sample];
-				VectorClassInt vc_rell = 0;
 				int site;
+				for (site = 0; site < nsite; site++)
+					boot_site_pars[site] = site_pars[boot_sample[site]];
+
+				VectorClassInt vc_rell = 0;
 				for (site = 0; site < nsite; site+=VCSIZE_INT)
-					vc_rell = VectorClassInt().load_a(&site_pars[site]) * VectorClassInt().load_a(&boot_sample[site]) + vc_rell;
+					vc_rell = VectorClassInt().load_a(&boot_site_pars[site]) + vc_rell;
 				BootValTypePars res = horizontal_add(vc_rell);
+
+//				BootValTypePars *boot_sample = boot_samples_pars[sample];
+//				VectorClassInt vc_rell = 0;
+//				int site;
+//				for (site = 0; site < nsite; site+=VCSIZE_INT)
+//					vc_rell = VectorClassInt().load_a(&site_pars[site]) * VectorClassInt().load_a(&boot_sample[site]) + vc_rell;
+//				BootValTypePars res = horizontal_add(vc_rell);
 				// add the remaining site
 //				for (; site < nsite; site++)
 //					res += site_pars[site] * boot_sample[site];
 				rell = -(double)res;
 			}else if (params->maximum_parsimony && !params->spr_parsimony) {
-				asm("#BEGIN HERE CHECK SSE");
-				int reps = 0;
-				BootValTypePars *boot_sample = boot_samples_pars[sample];
-				for (int ptn = 0; ptn < nptn; ptn++)
-					reps += _pattern_pars[ptn] * boot_sample[ptn];
-				rell = -(double)reps;
-				asm("#END HERE CHECK SSE");
+//				asm("#BEGIN HERE CHECK SSE");
+//				int reps = 0;
+//				BootValTypePars *boot_sample = boot_samples_pars[sample];
+//				for (int ptn = 0; ptn < nptn; ptn++)
+//					reps += _pattern_pars[ptn] * boot_sample[ptn];
+//				rell = -(double)reps;
+//				asm("#END HERE CHECK SSE");
 
 				// SSE optimized version of the above loop
-//				BootValTypePars *boot_sample = boot_samples_pars[sample];
-//				VectorClassInt vc_rell = 0;
-//				for (ptn = 0; ptn < nptn; ptn+=VCSIZE_INT) {
-//					vc_rell = VectorClassInt().load_a(&_pattern_pars[ptn]) * VectorClassInt().load_a(&boot_sample[ptn]) + vc_rell;
-//				}
-//				BootValTypePars res = horizontal_add(vc_rell);
-//				rell = -(double)res;
+				BootValTypePars *boot_sample = boot_samples_pars[sample];
+				VectorClassInt vc_rell = 0;
+				for (ptn = 0; ptn < nptn; ptn+=VCSIZE_INT) {
+					vc_rell = VectorClassInt().load_a(&_pattern_pars[ptn]) * VectorClassInt().load_a(&boot_sample[ptn]) + vc_rell;
+				}
+				BootValTypePars res = horizontal_add(vc_rell);
+				rell = -(double)res;
 			} else {
 				// TODO: The following parallel is not very efficient, should wrap the above loop
 	//#ifdef _OPENMP
