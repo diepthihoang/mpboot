@@ -228,14 +228,14 @@ void IQTree::setParams(Params &params) {
     					boot_samples[i][j] = this_sample[j];
     			}
 
-//    			for (size_t j = 0; j < nunit; j++)
-//    				boot_samples_pars[i][j] = this_sample[j];
-
-        		// Diep: new method - storing index of original site instead of frequency
-        		int s = 0, k;
     			for (size_t j = 0; j < nunit; j++)
-    				for(k = 0; k < this_sample[j]; k++, s++)
-    					boot_samples_pars[i][s] = j;
+    				boot_samples_pars[i][j] = this_sample[j];
+
+//        		// Diep: new method - storing index of original site instead of frequency
+//        		int s = 0, k;
+//    			for (size_t j = 0; j < nunit; j++)
+//    				for(k = 0; k < this_sample[j]; k++, s++)
+//    					boot_samples_pars[i][s] = j;
         		continue;
         	}
 
@@ -2316,7 +2316,7 @@ void IQTree::saveCurrentTree(double cur_logl) {
     BootValType *pattern_lh = NULL;
     double *pattern_lh_orig = NULL;
     BootValTypePars *site_pars = NULL;
-    BootValTypePars *boot_site_pars = NULL;
+//    BootValTypePars *boot_site_pars = NULL;
 
 	// DTH: if spr search on parsimony
 	if (params->maximum_parsimony){
@@ -2326,8 +2326,8 @@ void IQTree::saveCurrentTree(double cur_logl) {
 			pllComputeSiteParsimony(pllInst, pllPartitions, site_pars, nsite, &test_pars);
 			if(test_pars != -int(cur_logl))
 				outError("WRONG pllComputeSiteParsimony: sum of site parsimony is different from alignment parsimony");
-			boot_site_pars = aligned_alloc<BootValTypePars>(nsite+VCSIZE_INT);
-			memset(boot_site_pars, 0, sizeof(nsite+VCSIZE_INT) * (nsite+VCSIZE_INT));
+//			boot_site_pars = aligned_alloc<BootValTypePars>(nsite+VCSIZE_INT);
+//			memset(boot_site_pars, 0, sizeof(BootValTypePars) * (nsite+VCSIZE_INT));
 		}
 	}else{
 		pattern_lh = aligned_alloc<BootValType>(nptn);
@@ -2359,25 +2359,23 @@ void IQTree::saveCurrentTree(double cur_logl) {
             double rell = 0.0;
 
 			if (params->spr_parsimony) {
-				BootValTypePars *boot_sample = boot_samples_pars[sample];
-				int site;
-				for (site = 0; site < nsite; site++)
-					boot_site_pars[site] = site_pars[boot_sample[site]];
+//				BootValTypePars *boot_sample = boot_samples_pars[sample];
+//				int site;
+//				for (site = 0; site < nsite; site++)
+//					boot_site_pars[site] = site_pars[boot_sample[site]];
+//
+//				VectorClassInt vc_rell = 0;
+//				for (site = 0; site < nsite; site+=VCSIZE_INT)
+//					vc_rell = VectorClassInt().load_a(&boot_site_pars[site]) + vc_rell;
+//				BootValTypePars res = horizontal_add(vc_rell);
 
+				BootValTypePars *boot_sample = boot_samples_pars[sample];
 				VectorClassInt vc_rell = 0;
+				int site;
 				for (site = 0; site < nsite; site+=VCSIZE_INT)
-					vc_rell = VectorClassInt().load_a(&boot_site_pars[site]) + vc_rell;
+					vc_rell = VectorClassInt().load_a(&site_pars[site]) * VectorClassInt().load_a(&boot_sample[site]) + vc_rell;
 				BootValTypePars res = horizontal_add(vc_rell);
 
-//				BootValTypePars *boot_sample = boot_samples_pars[sample];
-//				VectorClassInt vc_rell = 0;
-//				int site;
-//				for (site = 0; site < nsite; site+=VCSIZE_INT)
-//					vc_rell = VectorClassInt().load_a(&site_pars[site]) * VectorClassInt().load_a(&boot_sample[site]) + vc_rell;
-//				BootValTypePars res = horizontal_add(vc_rell);
-				// add the remaining site
-//				for (; site < nsite; site++)
-//					res += site_pars[site] * boot_sample[site];
 				rell = -(double)res;
 			}else if (params->maximum_parsimony && !params->spr_parsimony) {
 //				asm("#BEGIN HERE CHECK SSE");
@@ -2506,6 +2504,7 @@ void IQTree::saveCurrentTree(double cur_logl) {
     }
 
     if(site_pars) aligned_free(site_pars);
+//    if(boot_site_pars) aligned_free(boot_site_pars);
 }
 
 
