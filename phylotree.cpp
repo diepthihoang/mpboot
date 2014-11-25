@@ -937,8 +937,8 @@ int PhyloTree::computeParsimonyBranch(PhyloNeighbor *dad_branch, PhyloNode *dad,
     }
 
     int nptn = aln->size();
-    if(!_pattern_pars) _pattern_pars = aligned_alloc<int>(nptn);
-    memset(_pattern_pars, 0, sizeof(int) * nptn);
+    if(!_pattern_pars) _pattern_pars = aligned_alloc<int>(nptn+VCSIZE_INT);
+    memset(_pattern_pars, 0, sizeof(int) * (nptn+VCSIZE_INT));
 
     if ((dad_branch->partial_lh_computed & 2) == 0)
         computePartialParsimony(dad_branch, dad);

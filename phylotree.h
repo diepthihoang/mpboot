@@ -241,7 +241,6 @@ struct LeafFreq {
 void precomputeFitchInfo();
 
 /**
-/**
 Phylogenetic Tree class
 
         @author BUI Quang Minh, Steffen Klaere, Arndt von Haeseler <minh.bui@univie.ac.at>

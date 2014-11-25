@@ -2304,7 +2304,7 @@ void IQTree::saveCurrentTree(double cur_logl) {
 	// DTH: if spr search on parsimony
 	if (params->maximum_parsimony){
 		if(params->spr_parsimony){
-			site_pars = aligned_alloc<BootValTypePars>(nsite);
+			site_pars = aligned_alloc<BootValTypePars>(nsite+VCSIZE_INT);
 			int test_pars = 0;
 			pllComputeSiteParsimony(pllInst, pllPartitions, site_pars, nsite, &test_pars);
 			if(test_pars != -int(cur_logl))
@@ -2342,45 +2342,44 @@ void IQTree::saveCurrentTree(double cur_logl) {
 			if (params->spr_parsimony) {
 				BootValTypePars *boot_sample = boot_samples_pars[sample];
 				VectorClassInt vc_rell = 0;
-				int site, maxsite = nsite - VCSIZE_INT;
-				for (site = 0; site < maxsite; site+=VCSIZE_INT)
-					vc_rell = VectorClassInt().load_a(&site_pars[site]) *
-						VectorClassInt().load_a(&boot_sample[site]) +
-						vc_rell;
+				int site;
+				for (site = 0; site < nsite; site+=VCSIZE_INT)
+					vc_rell = VectorClassInt().load_a(&site_pars[site]) * VectorClassInt().load_a(&boot_sample[site]) + vc_rell;
 				BootValTypePars res = horizontal_add(vc_rell);
 				// add the remaining site
-				for (; site < nsite; site++)
-					res += site_pars[site] * boot_sample[site];
+//				for (; site < nsite; site++)
+//					res += site_pars[site] * boot_sample[site];
 				rell = -(double)res;
 			}else if (params->maximum_parsimony && !params->spr_parsimony) {
-//					int reps = 0;
-//					BootValTypePars *boot_sample = boot_samples_pars[sample];
-//					for (int ptn = 0; ptn < nptn; ptn++)
-//						reps += _pattern_pars[ptn] * boot_sample[ptn];
-//					rell = -(double)reps;
+				asm("#BEGIN HERE CHECK SSE");
+				int reps = 0;
+				BootValTypePars *boot_sample = boot_samples_pars[sample];
+				for (int ptn = 0; ptn < nptn; ptn++)
+					reps += _pattern_pars[ptn] * boot_sample[ptn];
+				rell = -(double)reps;
+				asm("#END HERE CHECK SSE");
 
 				// SSE optimized version of the above loop
-				BootValTypePars *boot_sample = boot_samples_pars[sample];
-				VectorClassInt vc_rell = 0;
-				int maxptn = nptn - VCSIZE_INT;
-				for (ptn = 0; ptn < maxptn; ptn+=VCSIZE_INT)
-					vc_rell = VectorClassInt().load_a(&_pattern_pars[ptn]) * VectorClassInt().load_a(&boot_sample[ptn]) + vc_rell;
-				BootValTypePars res = horizontal_add(vc_rell);
-				// add the remaining ptn
-				for (; ptn < nptn; ptn++)
-					res += _pattern_pars[ptn] * boot_sample[ptn];
-				rell = -(double)res;
+//				BootValTypePars *boot_sample = boot_samples_pars[sample];
+//				VectorClassInt vc_rell = 0;
+//				for (ptn = 0; ptn < nptn; ptn+=VCSIZE_INT) {
+//					vc_rell = VectorClassInt().load_a(&_pattern_pars[ptn]) * VectorClassInt().load_a(&boot_sample[ptn]) + vc_rell;
+//				}
+//				BootValTypePars res = horizontal_add(vc_rell);
+//				rell = -(double)res;
 			} else {
 				// TODO: The following parallel is not very efficient, should wrap the above loop
 	//#ifdef _OPENMP
 	//#pragma omp parallel for reduction(+: rell)
 	//#endif
 	//            if (sse == LK_NORMAL || sse == LK_EIGEN) {
-				if (false) {
-					BootValType *boot_sample = boot_samples[sample];
-					for (ptn = 0; ptn < nptn; ptn++)
-						rell += pattern_lh[ptn] * boot_sample[ptn];
-				} else {
+//				if (true) {
+//					BootValType *boot_sample = boot_samples[sample];
+//					BootValType rellll = 0.0;
+//					for (ptn = 0; ptn < nptn; ptn++)
+//						rellll += pattern_lh[ptn] * boot_sample[ptn];
+//					rell = (double)rellll;
+//				} else {
 					// SSE optimized version of the above loop
 					BootValType *boot_sample = boot_samples[sample];
 	#ifdef BOOT_VAL_FLOAT
@@ -2400,7 +2399,7 @@ void IQTree::saveCurrentTree(double cur_logl) {
 					for (; ptn < nptn; ptn++)
 						res += pattern_lh[ptn] * boot_sample[ptn];
 					rell = res;
-				}
+//				}
 			}
 
             if (rell > boot_logl[sample] + params->ufboot_epsilon
