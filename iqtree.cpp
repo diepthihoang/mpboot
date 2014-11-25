@@ -1630,6 +1630,8 @@ double IQTree::doTreeSearch() {
         } // end of bootstrap convergence test
     }
 
+	cout << "NOTE: " << treels_logl.size() << " bootstrap candidate trees evaluated (logl-cutoff: " << logl_cutoff << ")" << endl;
+
     readTreeString(bestTreeString);
 
     if (testNNI)
