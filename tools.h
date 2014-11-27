@@ -1497,6 +1497,12 @@ struct Params {
      */
     bool test_site_pars;
 
+    /*
+     * Diep: option for computing parsimony RELL with compiler's automatic vectorization
+     */
+    bool auto_vectorize;
+
+
 #ifdef _OPENMP
     int num_threads;
 #endif

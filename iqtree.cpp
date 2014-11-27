@@ -2334,17 +2334,16 @@ void IQTree::saveCurrentTree(double cur_logl) {
 	if (params->maximum_parsimony){
 		if(rell_segments == -1){
 			// do this once
-			int i;
+			int i = 0;
 			int nunit = (params->spr_parsimony) ? (nsite) : (nptn);
 			rell_segments = 1 + int(fabs(cur_logl)) * 2 / USHRT_MAX;
-			if(rell_segments > 1){
-				segment_upper = new int[rell_segments];
-				// .... segment_upper[0] .... segment_upper[1] ..... segment_upper[last]==nunit
-				for(i = 0; i < rell_segments - 1; i++){
-					segment_upper[i] = (i + 1) * nunit / rell_segments;
-				}
-				segment_upper[i] = nunit;
+
+			segment_upper = new int[rell_segments];
+			// .... segment_upper[0] .... segment_upper[1] ..... segment_upper[last]==nunit
+			for(i = 0; i < rell_segments - 1; i++){
+				segment_upper[i] = (i + 1) * nunit / rell_segments;
 			}
+			segment_upper[i] = nunit;
 		}
 
 		if(params->spr_parsimony){
@@ -2386,24 +2385,19 @@ void IQTree::saveCurrentTree(double cur_logl) {
             double rell = 0.0;
 
 			if (params->spr_parsimony) {
-//				BootValTypePars *boot_sample = boot_samples_pars[sample];
-//				int site;
-//				for (site = 0; site < nsite; site++)
-//					boot_site_pars[site] = site_pars[boot_sample[site]];
-//
-//				VectorClassInt vc_rell = 0;
-//				for (site = 0; site < nsite; site+=VCSIZE_INT)
-//					vc_rell = VectorClassInt().load_a(&boot_site_pars[site]) + vc_rell;
-//				BootValTypePars res = horizontal_add(vc_rell);
-
 				BootValTypePars *boot_sample = boot_samples_pars[sample];
-				if(rell_segments == 1){
-					VectorClassUShort vc_rell = 0;
-					int site;
-					for (site = 0; site < nsite; site+=VCSIZE_USHORT)
-						vc_rell = VectorClassUShort().load_a(&site_pars[site]) * VectorClassUShort().load_a(&boot_sample[site]) + vc_rell;
-					BootValTypePars res = horizontal_add(vc_rell);
 
+				if(params->auto_vectorize){
+					// use compiler's automatic vectorization
+					int res = 0;
+//					int site = 0, segment_id = 0;
+//					for(; segment_id < rell_segments; segment_id++){
+//						for (; site < segment_upper[segment_id]; site++)
+//							res += site_pars[site] * boot_sample[site];
+//					}
+					int site = 0;
+					for(; site < nsite; site++)
+						res += site_pars[site] * boot_sample[site];
 					rell = -(double)res;
 				}else{
 					int site = 0, segment_id = 0, res = 0;
@@ -2418,21 +2412,18 @@ void IQTree::saveCurrentTree(double cur_logl) {
 				}
 			}else if (params->maximum_parsimony && !params->spr_parsimony) {
 //				asm("#BEGIN HERE CHECK SSE");
-//				int reps = 0;
-//				BootValTypePars *boot_sample = boot_samples_pars[sample];
-//				for (int ptn = 0; ptn < nptn; ptn++)
-//					reps += _pattern_pars[ptn] * boot_sample[ptn];
-//				rell = -(double)reps;
-//				asm("#END HERE CHECK SSE");
-
-				// SSE optimized version of the above loop
 				BootValTypePars *boot_sample = boot_samples_pars[sample];
-				if(rell_segments == 1){
-					VectorClassUShort vc_rell = 0;
-					for (ptn = 0; ptn < nptn; ptn+=VCSIZE_USHORT) {
-						vc_rell = VectorClassUShort().load_a(&_pattern_pars[ptn]) * VectorClassUShort().load_a(&boot_sample[ptn]) + vc_rell;
-					}
-					BootValTypePars res = horizontal_add(vc_rell);
+
+				if(params->auto_vectorize){
+					// use compiler's automatic vectorization
+//					int ptn = 0, segment_id = 0, res = 0;
+//					for(; segment_id < rell_segments; segment_id++){
+//						for (; ptn < segment_upper[segment_id]; ptn++)
+//							res += _pattern_pars[ptn] * boot_sample[ptn];
+//					}
+					int ptn = 0, res = 0;
+					for (; ptn < nptn; ptn++)
+						res += _pattern_pars[ptn] * boot_sample[ptn];
 					rell = -(double)res;
 				}else{
 					int ptn = 0, segment_id = 0, res = 0;

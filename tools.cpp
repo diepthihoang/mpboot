@@ -773,6 +773,7 @@ void parseArg(int argc, char *argv[], Params &params) {
     params.spr_mintrav = 1; // same as PLL
     params.spr_maxtrav = 20; // same as PLL
     params.test_site_pars = false;
+    params.auto_vectorize = false;
 #ifdef _OPENMP
     params.num_threads = 0;
 #endif
@@ -2257,6 +2258,10 @@ void parseArg(int argc, char *argv[], Params &params) {
             }
 			if(strcmp(argv[cnt], "-sitepars") == 0){
             	params.test_site_pars = true;
+            	continue;
+            }
+			if(strcmp(argv[cnt], "-autovec") == 0){
+            	params.auto_vectorize = true;
             	continue;
             }
 			if (strcmp(argv[cnt], "-me") == 0) {
