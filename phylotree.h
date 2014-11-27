@@ -31,6 +31,8 @@
 #include "optimization.h"
 #include "rateheterogeneity.h"
 
+//#define BootValTypePars int // Diep added
+#define BootValTypePars unsigned short // Diep added
 
 const double MIN_BRANCH_LEN = 0.000001; // NEVER TOUCH THIS CONSTANT AGAIN PLEASE!
 const double MAX_BRANCH_LEN = 100.0;
@@ -107,18 +109,23 @@ inline void aligned_free(void *mem) {
 #ifdef __AVX
 #define VectorClassMaster Vec4d
 #define VectorClassFloat Vec8f
-#define VectorClassInt Vec8i
+#define VectorClassUShort Vec16us
 #define VCSIZE_MASTER 4
 #define VCSIZE_FLOAT 8
 #define VCSIZE_INT 8
+#define VCSIZE_USHORT 16
+
 //#pragma message "Using AVX instructions"
 #else
 #define VectorClassMaster Vec2d
 #define VectorClassFloat Vec4f
 #define VectorClassInt Vec4i
+#define VectorClassUShort Vec8us
 #define VCSIZE_MASTER 2
 #define VCSIZE_FLOAT 4
 #define VCSIZE_INT 4
+#define VCSIZE_USHORT 8
+
 //#pragma message "Using SS3 instructions"
 #endif
 
@@ -1349,7 +1356,7 @@ protected:
     /**
      * Store array of pattern parsimony computed in computeParsimonyBranch()
      */
-    int* _pattern_pars;
+    BootValTypePars* _pattern_pars;
 
     /**
             internal pattern likelihoods per category, always stored after calling computeLikelihood()

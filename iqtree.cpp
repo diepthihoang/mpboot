@@ -70,6 +70,8 @@ void IQTree::init() {
     //boot_splits = new SplitGraph;
     pll2iqtree_pattern_index = NULL;
     fastNNI = true;
+    rell_segments = -1;
+    segment_upper = NULL;
 }
 
 IQTree::IQTree(Alignment *aln) : PhyloTree(aln) {
@@ -189,13 +191,20 @@ void IQTree::setParams(Params &params) {
 			// Diep: For parsimony bootstrap
 			boot_samples_pars.resize(params.gbo_replicates);
 			if(params.spr_parsimony)
-				nunit = get_safe_upper_limit_float(getAlnNSite());
+				nunit = getAlnNSite() + VCSIZE_USHORT;
 			else
-				nunit = get_safe_upper_limit_float(getAlnNPattern());
-			BootValTypePars *mem = aligned_alloc<BootValTypePars>(nunit * (size_t)(params.gbo_replicates));
-			memset(mem, 0, nunit * (size_t)(params.gbo_replicates) * sizeof(BootValTypePars));
-			for (i = 0; i < params.gbo_replicates; i++)
-				boot_samples_pars[i] = mem + i*nunit;
+				nunit = getAlnNPattern() + VCSIZE_USHORT;
+
+//			BootValTypePars *mem = aligned_alloc<BootValTypePars>(nunit * (size_t)(params.gbo_replicates));
+//			memset(mem, 0, nunit * (size_t)(params.gbo_replicates) * sizeof(BootValTypePars));
+//			for (i = 0; i < params.gbo_replicates; i++)
+//				boot_samples_pars[i] = mem + i*nunit;
+
+			// Diep: rewrote the above to properly use load_a in saveCurrentTree
+			for (i = 0; i < params.gbo_replicates; i++){
+				boot_samples_pars[i] = aligned_alloc<BootValTypePars>(nunit);
+				memset(boot_samples_pars[i], 0, nunit * sizeof(BootValTypePars));
+			}
 		} else{
         	boot_samples.resize(params.gbo_replicates);
 #ifdef BOOT_VAL_FLOAT
@@ -324,6 +333,8 @@ IQTree::~IQTree() {
 
     if(!boot_samples_pars.empty())
     	aligned_free(boot_samples_pars[0]); // Diep added
+
+    if(segment_upper) delete [] segment_upper;
 }
 
 void IQTree::createPLLPartition(Params &params, ostream &pllPartitionFileHandle) {
@@ -2313,6 +2324,7 @@ void IQTree::saveCurrentTree(double cur_logl) {
 
     int nptn = getAlnNPattern();
     int nsite = getAlnNSite();
+
     BootValType *pattern_lh = NULL;
     double *pattern_lh_orig = NULL;
     BootValTypePars *site_pars = NULL;
@@ -2320,8 +2332,23 @@ void IQTree::saveCurrentTree(double cur_logl) {
 
 	// DTH: if spr search on parsimony
 	if (params->maximum_parsimony){
+		if(rell_segments == -1){
+			// do this once
+			int i;
+			int nunit = (params->spr_parsimony) ? (nsite) : (nptn);
+			rell_segments = 1 + int(fabs(cur_logl)) * 2 / USHRT_MAX;
+			if(rell_segments > 1){
+				segment_upper = new int[rell_segments];
+				// .... segment_upper[0] .... segment_upper[1] ..... segment_upper[last]==nunit
+				for(i = 0; i < rell_segments - 1; i++){
+					segment_upper[i] = (i + 1) * nunit / rell_segments;
+				}
+				segment_upper[i] = nunit;
+			}
+		}
+
 		if(params->spr_parsimony){
-			site_pars = aligned_alloc<BootValTypePars>(nsite+VCSIZE_INT);
+			site_pars = aligned_alloc<BootValTypePars>(nsite+VCSIZE_USHORT);
 			int test_pars = 0;
 			pllComputeSiteParsimony(pllInst, pllPartitions, site_pars, nsite, &test_pars);
 			if(test_pars != -int(cur_logl))
@@ -2370,13 +2397,25 @@ void IQTree::saveCurrentTree(double cur_logl) {
 //				BootValTypePars res = horizontal_add(vc_rell);
 
 				BootValTypePars *boot_sample = boot_samples_pars[sample];
-				VectorClassInt vc_rell = 0;
-				int site;
-				for (site = 0; site < nsite; site+=VCSIZE_INT)
-					vc_rell = VectorClassInt().load_a(&site_pars[site]) * VectorClassInt().load_a(&boot_sample[site]) + vc_rell;
-				BootValTypePars res = horizontal_add(vc_rell);
+				if(rell_segments == 1){
+					VectorClassUShort vc_rell = 0;
+					int site;
+					for (site = 0; site < nsite; site+=VCSIZE_USHORT)
+						vc_rell = VectorClassUShort().load_a(&site_pars[site]) * VectorClassUShort().load_a(&boot_sample[site]) + vc_rell;
+					BootValTypePars res = horizontal_add(vc_rell);
 
-				rell = -(double)res;
+					rell = -(double)res;
+				}else{
+					int site = 0, segment_id = 0, res = 0;
+					VectorClassUShort vc_rell = 0;
+					for(; segment_id < rell_segments; segment_id++){
+						for (; site < segment_upper[segment_id]; site+=VCSIZE_USHORT)
+							vc_rell = VectorClassUShort().load_a(&site_pars[site]) * VectorClassUShort().load_a(&boot_sample[site]) + vc_rell;
+						res += horizontal_add(vc_rell);
+						vc_rell = 0;
+					}
+					rell = -(double)res;
+				}
 			}else if (params->maximum_parsimony && !params->spr_parsimony) {
 //				asm("#BEGIN HERE CHECK SSE");
 //				int reps = 0;
@@ -2388,12 +2427,24 @@ void IQTree::saveCurrentTree(double cur_logl) {
 
 				// SSE optimized version of the above loop
 				BootValTypePars *boot_sample = boot_samples_pars[sample];
-				VectorClassInt vc_rell = 0;
-				for (ptn = 0; ptn < nptn; ptn+=VCSIZE_INT) {
-					vc_rell = VectorClassInt().load_a(&_pattern_pars[ptn]) * VectorClassInt().load_a(&boot_sample[ptn]) + vc_rell;
+				if(rell_segments == 1){
+					VectorClassUShort vc_rell = 0;
+					for (ptn = 0; ptn < nptn; ptn+=VCSIZE_USHORT) {
+						vc_rell = VectorClassUShort().load_a(&_pattern_pars[ptn]) * VectorClassUShort().load_a(&boot_sample[ptn]) + vc_rell;
+					}
+					BootValTypePars res = horizontal_add(vc_rell);
+					rell = -(double)res;
+				}else{
+					int ptn = 0, segment_id = 0, res = 0;
+					VectorClassUShort vc_rell = 0;
+					for(; segment_id < rell_segments; segment_id++){
+						for (; ptn < segment_upper[segment_id]; ptn+=VCSIZE_USHORT)
+							vc_rell = VectorClassUShort().load_a(&_pattern_pars[ptn]) * VectorClassUShort().load_a(&boot_sample[ptn]) + vc_rell;
+						res += horizontal_add(vc_rell);
+						vc_rell = 0;
+					}
+					rell = -(double)res;
 				}
-				BootValTypePars res = horizontal_add(vc_rell);
-				rell = -(double)res;
 			} else {
 				// TODO: The following parallel is not very efficient, should wrap the above loop
 	//#ifdef _OPENMP
@@ -2504,7 +2555,6 @@ void IQTree::saveCurrentTree(double cur_logl) {
     }
 
     if(site_pars) aligned_free(site_pars);
-//    if(boot_site_pars) aligned_free(boot_site_pars);
 }
 
 

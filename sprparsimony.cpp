@@ -2200,6 +2200,24 @@ void pllComputeSiteParsimony(pllInstance * tr, partitionList * pr, int *site_par
 	if(cur_pars) *cur_pars = sum;
 }
 
+void pllComputeSiteParsimony(pllInstance * tr, partitionList * pr, unsigned short *site_pars, int nsite, int *cur_pars){
+	int site = 0;
+	int sum = 0;
+
+	for(int i = 0; i < pr->numberOfPartitions; i++){
+		int partialParsLength = pr->partitionData[i]->parsimonyLength * PLL_PCF;
+		int maxNSite = partialParsLength > nsite ? nsite : partialParsLength;
+		parsimonyNumber * p = &(pr->partitionData[i]->perSitePartialPars[partialParsLength * tr->start->number]);
+
+		for(int k = 0; k < maxNSite; k++){
+			site_pars[site] = p[k];
+			sum += site_pars[site];
+			site++;
+		}
+	}
+	if(cur_pars) *cur_pars = sum;
+}
+
 void testSiteParsimony(Params &params) {
 	IQTree * iqtree;
 	iqtree = new IQTree;

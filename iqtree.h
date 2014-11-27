@@ -37,7 +37,7 @@
 #define BOOT_VAL_FLOAT
 #define BootValType float
 //#define BootValType double
-#define BootValTypePars int // Diep added
+
 
 typedef std::map< string, double > mapString2Double;
 typedef std::multiset< double, std::less< double > > multiSetDB;
@@ -700,6 +700,8 @@ public:
     /** vector of bootstrap alignments generated */
     vector<BootValType* > boot_samples;
     vector<BootValTypePars*> boot_samples_pars; // Diep added
+    int rell_segments; // Diep added: (if needed) split the parsimony vector into several segments to avoid overflow when calc rell based on vec8us
+    int * segment_upper;
 
     /** newick string of corresponding bootstrap trees */
     IntVector boot_trees;
