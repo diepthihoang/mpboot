@@ -759,7 +759,7 @@ void parseArg(int argc, char *argv[], Params &params) {
     params.speednni = true; // turn on reduced hill-climbing NNI by default now
     params.adaptPert = false;
     params.numParsTrees = 100;
-    params.sprDist = 20;
+    params.sprDist = -1;
     params.numNNITrees = 20;
     params.avh_test = 0;
     params.bootlh_test = 0;
@@ -1793,9 +1793,9 @@ void parseArg(int argc, char *argv[], Params &params) {
 				params.iqp = true;
 				continue;
 			}
-			if (strcmp(argv[cnt], "-wct") == 0) {
+			if (strcmp(argv[cnt], "-wlt") == 0) {
 				// write all candidate trees
-				params.write_candidate_trees = true;
+				params.write_local_optimal_trees = true;
 				continue;
 			}
 			if (strcmp(argv[cnt], "-wt") == 0) {
@@ -2520,9 +2520,17 @@ void parseArg(int argc, char *argv[], Params &params) {
             params.out_prefix = params.user_file;
     }
 
-    // Diep (for spr pars)
+    // Diep: for old mpars.spr (must work with snni)
     if(params.spr_parsimony && !params.snni){
     	outError("-spr_pars must work with -snni");
+    }
+
+    // Diep: NNI is equivalent to SPR radius = 1
+    if(params.sprDist == -1){
+		if(params.maximum_parsimony && !params.spr_parsimony){
+			params.sprDist = 1;
+		}else
+			params.sprDist = 20;
     }
 }
 
@@ -2608,28 +2616,26 @@ void usage_iqtree(char* argv[], bool full_command) {
             << "  -sp <partition_file> Partition model specification in NEXUS format." << endl
             << "                       For single model use the -m option (see below)" << endl
             << "  -z <trees_file>      Compute log-likelihoods for all trees in the given file" << endl
-            << "  <treefile>           User-input tree" << endl
+            << "  <treefile>           Initial tree for tree reconstruction (default: MP)" << endl
             << "  -o <outgroup_taxon>  Outgroup taxon name for writing .treefile" << endl
             << "  -pre <PREFIX>        Using <PREFIX> for output files (default: alignment name)" << endl
 #ifdef _OPENMP
             << "  -omp <#cpu_cores>    Number of cores/threads to use (default: all cores)" << endl
 #endif
+            << "  -seed <number>       Random seed number, normally used for debugging purpose" << endl
+            << "  -v, -vv, -vvv        Verbose mode, printing more messages to screen" << endl
             << endl << "NEW STOCHASTIC TREE SEARCH ALGORITHM:" << endl
             << "  -pll                 Use phylogenetic likelihood library (PLL) (default: off)" << endl
             << "  -numpars <number>    Number of initial parsimony trees (default: 100)" << endl
             << "  -toppars <number>    Number of best parsimony trees (default: 20)" << endl
             << "  -numcand <number>    Size of the candidate tree set (defaut: 5)" << endl
             << "  -pers <perturbation> Perturbation strength for randomized NNI (default: 0.5)" << endl
-            << "  -numstop <number>    Number of \"unsuccessful\" iterations until the search is stopped (default: 100)" << endl
-            << "  -n <#iterations>     Fix number of iterations to <#iterations>" << endl
-            << "                       (default: <#iterations> is determined adaptively by the stopping rule)" << endl
-            << "  -wt                  Write locally optimal trees into .treels file" << endl
-            << "  -iqp                 Use the IQP tree perturbation method instead of the randomized NNI (default: OFF)" << endl
-            << "  -seed <number>       Random seed number, normally used for debugging purpose" << endl
-            << "  -v, -vv, -vvv        Verbose mode, printing more messages to screen" << endl
+            << "  -numstop <number>    Number of unsuccessful iterations to stop (default: 100)" << endl
+            << "  -n <#iterations>     Fix number of iterations to <#iterations> (default: auto)" << endl
+            << "  -iqp                 Use the IQP tree perturbation (default: randomized NNI)" << endl
             << "  -iqpnni              Switch back to the old IQPNNI tree search algorithm" << endl
-            << endl << "ULTRA-FAST BOOTSTRAP:" << endl
-            << "  -bb <#replicates>    Ultra-fast bootstrap (>=1000)" << endl
+            << endl << "ULTRAFAST BOOTSTRAP:" << endl
+            << "  -bb <#replicates>    Ultrafast bootstrap (>=1000)" << endl
 //            << "  -n <#iterations>     Minimum number of iterations (default: 100)" << endl
             << "  -nm <#iterations>    Maximum number of iterations (default: 1000)" << endl
 			<< "  -nstep <#iterations> #Iterations for UFBoot stopping rule (default: 100)" << endl
@@ -2720,14 +2726,15 @@ void usage_iqtree(char* argv[], bool full_command) {
 			cout << "                       min, mean, and max branch lengths of random trees." << endl;
 
 			cout << endl << "MISCELLANEOUS:" << endl
+		    << "  -wt                  Write locally optimal trees into .treels file" << endl
 			<< "  -fixbr               Fix branch lengths of <treefile>." << endl
-            << "                       Used in combination with -n 0 to compute the log-likelihood of <treefile>" << endl
+            << "                       Used with -n 0 to compute log-likelihood of <treefile>" << endl
 			<< "  -wsl                 Writing site log-likelihoods to .sitelh file" << endl
-            << "  -wslg                Writing site log-likelihoods per Gamma category" << endl
-            << "  -d <file>            Reading genetic distances from file (default: JC)" << endl
+            << "  -wslg                Writing site log-likelihoods per Gamma category" << endl;
+//            << "  -d <file>            Reading genetic distances from file (default: JC)" << endl
 //			<< "  -d <outfile>         Calculate the distance matrix inferred from tree" << endl
-			<< "  -stats <outfile>     Output some statistics about branch lengths" << endl
-			<< "  -comp <treefile>     Compare tree with each in the input trees" << endl;
+//			<< "  -stats <outfile>     Output some statistics about branch lengths" << endl
+//			<< "  -comp <treefile>     Compare tree with each in the input trees" << endl;
 
 
 			cout << endl;

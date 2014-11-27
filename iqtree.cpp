@@ -1435,7 +1435,7 @@ double IQTree::doTreeSearch() {
 	/*====================================================
 	 * MAIN LOOP OF THE IQ-TREE ALGORITHM
 	 *====================================================*/
-    for (curIt = params->numNNITrees + 1; !stop_rule.meetStopCondition(curIt, cur_correlation); curIt++) {
+    for ( ; !stop_rule.meetStopCondition(curIt, cur_correlation); curIt++) {
         searchinfo.curIter = curIt;
         // estimate logl_cutoff for bootstrap
         if (params->avoid_duplicated_trees && max_candidate_trees > 0 && treels_logl.size() > 1000) {
@@ -1534,7 +1534,7 @@ double IQTree::doTreeSearch() {
                 if (isSuperTree()) {
                     ((PhyloSuperTree*) this)->mapTrees();
                 }
-                curScore = optimizeAllBranches(1, TOL_LIKELIHOOD, PLL_NEWZPERCYCLE);
+                curScore = optimizeAllBranches(params->numSmoothTree, TOL_LIKELIHOOD, PLL_NEWZPERCYCLE);
                 perturbScore = curScore;
             }
         }
@@ -2359,10 +2359,10 @@ void IQTree::saveCurrentTree(double cur_logl) {
 	}else{
 		pattern_lh = aligned_alloc<BootValType>(nptn);
 #ifdef BOOT_VAL_FLOAT
-		pattern_lh_orig = aligned_alloc_double(nptn);
+		double *pattern_lh_orig = aligned_alloc_double(nptn);
 		computePatternLikelihood(pattern_lh_orig, &cur_logl);
 		for (int i = 0; i < nptn; i++)
-			pattern_lh[i] = pattern_lh_orig[i];
+			pattern_lh[i] = (float)pattern_lh_orig[i];
 #else
 		computePatternLikelihood(pattern_lh, &cur_logl);
 #endif
