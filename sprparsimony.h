@@ -34,6 +34,8 @@ void pllComputePatternParsimony(pllInstance * tr, partitionList * pr, double *pt
 void pllComputeSiteParsimony(pllInstance * tr, partitionList * pr, int *site_pars, int nsite, int *cur_pars = NULL);
 void pllComputeSiteParsimony(pllInstance * tr, partitionList * pr, unsigned short *site_pars, int nsite, int *cur_pars = NULL);
 
+int pllCalcMinParsScorePattern(pllInstance *tr, int dataType, int site);
+
 // Diep: for testing site parsimony computed by PLL vs IQTree on the same tree
 // this is called if params.test_site_pars == true
 void testSiteParsimony(Params &params);

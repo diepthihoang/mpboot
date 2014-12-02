@@ -1699,6 +1699,45 @@ static pllBoolean isInformative(pllInstance *tr, int dataType, int site)
 	return PLL_FALSE;
 
 }
+
+/*
+ * Diep: compute minimum parsimony of the given site
+ *
+ */
+int pllCalcMinParsScorePattern(pllInstance *tr, int dataType, int site)
+{
+	int
+		informativeCounter = 0,
+		check[256],
+		j,
+		undetermined = getUndetermined(dataType);
+
+	const unsigned int
+		*bitVector = getBitVector(dataType);
+
+	unsigned char
+		nucleotide;
+
+
+	for(j = 0; j < 256; j++)
+		check[j] = 0;
+
+	for(j = 1; j <= tr->mxtips; j++)
+	{
+		nucleotide = tr->yVector[j][site];
+		check[nucleotide] = 1;
+		assert(bitVector[nucleotide] > 0);
+	}
+
+	for(j = 0; j < undetermined; j++)
+	{
+		if(check[j] > 0)
+		informativeCounter++;
+	}
+
+	return informativeCounter - 1;
+}
+
 //
 //static pllBoolean isInformative(pllInstance *tr, int dataType, int site)
 //{

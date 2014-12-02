@@ -190,6 +190,7 @@ void IQTree::setParams(Params &params) {
         {
 			// Diep: For parsimony bootstrap
 			boot_samples_pars.resize(params.gbo_replicates);
+			boot_samples_pars_remain_bounds.resize(params.gbo_replicates);
 			if(params.spr_parsimony)
 				nunit = getAlnNSite() + VCSIZE_USHORT;
 			else
@@ -331,8 +332,15 @@ IQTree::~IQTree() {
     if (!boot_samples.empty())
     	aligned_free(boot_samples[0]); // free memory
 
-    if(!boot_samples_pars.empty())
-    	aligned_free(boot_samples_pars[0]); // Diep added
+    if(!boot_samples_pars.empty()){
+    	for(int i = 0; i < params->gbo_replicates; i++)
+    		aligned_free(boot_samples_pars[i]); // Diep added
+    }
+
+    if(!boot_samples_pars_remain_bounds.empty()){
+    	for(int i = 0; i < params->gbo_replicates; i++)
+    		delete [] boot_samples_pars_remain_bounds[i];
+    }
 
     if(segment_upper) delete [] segment_upper;
 }
@@ -2344,6 +2352,11 @@ void IQTree::saveCurrentTree(double cur_logl) {
 				segment_upper[i] = (i + 1) * nunit / rell_segments;
 			}
 			segment_upper[i] = nunit;
+
+			if(rell_segments > 1){
+				cout << "NOTE: REPS computation will be segmented into " << rell_segments << " parts for speed." << endl;
+				pllComputeRellRemainBound();
+			}
 		}
 
 		if(params->spr_parsimony){
@@ -2383,6 +2396,7 @@ void IQTree::saveCurrentTree(double cur_logl) {
 
         for (int sample = 0; sample < nsamples; sample++) {
             double rell = 0.0;
+            bool skipped = false;
 
 			if (params->spr_parsimony) {
 				BootValTypePars *boot_sample = boot_samples_pars[sample];
@@ -2407,6 +2421,17 @@ void IQTree::saveCurrentTree(double cur_logl) {
 							vc_rell = VectorClassUShort().load_a(&site_pars[site]) * VectorClassUShort().load_a(&boot_sample[site]) + vc_rell;
 						res += horizontal_add(vc_rell);
 						vc_rell = 0;
+						if(rell_segments > 1 && segment_id < rell_segments - 1){
+//							if(res + boot_samples_pars_remain_bounds[sample][segment_id] > int(-boot_logl[sample])){
+							if(-(double)(res + boot_samples_pars_remain_bounds[sample][segment_id]) < boot_logl[sample]){
+//								cout << "Current best of sample " << sample << " = " << int(-boot_logl[sample]) << endl;
+//								cout << "REPS = " << res + boot_samples_pars_remain_bounds[sample][segment_id] << endl;
+//								cout << "NOTE: estimated value for boot sample parsimony  exceeds its current best."
+//										<< "Skip on sample " << sample << " at site " << segment_upper[segment_id] << endl;
+								skipped = true;
+								break;
+							}
+						}
 					}
 					rell = -(double)res;
 				}
@@ -2433,6 +2458,17 @@ void IQTree::saveCurrentTree(double cur_logl) {
 							vc_rell = VectorClassUShort().load_a(&_pattern_pars[ptn]) * VectorClassUShort().load_a(&boot_sample[ptn]) + vc_rell;
 						res += horizontal_add(vc_rell);
 						vc_rell = 0;
+						if(rell_segments > 1 && segment_id < rell_segments - 1){
+//							if(res + boot_samples_pars_remain_bounds[sample][segment_id] > int(-boot_logl[sample])){
+							if(-(double)(res + boot_samples_pars_remain_bounds[sample][segment_id]) < boot_logl[sample]){
+//								cout << "Current best of sample " << sample << " = " << int(-boot_logl[sample]) << endl;
+//								cout << "REPS = " << res + boot_samples_pars_remain_bounds[sample][segment_id] << endl;
+//								cout << "NOTE: estimated value for boot sample parsimony exceeds its current best."
+//										<< "Skip on sample " << sample << " at site " << segment_upper[segment_id] << endl;
+								skipped = true;
+								break;
+							}
+						}
 					}
 					rell = -(double)res;
 				}
@@ -2470,6 +2506,8 @@ void IQTree::saveCurrentTree(double cur_logl) {
 					rell = res;
 //				}
 			}
+
+			if(skipped) continue;
 
             if (rell > boot_logl[sample] + params->ufboot_epsilon
                     || (rell > boot_logl[sample] - params->ufboot_epsilon
@@ -2548,6 +2586,55 @@ void IQTree::saveCurrentTree(double cur_logl) {
     if(site_pars) aligned_free(site_pars);
 }
 
+void IQTree::pllComputeRellRemainBound(){
+	int nunit = (params->spr_parsimony) ? (getAlnNSite()) : (getAlnNPattern());
+	int nptn = getAlnNPattern();
+	int nsite = getAlnNSite();
+	int * min_unit_pars = new int[nunit];
+
+	if(params->spr_parsimony){
+		// compute the array of min_unit_pars (site-wise)
+		int * min_pll_ptn_pars = new int[nptn];
+		int site = 0;
+		for(int i = 0; i < nptn; i++){
+			min_pll_ptn_pars[i] = pllCalcMinParsScorePattern(pllInst, pllPartitions->partitionData[0]->dataType, i);
+			if(min_pll_ptn_pars[i] > 1){
+				for(int j = 0; j < pllInst->aliaswgt[i]; j++){
+					min_unit_pars[site] = min_pll_ptn_pars[i];
+					site++;
+				}
+			}
+		}
+		for(; site < nsite; site++) min_unit_pars[site] = 0; // constant site
+		delete [] min_pll_ptn_pars;
+	}else{
+		// compute the array of min_unit_pars (pattern-wise)
+		if(!pll2iqtree_pattern_index) pllBuildIQTreePatternIndex(); // to be able to use the map
+		int * min_pll_ptn_pars = new int[nptn];
+		int iqtree_ptn = 0;
+		for(int i = 0; i < nptn; i++){
+			min_pll_ptn_pars[i] = pllCalcMinParsScorePattern(pllInst, pllPartitions->partitionData[0]->dataType, i);
+			min_unit_pars[pll2iqtree_pattern_index[i]] = min_pll_ptn_pars[i];
+		}
+		delete [] min_pll_ptn_pars;
+	}
+
+	for(int b = 0; b < params->gbo_replicates; b++){
+		// last segment doesn't need remain bound
+		boot_samples_pars_remain_bounds[b] = new int[rell_segments - 1];
+
+		for(int s = 0; s < rell_segments - 1; s++){
+			int remain = 0;
+			// for position = segment_upper[s] .... (nunit-1)
+			// compute the min of the remain based on min_unit_pars
+			for(int pos = segment_upper[s]; pos < nunit; pos++){
+				remain += min_unit_pars[pos] * boot_samples_pars[b][pos];
+			}
+			boot_samples_pars_remain_bounds[b][s] = remain;
+		}
+	}
+	delete [] min_unit_pars;
+}
 
 void IQTree::saveNNITrees(PhyloNode *node, PhyloNode *dad) {
     if (!node) {
