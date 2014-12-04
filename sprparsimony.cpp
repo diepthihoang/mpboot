@@ -1700,6 +1700,14 @@ static pllBoolean isInformative(pllInstance *tr, int dataType, int site)
 
 }
 
+static bool isUnambiguous(char nucleotide, int dataType){
+	// PLL_DNA_DATA or PLL_DNA_AA
+	if(dataType == PLL_DNA_DATA)
+		return (nucleotide == 1) || (nucleotide == 2) || (nucleotide == 4) || (nucleotide == 8);
+	else if(dataType == PLL_DNA_DATA)
+		return nucleotide < 20;
+	else return true;
+}
 /*
  * Diep: compute minimum parsimony of the given site
  *
@@ -1731,8 +1739,8 @@ int pllCalcMinParsScorePattern(pllInstance *tr, int dataType, int site)
 
 	for(j = 0; j < undetermined; j++)
 	{
-		if(check[j] > 0)
-		informativeCounter++;
+		if(check[j] > 0 && isUnambiguous(j, dataType))
+			informativeCounter++;
 	}
 
 	return informativeCounter - 1;
