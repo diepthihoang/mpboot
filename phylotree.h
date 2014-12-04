@@ -109,6 +109,7 @@ inline void aligned_free(void *mem) {
 #ifdef __AVX
 #define VectorClassMaster Vec4d
 #define VectorClassFloat Vec8f
+#define VectorClassInt Vec8i
 #define VectorClassUShort Vec16us
 #define VCSIZE_MASTER 4
 #define VCSIZE_FLOAT 8

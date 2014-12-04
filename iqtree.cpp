@@ -224,28 +224,24 @@ void IQTree::setParams(Params &params) {
         boot_counts.resize(params.gbo_replicates, 0);
         VerboseMode saved_mode = verbose_mode;
         verbose_mode = VB_QUIET;
+
+        if(params.spr_parsimony)
+			nunit = getAlnNSite();
+		else
+			nunit = getAlnNPattern();
+
         for (i = 0; i < params.gbo_replicates; i++) {
         	if(params.spr_parsimony){
         		if(params.print_bootaln)
         			outError("Bootstrap with SPR parsimony hasn't supported printing bootstrap alignment yet.");
     			IntVector this_sample;
         		aln->createBootstrapAlignmentSite(this_sample, params.bootstrap_spec);
-
-    			for (size_t j = 0; j < nunit; j++){
-    				if(params.maximum_parsimony)
-    					boot_samples_pars[i][j] = this_sample[j];
-    				else
-    					boot_samples[i][j] = this_sample[j];
-    			}
-
-    			for (size_t j = 0; j < nunit; j++)
-    				boot_samples_pars[i][j] = this_sample[j];
-
-//        		// Diep: new method - storing index of original site instead of frequency
-//        		int s = 0, k;
-//    			for (size_t j = 0; j < nunit; j++)
-//    				for(k = 0; k < this_sample[j]; k++, s++)
-//    					boot_samples_pars[i][s] = j;
+        		size_t j;
+    			for (j = 0; j < nunit; j++)
+  					boot_samples_pars[i][j] = this_sample[j];
+    			// make sure the rest is 0
+    			for (; j < nunit + VCSIZE_USHORT; j++)
+  					boot_samples_pars[i][j] = 0;
         		continue;
         	}
 
@@ -2344,7 +2340,7 @@ void IQTree::saveCurrentTree(double cur_logl) {
 			// do this once
 			int i = 0;
 			int nunit = (params->spr_parsimony) ? (nsite) : (nptn);
-			rell_segments = 1 + int(fabs(cur_logl)) * 2 / USHRT_MAX;
+			rell_segments = 1 + int(fabs(cur_logl)) * 5 / USHRT_MAX;
 
 			segment_upper = new int[rell_segments];
 			// .... segment_upper[0] .... segment_upper[1] ..... segment_upper[last]==nunit
@@ -2354,7 +2350,7 @@ void IQTree::saveCurrentTree(double cur_logl) {
 			segment_upper[i] = nunit;
 
 			if(rell_segments > 1){
-				cout << "NOTE: REPS computation will be segmented into " << rell_segments << " parts for speed." << endl;
+				cout << "NOTE: REPS computation is segmented into " << rell_segments << " parts for speed..." << endl;
 				pllComputeRellRemainBound();
 			}
 		}
@@ -2362,11 +2358,9 @@ void IQTree::saveCurrentTree(double cur_logl) {
 		if(params->spr_parsimony){
 			site_pars = aligned_alloc<BootValTypePars>(nsite+VCSIZE_USHORT);
 			int test_pars = 0;
-			pllComputeSiteParsimony(pllInst, pllPartitions, site_pars, nsite, &test_pars);
+			pllComputeSiteParsimony(pllInst, pllPartitions, site_pars, nsite+VCSIZE_USHORT, &test_pars);
 			if(test_pars != -int(cur_logl))
 				outError("WRONG pllComputeSiteParsimony: sum of site parsimony is different from alignment parsimony");
-//			boot_site_pars = aligned_alloc<BootValTypePars>(nsite+VCSIZE_INT);
-//			memset(boot_site_pars, 0, sizeof(BootValTypePars) * (nsite+VCSIZE_INT));
 		}
 	}else{
 		pattern_lh = aligned_alloc<BootValType>(nptn);
@@ -2400,7 +2394,6 @@ void IQTree::saveCurrentTree(double cur_logl) {
 
 			if (params->spr_parsimony) {
 				BootValTypePars *boot_sample = boot_samples_pars[sample];
-
 				if(params->auto_vectorize){
 					// use compiler's automatic vectorization
 					int res = 0;
@@ -2414,15 +2407,17 @@ void IQTree::saveCurrentTree(double cur_logl) {
 						res += site_pars[site] * boot_sample[site];
 					rell = -(double)res;
 				}else{
-					int site = 0, segment_id = 0, res = 0;
-					VectorClassUShort vc_rell = 0;
-					for(; segment_id < rell_segments; segment_id++){
-						for (; site < segment_upper[segment_id]; site+=VCSIZE_USHORT)
-							vc_rell = VectorClassUShort().load_a(&site_pars[site]) * VectorClassUShort().load_a(&boot_sample[site]) + vc_rell;
-						res += horizontal_add(vc_rell);
+					int site, segment_id;
+					unsigned long res = 0;
+					VectorClassUShort vc_rell;
+					for(segment_id = 0, site = 0; segment_id < rell_segments; segment_id++){
 						vc_rell = 0;
+						for (; site < segment_upper[segment_id]; site+=VCSIZE_USHORT){
+							vc_rell = VectorClassUShort().load_a(&site_pars[site]) * VectorClassUShort().load_a(&boot_sample[site]) + vc_rell;
+						}
+						res += horizontal_add(vc_rell);
+
 						if(rell_segments > 1 && segment_id < rell_segments - 1){
-//							if(res + boot_samples_pars_remain_bounds[sample][segment_id] > int(-boot_logl[sample])){
 							if(-(double)(res + boot_samples_pars_remain_bounds[sample][segment_id]) < boot_logl[sample]){
 //								cout << "Current best of sample " << sample << " = " << int(-boot_logl[sample]) << endl;
 //								cout << "REPS = " << res + boot_samples_pars_remain_bounds[sample][segment_id] << endl;
@@ -2433,6 +2428,18 @@ void IQTree::saveCurrentTree(double cur_logl) {
 							}
 						}
 					}
+
+//					unsigned long res2 = 0;
+//					int site2 = 0;
+//					for(site2 = 0; site2 < nsite; site2++){
+//						res2 += site_pars[site2] * boot_sample[site2];
+//					}
+//
+//					if(skipped == false && res != res2){
+//						cout << "res = " << res << ", res2 = " << res2 << endl;
+//						outError("Something went wrong in the calc of RES.");
+//					}
+
 					rell = -(double)res;
 				}
 			}else if (params->maximum_parsimony && !params->spr_parsimony) {
@@ -2459,7 +2466,6 @@ void IQTree::saveCurrentTree(double cur_logl) {
 						res += horizontal_add(vc_rell);
 						vc_rell = 0;
 						if(rell_segments > 1 && segment_id < rell_segments - 1){
-//							if(res + boot_samples_pars_remain_bounds[sample][segment_id] > int(-boot_logl[sample])){
 							if(-(double)(res + boot_samples_pars_remain_bounds[sample][segment_id]) < boot_logl[sample]){
 //								cout << "Current best of sample " << sample << " = " << int(-boot_logl[sample]) << endl;
 //								cout << "REPS = " << res + boot_samples_pars_remain_bounds[sample][segment_id] << endl;

@@ -2236,6 +2236,10 @@ void pllComputeSiteParsimony(pllInstance * tr, partitionList * pr, int *site_par
 			site++;
 		}
 	}
+
+	for(; site < nsite; site++){
+		site_pars[site] = 0;
+	}
 	if(cur_pars) *cur_pars = sum;
 }
 
@@ -2253,6 +2257,9 @@ void pllComputeSiteParsimony(pllInstance * tr, partitionList * pr, unsigned shor
 			sum += site_pars[site];
 			site++;
 		}
+	}
+	for(; site < nsite; site++){
+		site_pars[site] = 0;
 	}
 	if(cur_pars) *cur_pars = sum;
 }
