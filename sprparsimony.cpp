@@ -124,7 +124,6 @@ extern double masterTime;
 /* program options */
 extern Params *globalParam;
 IQTree * iqtree = NULL;
-
 ///************************************************ pop count stuff ***********************************************/
 //
 // unsigned int bitcount_32_bit(unsigned int i)
@@ -1816,14 +1815,16 @@ static void determineUninformativeSites(pllInstance *tr, partitionList *pr, int 
 
   for(model = 0; model < pr->numberOfPartitions; model++)
     {
+	  pr->partitionData[model]->numInformativeSites = 0;
       for(i = pr->partitionData[model]->lower; i < pr->partitionData[model]->upper; i++)
         {
-           if(isInformative(tr, pr->partitionData[model]->dataType, i))
+           if(isInformative(tr, pr->partitionData[model]->dataType, i)){
              informative[i] = 1;
+             pr->partitionData[model]->numInformativeSites += tr->aliaswgt[i];
+           }
            else
              {
                informative[i] = 0;
-               number++;
              }
         }
     }
@@ -2013,9 +2014,8 @@ static void stepwiseAddition(pllInstance *tr, partitionList *pr, nodeptr p, node
 
 void _allocateParsimonyDataStructures(pllInstance *tr, partitionList *pr, int perSiteScores)
 {
-	  int
-	    i,
-	    *informative = (int *)rax_malloc(sizeof(int) * (size_t)tr->originalCrunchedLength);
+	  int i;
+	  int * informative = (int *)rax_malloc(sizeof(int) * (size_t)tr->originalCrunchedLength);
 
 	  determineUninformativeSites(tr, pr, informative);
 
@@ -2235,7 +2235,7 @@ void pllComputeSiteParsimony(pllInstance * tr, partitionList * pr, int *site_par
 
 	for(int i = 0; i < pr->numberOfPartitions; i++){
 		int partialParsLength = pr->partitionData[i]->parsimonyLength * PLL_PCF;
-		int maxNSite = partialParsLength > nsite ? nsite : partialParsLength;
+		int maxNSite = pr->partitionData[i]->numInformativeSites;
 		parsimonyNumber * p = &(pr->partitionData[i]->perSitePartialPars[partialParsLength * tr->start->number]);
 
 		for(int k = 0; k < maxNSite; k++){
@@ -2257,7 +2257,7 @@ void pllComputeSiteParsimony(pllInstance * tr, partitionList * pr, unsigned shor
 
 	for(int i = 0; i < pr->numberOfPartitions; i++){
 		int partialParsLength = pr->partitionData[i]->parsimonyLength * PLL_PCF;
-		int maxNSite = partialParsLength > nsite ? nsite : partialParsLength;
+		int maxNSite = pr->partitionData[i]->numInformativeSites;
 		parsimonyNumber * p = &(pr->partitionData[i]->perSitePartialPars[partialParsLength * tr->start->number]);
 
 		for(int k = 0; k < maxNSite; k++){
@@ -2266,6 +2266,7 @@ void pllComputeSiteParsimony(pllInstance * tr, partitionList * pr, unsigned shor
 			site++;
 		}
 	}
+
 	for(; site < nsite; site++){
 		site_pars[site] = 0;
 	}

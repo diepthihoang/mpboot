@@ -1007,7 +1007,8 @@ typedef struct {
   size_t parsimonyLength;
   parsimonyNumber *parsVect; 
   parsimonyNumber *perSiteParsScores;
-  parsimonyNumber *perSitePartialPars;
+  parsimonyNumber *perSitePartialPars; /* Diep added - for UFBoot */
+  int numInformativeSites; /* Diep added - for UFBoot */
 
 
   /* This buffer of size width is used to store intermediate values for the branch length optimization under 
