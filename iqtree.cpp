@@ -22,8 +22,8 @@
 #include "phylosupertreeplen.h"
 #include "mexttree.h"
 #include "timeutil.h"
-#include "gtrmodel.h"
-#include "rategamma.h"
+#include "model/modelgtr.h"
+#include "model/rategamma.h"
 #include <numeric>
 #include "pll/pllInternal.h"
 #include "nnisearch.h"
@@ -995,10 +995,10 @@ void IQTree::inputModelPLL2IQTree() {
     // TODO add support for partitioned model
     dynamic_cast<RateGamma*>(getRate())->setGammaShape(pllPartitions->partitionData[0]->alpha);
     if (aln->num_states == 4) {
-        ((GTRModel*) getModel())->setRateMatrix(pllPartitions->partitionData[0]->substRates);
+        ((ModelGTR*) getModel())->setRateMatrix(pllPartitions->partitionData[0]->substRates);
         getModel()->decomposeRateMatrix();
     }
-    ((GTRModel*) getModel())->setStateFrequency(pllPartitions->partitionData[0]->empiricalFrequencies);
+    ((ModelGTR*) getModel())->setStateFrequency(pllPartitions->partitionData[0]->empiricalFrequencies);
 }
 
 void IQTree::inputModelIQTree2PLL() {
@@ -1659,7 +1659,10 @@ double IQTree::doTreeSearch() {
         } // end of bootstrap convergence test
     }
 
-	cout << "NOTE: " << treels_logl.size() << " bootstrap candidate trees evaluated (logl-cutoff: " << logl_cutoff << ")" << endl;
+    // Diep: added the text to output to observe the # of candidate trees
+    if(params->gbo_replicates && ((curIt - 1) % (params->step_iterations / 2) != 0)){
+    	cout << "NOTE: At the end, " << treels_logl.size() << " bootstrap candidate trees evaluated." << endl;
+    }
 
     readTreeString(bestTreeString);
 
@@ -1825,6 +1828,13 @@ double IQTree::optimizeNNI(int &nni_count, int &nni_steps) {
             // This is important because after restoring the branch lengths, all partial
             // likelihood need to be cleared.
             clearAllPartialLH();
+            // BQM: This was missing: one should also clear all subtrees of a supertree
+            if (isSuperTree()) {
+            	PhyloSuperTree *stree = (PhyloSuperTree*)this;
+            	for (PhyloSuperTree::iterator it = stree->begin(); it != stree->end(); it++) {
+            		(*it)->clearAllPartialLH();
+            	}
+            }
             rollBack = true;
             // only apply the best NNI
             numNNIs = 1;
@@ -2702,7 +2712,7 @@ void IQTree::summarizeBootstrap(Params &params, MTreeSet &trees) {
     string out_file;
     out_file = params.out_prefix;
     out_file += ".splits";
-    if (verbose_mode >= VB_MED) {
+    if (params.print_splits_file) {
 		sg.saveFile(out_file.c_str(), IN_OTHER, true);
 		cout << "Split supports printed to star-dot file " << out_file << endl;
     }

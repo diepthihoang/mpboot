@@ -29,26 +29,26 @@
 #include "alignment.h"
 #include "superalignment.h"
 #include "iqtree.h"
-#include "gtrmodel.h"
-#include "modeldna.h"
+#include "model/modelgtr.h"
+#include "model/modeldna.h"
 #include "myreader.h"
-#include "rateheterogeneity.h"
-#include "rategamma.h"
-#include "rateinvar.h"
-#include "rategammainvar.h"
+#include "model/rateheterogeneity.h"
+#include "model/rategamma.h"
+#include "model/rateinvar.h"
+#include "model/rategammainvar.h"
 //#include "modeltest_wrapper.h"
-#include "modelprotein.h"
-#include "modelbin.h"
-#include "modelcodon.h"
+#include "model/modelprotein.h"
+#include "model/modelbin.h"
+#include "model/modelcodon.h"
 #include "stoprule.h"
 
 #include "mtreeset.h"
 #include "mexttree.h"
-#include "ratemeyerhaeseler.h"
+#include "model/ratemeyerhaeseler.h"
 #include "whtest_wrapper.h"
-#include "partitionmodel.h"
+#include "model/partitionmodel.h"
 #include "guidedbootstrap.h"
-#include "modelset.h"
+#include "model/modelset.h"
 #include "timeutil.h"
 #include "parstree.h"
 #include "tinatree.h"
@@ -280,10 +280,12 @@ void reportRate(ofstream &out, PhyloTree &tree) {
 					<< endl;
 		int cats = rate_model->getNDiscreteRate();
 		DoubleVector prop;
-		if (rate_model->getGammaShape() > 0 || rate_model->getPtnCat(0) < 0)
-			prop.resize(cats,
-					(1.0 - rate_model->getPInvar()) / rate_model->getNRate());
-		else {
+		if (rate_model->getGammaShape() > 0 || rate_model->getPtnCat(0) < 0) {
+//			prop.resize(cats, (1.0 - rate_model->getPInvar()) / rate_model->getNRate());
+			prop.resize(cats);
+		for (i = 0; i < cats; i++)
+			prop[i] = rate_model->getProp(i);
+		} else {
 			prop.resize(cats, 0.0);
 			for (i = 0; i < tree.aln->getNPattern(); i++)
 				prop[rate_model->getPtnCat(i)] += tree.aln->at(i).frequency;
@@ -1061,6 +1063,7 @@ void computeInitialDist(Params &params, IQTree &iqtree, string &dist_file) {
 void computeInitialTree(Params &params, IQTree &iqtree, string &dist_file, int &numInitTrees, string &initTree) {
     double start = getCPUTime();
 
+    string out_file = params.out_prefix;
     if (params.user_file) {
         // start the search with user-defined tree
     	cout << endl;
@@ -1085,6 +1088,8 @@ void computeInitialTree(Params &params, IQTree &iqtree, string &dist_file, int &
 		iqtree.clearAllPartialLH();
 		iqtree.fixNegativeBranch(true);
 		numInitTrees = params.numParsTrees;
+        if (numInitTrees > params.min_iterations && params.stop_condition == SC_FIXED_ITERATION)
+            numInitTrees = params.min_iterations;
 		break;
 	case STT_PLL_PARSIMONY:
 		cout << endl;
@@ -1102,10 +1107,16 @@ void computeInitialTree(Params &params, IQTree &iqtree, string &dist_file, int &
 		iqtree.readTreeString(string(iqtree.pllInst->tree_string));
 		iqtree.initializeAllPartialPars();
 		iqtree.clearAllPartialLH();
+        if (params.write_init_tree) {
+            out_file += ".parstree";
+            iqtree.printTree(out_file.c_str(), WT_NEWLINE);
+        }
 		iqtree.fixNegativeBranch(true);
 
 		cout << getCPUTime() - start << " seconds" << endl;
 		numInitTrees = params.numParsTrees;
+        if (numInitTrees > params.min_iterations && params.stop_condition == SC_FIXED_ITERATION)
+            numInitTrees = params.min_iterations;
 		break;
 	case STT_BIONJ:
 		// This is the old default option: using BIONJ as starting tree
@@ -1228,7 +1239,12 @@ int initCandidateTreeSet(Params &params, IQTree &iqtree, int numInitTrees) {
     double parsTime = getCPUTime() - startTime;
     cout << "(" << numDupPars << " duplicated parsimony trees)" << endl;
     cout << "CPU time: " << parsTime << endl;
-    cout << "Computing log-likelihood of the parsimony trees ... " << endl;
+
+    // Diep: Tests showed that parsimony search still needs the following loop to faster converge
+    if(!params.maximum_parsimony)
+    	cout << "Computing log-likelihood of the parsimony trees ... " << endl;
+    else
+    	cout << "Revising the set of initial parsimony trees ..." << endl;
     startTime = getCPUTime();
     vector<string> unOptParTrees = iqtree.candidateTrees.getHighestScoringTrees(numInitTrees);
     for (vector<string>::iterator it = unOptParTrees.begin()+1; it != unOptParTrees.end(); it++) {
@@ -2044,7 +2060,8 @@ void runPhyloAnalysis(Params &params) {
 		StrVector twin_seqs;
 
 		// remove identical sequences
-		tree->removeIdenticalSeqs(params, removed_seqs, twin_seqs);
+        if (params.ignore_identical_seqs)
+            tree->removeIdenticalSeqs(params, removed_seqs, twin_seqs);
 		// call main tree reconstruction
 		runTreeReconstruction(params, original_model, *tree, model_info);
 		if (params.gbo_replicates && params.online_bootstrap) {
@@ -2313,7 +2330,7 @@ void computeConsensusTree(const char *input_trees, int burnin, int max_count,
 	}
 
     //sg.scaleWeight(0.01, false, 4);
-	if (verbose_mode >= VB_MED) {
+	if (params->print_splits_file) {
 		sg.saveFile(out_file.c_str(), IN_OTHER, true);
 		cout << "Non-trivial split supports printed to star-dot file " << out_file << endl;
 	}

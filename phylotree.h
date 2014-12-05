@@ -25,11 +25,11 @@
 #include "Eigen/Core"
 #include "mtree.h"
 #include "alignment.h"
-#include "modelsubst.h"
-#include "modelfactory.h"
+#include "model/modelsubst.h"
+#include "model/modelfactory.h"
 #include "phylonode.h"
 #include "optimization.h"
-#include "rateheterogeneity.h"
+#include "model/rateheterogeneity.h"
 
 //#define BootValTypePars int // Diep added
 #define BootValTypePars unsigned short // Diep added
@@ -497,7 +497,7 @@ public:
     /**
             clear all partial likelihood for a clean computation again
      */
-    void clearAllPartialLH();
+    virtual void clearAllPartialLH();
 
     /**
      * compute all partial likelihoods if not computed before
@@ -533,6 +533,7 @@ public:
     bool tip_partial_lh_computed;
 
     void computeTipPartialLikelihood();
+    void computePtnInvar();
 
     /**
             compute the partial likelihood at a subtree
