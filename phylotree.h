@@ -30,9 +30,7 @@
 #include "phylonode.h"
 #include "optimization.h"
 #include "model/rateheterogeneity.h"
-
-//#define BootValTypePars int // Diep added
-#define BootValTypePars unsigned short // Diep added
+#include "phyloanalysis.h"
 
 const double MIN_BRANCH_LEN = 0.000001; // NEVER TOUCH THIS CONSTANT AGAIN PLEASE!
 const double MAX_BRANCH_LEN = 100.0;
@@ -1274,6 +1272,7 @@ public:
 
     int mlCheck;
 
+
     /*
      * 		Store the all the parameters for the program
      */
@@ -1359,6 +1358,7 @@ protected:
      * Store array of pattern parsimony computed in computeParsimonyBranch()
      */
     BootValTypePars* _pattern_pars;
+
 
     /**
             internal pattern likelihoods per category, always stored after calling computeLikelihood()

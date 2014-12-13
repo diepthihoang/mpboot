@@ -61,7 +61,7 @@ public:
 	*/
 	bool is_const;
 
-
+	int ras_pars_score; // Diep added: for sorting pattern by score
 };
 
 #endif

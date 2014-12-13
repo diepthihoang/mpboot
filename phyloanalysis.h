@@ -88,4 +88,27 @@ void computeConsensusNetwork(const char *input_trees, int burnin, int max_count,
 		int weight_summary, double weight_threshold,
 	const char *output_tree, const char *out_prefix, const char* tree_weight_file);
 
+/**
+ * Diep:
+ * Locate the definition here so it is seen by optimizeAlignment
+ */
+//#define BootValTypePars int // Diep added
+#define BootValTypePars unsigned short // Diep added
+
+
+struct PatternComp{
+	bool operator() (Pattern i, Pattern j) {
+		return (i.ras_pars_score * i.frequency > j.ras_pars_score * j.frequency);
+//		return (i.ras_pars_score > j.ras_pars_score);
+	}
+};
+
+/**
+ * Diep:
+ * Based on a topology output by PLL Random Addition Sequence method
+ * reorder pattern in the alignment by decreasing order of parsimony score
+ * By this, uninformative sites will all be shifted to the end of the alignment.
+ */
+void optimizeAlignment(IQTree * & tree, Params & params);
+
 #endif

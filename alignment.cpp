@@ -60,6 +60,50 @@ Alignment::Alignment()
     non_stop_codon = NULL;
     seq_type = SEQ_UNKNOWN;
     STATE_UNKNOWN = 126;
+
+    // Diep added:
+    n_informative_patterns = 0;
+    n_informative_sites = 0;
+}
+
+void Alignment::operator=(Alignment & aln){
+	int nsite = aln.getNSite();
+    seq_names.insert(seq_names.begin(), aln.seq_names.begin(), aln.seq_names.end());
+    num_states = aln.num_states;
+    seq_type = aln.seq_type;
+    site_pattern.resize(nsite);
+    clear();
+    pattern_index.clear();
+
+    int site = 0;
+    for(std::vector<Pattern>::iterator it = aln.begin(); it != aln.end(); ++it) {
+    	for(int i = 0; i < it->frequency; i++){
+    		addPattern(*it, site, 1);
+    		site++;
+    	}
+    }
+    countConstSite();
+}
+
+void Alignment::updateSitePatternAfterSorted(){
+	frac_const_sites = 0.0;
+	int nsite = getNSite();
+	int nptn = getNPattern();
+    site_pattern.resize(nsite);
+    pattern_index.clear();
+    int site = 0;
+    for(int i = 0; i < nptn; ++i) {
+    	for(int j = 0; j < at(i).frequency; ++j){
+    		site_pattern[site] = i;
+    		site++;
+    	}
+    	pattern_index[at(i)] = i;
+		if(at(i).ras_pars_score != 0){
+			n_informative_patterns++;
+			n_informative_sites += at(i).frequency;
+		}
+    }
+	countConstSite();
 }
 
 string &Alignment::getSeqName(int i) {

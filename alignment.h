@@ -65,6 +65,8 @@ public:
      */
     virtual ~Alignment();
 
+    void operator=(Alignment & some_aln);
+    void updateSitePatternAfterSorted();
 
     /****************************************************************************
             input alignment reader
@@ -584,6 +586,13 @@ public:
      */
     double multinomialProb(IntVector &pattern_freq);
 
+
+
+    /*
+     * Diep added: for UFBoot-MP
+     */
+    int n_informative_patterns;
+    int n_informative_sites;
 
 protected:
 

@@ -40,5 +40,6 @@ int pllCalcMinParsScorePattern(pllInstance *tr, int dataType, int site);
 // this is called if params.test_site_pars == true
 void testSiteParsimony(Params &params);
 
+void computeUserTreeParsimomy(Params &params);
 
 #endif /* SPRPARSIMONY_H_ */

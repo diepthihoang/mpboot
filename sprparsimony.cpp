@@ -1375,7 +1375,8 @@ static void testInsertParsimony (pllInstance *tr, partitionList *pr, nodeptr p, 
 
       mp = evaluateParsimony(tr, pr, p->next->next, PLL_FALSE, perSiteScores);
 
-		if(globalParam->gbo_replicates > 0){
+//		if(globalParam->gbo_replicates > 0 && perSiteScores){
+		if(perSiteScores){
 			// If UFBoot is enabled ...
 			pllSaveCurrentTreeSprParsimony(tr, pr, mp); // run UFBoot
 		}
@@ -2063,94 +2064,93 @@ void _pllFreeParsimonyDataStructures(pllInstance *tr, partitionList *pr)
   }
 }
 
-//
-//void pllMakeParsimonyTreeFast(pllInstance *tr, partitionList *pr)
-//{
-//  nodeptr
-//    p,
-//    f;
-//
-//  int
-//    i,
-//    nextsp,
-//    *perm        = (int *)rax_malloc((size_t)(tr->mxtips + 1) * sizeof(int));
-//
-//  unsigned int
-//    randomMP,
-//    startMP;
-//
-//  assert(!tr->constrained);
-//
-//  makePermutationFast(perm, tr->mxtips, tr);
-//
-//  tr->ntips = 0;
-//
-//  tr->nextnode = tr->mxtips + 1;
-//
-//  buildSimpleTree(tr, pr, perm[1], perm[2], perm[3]);
-//
-//  f = tr->start;
-//
-//  while(tr->ntips < tr->mxtips)
-//    {
-//      nodeptr q;
-//
-//      tr->bestParsimony = INT_MAX;
-//      nextsp = ++(tr->ntips);
-//      p = tr->nodep[perm[nextsp]];
-//      q = tr->nodep[(tr->nextnode)++];
-//      p->back = q;
-//      q->back = p;
-//
-//      if(tr->grouped)
-//        {
-//          int
-//            number = p->back->number;
-//
-//          tr->constraintVector[number] = -9;
-//        }
-//
-//      stepwiseAddition(tr, pr, q, f->back);
-//
-//      {
-//        nodeptr
-//          r = tr->insertNode->back;
-//
-//        int counter = 4;
-//
-//        hookupDefault(q->next,       tr->insertNode);
-//        hookupDefault(q->next->next, r);
-//
-//        computeTraversalInfoParsimony(q, tr->ti, &counter, tr->mxtips, PLL_FALSE);
-//        tr->ti[0] = counter;
-//
-//        newviewParsimonyIterativeFast(tr, pr);
-//      }
-//    }
-//
-//  nodeRectifierPars(tr);
-//
-//  randomMP = tr->bestParsimony;
-//
-//  do
-//    {
-//      startMP = randomMP;
-//      nodeRectifierPars(tr);
-//      for(i = 1; i <= tr->mxtips + tr->mxtips - 2; i++)
-//        {
-//          rearrangeParsimony(tr, pr, tr->nodep[i], 1, 20, PLL_FALSE);
-//          if(tr->bestParsimony < randomMP)
-//            {
-//              restoreTreeRearrangeParsimony(tr, pr);
-//              randomMP = tr->bestParsimony;
-//            }
-//        }
-//    }
-//  while(randomMP < startMP);
-//
-//  rax_free(perm);
-//}
 
+static void _pllMakeParsimonyTreeFast(pllInstance *tr, partitionList *pr, int sprDist)
+{
+  nodeptr
+    p,
+    f;
+
+  int
+    i,
+    nextsp,
+    *perm        = (int *)rax_malloc((size_t)(tr->mxtips + 1) * sizeof(int));
+
+  unsigned int
+    randomMP,
+    startMP;
+
+  assert(!tr->constrained);
+
+  makePermutationFast(perm, tr->mxtips, tr);
+
+  tr->ntips = 0;
+
+  tr->nextnode = tr->mxtips + 1;
+
+  buildSimpleTree(tr, pr, perm[1], perm[2], perm[3]);
+
+  f = tr->start;
+
+  while(tr->ntips < tr->mxtips)
+    {
+      nodeptr q;
+
+      tr->bestParsimony = INT_MAX;
+      nextsp = ++(tr->ntips);
+      p = tr->nodep[perm[nextsp]];
+      q = tr->nodep[(tr->nextnode)++];
+      p->back = q;
+      q->back = p;
+
+      if(tr->grouped)
+        {
+          int
+            number = p->back->number;
+
+          tr->constraintVector[number] = -9;
+        }
+
+      stepwiseAddition(tr, pr, q, f->back);
+
+      {
+        nodeptr
+          r = tr->insertNode->back;
+
+        int counter = 4;
+
+        hookupDefault(q->next,       tr->insertNode);
+        hookupDefault(q->next->next, r);
+
+        computeTraversalInfoParsimony(q, tr->ti, &counter, tr->mxtips, PLL_FALSE, 0);
+        tr->ti[0] = counter;
+
+        newviewParsimonyIterativeFast(tr, pr, 0);
+      }
+    }
+
+  nodeRectifierPars(tr);
+
+  randomMP = tr->bestParsimony;
+
+  do
+    {
+      startMP = randomMP;
+      nodeRectifierPars(tr);
+      for(i = 1; i <= tr->mxtips + tr->mxtips - 2; i++)
+        {
+          rearrangeParsimony(tr, pr, tr->nodep[i], 1, sprDist, PLL_FALSE, 0);
+          if(tr->bestParsimony < randomMP)
+            {
+              restoreTreeRearrangeParsimony(tr, pr, 0);
+              randomMP = tr->bestParsimony;
+            }
+        }
+    }
+  while(randomMP < startMP);
+
+  rax_free(perm);
+}
 
 /** @brief Compute a randomized stepwise addition oder parsimony tree
 
@@ -2168,7 +2168,7 @@ void _pllFreeParsimonyDataStructures(pllInstance *tr, partitionList *pr)
 void _pllComputeRandomizedStepwiseAdditionParsimonyTree(pllInstance * tr, partitionList * partitions, int sprDist)
 {
 	_allocateParsimonyDataStructures(tr, partitions, PLL_FALSE);
-	pllMakeParsimonyTreeFast(tr, partitions, sprDist);
+	_pllMakeParsimonyTreeFast(tr, partitions, sprDist);
 	_pllFreeParsimonyDataStructures(tr, partitions);
 }
 
@@ -2270,6 +2270,13 @@ void pllComputeSiteParsimony(pllInstance * tr, partitionList * pr, unsigned shor
 	for(; site < nsite; site++){
 		site_pars[site] = 0;
 	}
+
+	cout << "Site parsimony by PLL: " << endl;
+	for(site = 0; site < nsite; site++){
+		cout << site_pars[site] << ", ";
+	}
+	cout << endl;
+
 	if(cur_pars) *cur_pars = sum;
 }
 
@@ -2405,4 +2412,13 @@ void testSiteParsimony(Params &params) {
 
 	if(site_scores) delete [] site_scores;
 	if(iqtree) delete iqtree;
+}
+
+
+void computeUserTreeParsimomy(Params &params) {
+    Alignment alignment(params.aln_file, params.sequence_type, params.intype);
+    IQTree tree;
+    tree.readTree(params.user_file, params.is_rooted);
+	tree.setAlignment(&alignment);
+	cout << "Parsimony score is: " << tree.computeParsimony() << endl;
 }

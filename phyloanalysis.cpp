@@ -53,6 +53,7 @@
 #include "parstree.h"
 #include "tinatree.h"
 #include "sprparsimony.h"
+#include <algorithm>
 
 void reportReferences(Params &params, ofstream &out, string &original_model) {
 	out << "To cite IQ-TREE please use:" << endl << endl
@@ -1097,7 +1098,11 @@ void computeInitialTree(Params &params, IQTree &iqtree, string &dist_file, int &
 		// generate a parsimony tree for model optimization
 		iqtree.pllInst->randomNumberSeed = params.ran_seed;
 
-		pllComputeRandomizedStepwiseAdditionParsimonyTree(iqtree.pllInst, iqtree.pllPartitions, params.sprDist);
+		if(params.maximum_parsimony){
+			_pllComputeRandomizedStepwiseAdditionParsimonyTree(iqtree.pllInst, iqtree.pllPartitions, params.sprDist);
+		}
+		else
+			pllComputeRandomizedStepwiseAdditionParsimonyTree(iqtree.pllInst, iqtree.pllPartitions, params.sprDist);
 
 		resetBranches(iqtree.pllInst);
 		pllTreeToNewick(iqtree.pllInst->tree_string, iqtree.pllInst, iqtree.pllPartitions, iqtree.pllInst->start->back,
@@ -1197,12 +1202,17 @@ int initCandidateTreeSet(Params &params, IQTree &iqtree, int numInitTrees) {
     cout.flush();
     double startTime = getCPUTime();
     int numDupPars = 0;
+    if(params.maximum_parsimony) iqtree.candidateTrees.clear(); // Diep: added this to fix the bug of sorted aln <> orig aln
     for (int treeNr = 1; treeNr < numInitTrees; treeNr++) {
         string curParsTree;
         if (params.start_tree == STT_PLL_PARSIMONY) {
 			iqtree.pllInst->randomNumberSeed = params.ran_seed + treeNr * 12345;
 
-			pllComputeRandomizedStepwiseAdditionParsimonyTree(iqtree.pllInst, iqtree.pllPartitions, params.sprDist);
+			if(params.maximum_parsimony){
+				_pllComputeRandomizedStepwiseAdditionParsimonyTree(iqtree.pllInst, iqtree.pllPartitions, params.sprDist);
+			}
+			else
+				pllComputeRandomizedStepwiseAdditionParsimonyTree(iqtree.pllInst, iqtree.pllPartitions, params.sprDist);
 
 	        pllTreeToNewick(iqtree.pllInst->tree_string, iqtree.pllInst, iqtree.pllPartitions,
 					iqtree.pllInst->start->back, PLL_TRUE, PLL_TRUE, PLL_FALSE, PLL_FALSE, PLL_FALSE,
@@ -2026,6 +2036,11 @@ void runPhyloAnalysis(Params &params) {
 			alignment = aln;
 		}
 		tree = new IQTree(alignment);
+
+		// Diep: this is to rearrange columns for better speed in REPS
+		if(params.maximum_parsimony){
+			optimizeAlignment(tree, params);
+		}
 	}
 
 	string original_model = params.model_name;
@@ -2052,12 +2067,13 @@ void runPhyloAnalysis(Params &params) {
 		// the main Maximum likelihood tree reconstruction
 		vector<ModelInfo> model_info;
 		alignment->checkGappySeq();
+
 		StrVector removed_seqs;
 		StrVector twin_seqs;
-
 		// remove identical sequences
         if (params.ignore_identical_seqs)
             tree->removeIdenticalSeqs(params, removed_seqs, twin_seqs);
+
 		// call main tree reconstruction
 		runTreeReconstruction(params, original_model, *tree, model_info);
 		if (params.gbo_replicates && params.online_bootstrap) {
@@ -2378,3 +2394,44 @@ void computeConsensusNetwork(const char *input_trees, int burnin, int max_count,
 
 }
 
+void optimizeAlignment(IQTree * & tree, Params & params){
+	double start = getCPUTime();
+
+	cout << "Reordering patterns in alignment by decreasing order of pattern parsimony...";
+//	tree->initTopologyByPLLRandomAdition(params);
+	tree->computeParsimonyTree(params.out_prefix, tree->aln);
+	// extract the vector of pattern pars of the initialized tree
+	tree->initializeAllPartialPars();
+	tree->clearAllPartialLH();
+//	tree->fixNegativeBranch(true);
+	int pars_before = tree->computeParsimony();
+	BootValTypePars * tmpPatternPars = tree->getPatternPars();
+	for(int i = 0; i < tree->getAlnNPattern(); i++)
+		(tree->aln)->at(i).ras_pars_score = tmpPatternPars[i];
+
+	// sort
+	PatternComp pcomp;
+	sort(tree->aln->begin(), tree->aln->end(), pcomp);
+	tree->aln->updateSitePatternAfterSorted();
+
+	tree->initializeAllPartialPars();
+	tree->clearAllPartialLH();
+	int pars_after = tree->computeParsimony();
+	if(pars_after != pars_before) outError("Reordering alignment has bug.");
+
+//	string tree_after = tree->getTreeString();
+//	cout << "TREE BEFORE: " << tree_before << endl;
+//	cout << "TREE AFTER: " << tree_after << endl;
+//	Alignment * sortedAln = new Alignment;
+//	*sortedAln = *(tree->aln);
+//	delete tree;
+//	tree = new IQTree(sortedAln);
+//
+//	tree->aln->printPhylip("temp.phy", false);
+//	Alignment * alignment = new Alignment("temp.phy", params.sequence_type, params.intype);
+////	tree->setAlignment(alignment);
+//	IQTree * tree1 = new IQTree(alignment);
+//	tree = tree1;
+
+	cout << getCPUTime() - start << " seconds" << endl;
+}

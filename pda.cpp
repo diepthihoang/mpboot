@@ -2287,8 +2287,8 @@ int main(int argc, char *argv[])
 		generateRandomTree(params);
 	} else if (params.do_pars_multistate) {
 		doParsMultiState(params);
-	} else if (params.test_site_pars) {
-		testSiteParsimony(params);
+	} else if (params.compute_parsimony) {
+		computeUserTreeParsimomy(params);
 	}
 	else if (params.rf_dist_mode != 0) {
 		computeRFDist(params);

@@ -703,7 +703,10 @@ public:
     vector<int*> boot_samples_pars_remain_bounds; // Diep: minimal score for the remain of boot aln from segment_upper[i]
     int rell_segments; // Diep added: (if needed) split the parsimony vector into several segments to avoid overflow when calc rell based on vec8us
     int * segment_upper;
-    void pllComputeRellRemainBound();
+    void pllComputeRellRemainBound(int nunit);
+
+    void initTopologyByPLLRandomAdition(Params &params); // Diep: this is for reorder columns in aln (UFBoot-MP)
+    BootValTypePars * getPatternPars();
 
     /** newick string of corresponding bootstrap trees */
     IntVector boot_trees;

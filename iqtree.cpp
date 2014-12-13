@@ -300,6 +300,77 @@ void myPartitionsDestroy(partitionList *pl) {
 	rax_free(pl);
 }
 
+// Diep
+// To initialize current tree as a RAS tree computed by PLL
+// This is done independent of Tung's initializePLL function
+// to support reordering aln pattern by parsimony score
+void IQTree::initTopologyByPLLRandomAdition(Params &params){
+	pllInstance * tmpInst;
+	pllInstanceAttr tmpAttr;
+	pllAlignmentData * tmpAlignmentData;
+	partitionList * tmpPartitions;
+	/* set PLL instance attributes */
+	tmpAttr.rateHetModel = PLL_GAMMA;
+	tmpAttr.fastScaling  = PLL_FALSE;
+	tmpAttr.saveMemory   = PLL_FALSE;
+	tmpAttr.useRecom     = PLL_FALSE;
+	tmpAttr.randomNumberSeed = params.ran_seed;
+
+	tmpInst = pllCreateInstance (&tmpAttr);      /* Create the PLL instance */
+    /* Read in the aln file */
+    stringstream pllAln;
+	if (aln->isSuperAlignment()) {
+		((SuperAlignment*) aln)->printCombinedAlignment(pllAln);
+	} else {
+		aln->printPhylip(pllAln);
+	}
+	string pllAlnStr = pllAln.str();
+	tmpAlignmentData = pllParsePHYLIPString(pllAlnStr.c_str(), pllAlnStr.length());
+
+    /* Read in the partition information */
+    // BQM: to avoid printing file
+    stringstream pllPartitionFileHandle;
+    createPLLPartition(params, pllPartitionFileHandle);
+    pllQueue *partitionInfo = pllPartitionParseString(pllPartitionFileHandle.str().c_str());
+
+    /* Validate the partitions */
+    if (!pllPartitionsValidate(partitionInfo, tmpAlignmentData)) {
+        outError("pllPartitionsValidate");
+    }
+
+    /* Commit the partitions and build a partitions structure */
+    tmpPartitions = pllPartitionsCommit(partitionInfo, tmpAlignmentData);
+
+    /* We don't need the the intermediate partition queue structure anymore */
+    pllQueuePartitionsDestroy(&partitionInfo);
+
+    pllTreeInitTopologyForAlignment(tmpInst, tmpAlignmentData);
+
+    /* Connect the aln and partition structure with the tree structure */
+    if (!pllLoadAlignment(tmpInst, tmpAlignmentData, tmpPartitions, PLL_SHALLOW_COPY)) {
+        outError("Incompatible tree/aln combination");
+    }
+
+    pllComputeRandomizedStepwiseAdditionParsimonyTree(tmpInst, tmpPartitions, 1);
+	pllTreeToNewick(tmpInst->tree_string, tmpInst, tmpPartitions, tmpInst->start->back, PLL_TRUE,
+			PLL_TRUE, 0, 0, 0, PLL_SUMMARIZE_LH, 0, 0);
+	string treeString = string(tmpInst->tree_string);
+	readTreeString(treeString);
+
+	// clean up PLL temp data */
+    if (tmpPartitions)
+    	myPartitionsDestroy(tmpPartitions);
+    if (tmpAlignmentData)
+    	pllAlignmentDataDestroy(tmpAlignmentData);
+    if (tmpInst)
+        pllDestroyInstance(tmpInst);
+	// done clean up
+}
+
+BootValTypePars * IQTree::getPatternPars(){
+	return _pattern_pars;
+}
+
 IQTree::~IQTree() {
     //if (bonus_values)
     //delete bonus_values;
@@ -427,8 +498,13 @@ void IQTree::initializePLL(Params &params) {
     /* We don't need the the intermediate partition queue structure anymore */
     pllQueuePartitionsDestroy(&partitionInfo);
 
-    /* eliminate duplicate sites from the alignment and update weights vector */
-    pllAlignmentRemoveDups(pllAlignment, pllPartitions);
+    // Diep: 	Added this IF statement so that UFBoot-MP SPR code doesn't affect other IQTree mode
+    // 			alignment in  UFBoot-MP SPR branch will be sorted by pattern and site pars score
+    // PLL eliminates duplicate sites from the alignment and update weights vector
+    if(params.maximum_parsimony && params.gbo_replicates)
+    	pllSortedAlignmentRemoveDups(pllAlignment, pllPartitions); // to sync sorted IQTree aln and PLL one
+    else
+    	pllAlignmentRemoveDups(pllAlignment, pllPartitions);
 
     pllTreeInitTopologyForAlignment(pllInst, pllAlignment);
 
@@ -1463,6 +1539,7 @@ double IQTree::doTreeSearch() {
             }
         }
 
+
         if (estimate_nni_cutoff && nni_info.size() >= 500) {
             estimate_nni_cutoff = false;
             estimateNNICutoff(params);
@@ -2338,6 +2415,7 @@ void IQTree::saveCurrentTree(double cur_logl) {
 
     int nptn = getAlnNPattern();
     int nsite = getAlnNSite();
+    int nunit = (params->spr_parsimony) ? (nsite) : (nptn);
 
     BootValType *pattern_lh = NULL;
     double *pattern_lh_orig = NULL;
@@ -2346,23 +2424,30 @@ void IQTree::saveCurrentTree(double cur_logl) {
 
 	// DTH: if spr search on parsimony
 	if (params->maximum_parsimony){
-		if(rell_segments == -1){
+		if(!params->auto_vectorize && rell_segments == -1){
 			// do this once
 			int i = 0;
-			int nunit = (params->spr_parsimony) ? (nsite) : (nptn);
-			rell_segments = 1 + int(fabs(cur_logl)) * 5 / USHRT_MAX;
+			 // take 'informative' into account
+			nunit = (params->spr_parsimony) ? (nsite) : (aln->n_informative_patterns);
+			rell_segments = 1 + int(fabs(cur_logl)) * 4 / USHRT_MAX;
+			double starts = getCPUTime();
+			if(rell_segments > 1)
+				cout << "NOTE: REPS computation is segmented into " << rell_segments << " parts for speed..." << endl;
 
 			segment_upper = new int[rell_segments];
 			// .... segment_upper[0] .... segment_upper[1] ..... segment_upper[last]==nunit
+
 			for(i = 0; i < rell_segments - 1; i++){
 				segment_upper[i] = (i + 1) * nunit / rell_segments;
+//				cout << "Segment " << i + 1 << " ends at " << segment_upper[i] -1 << endl;
 			}
 			segment_upper[i] = nunit;
+//			cout << "Segment " << i + 1 << " ends at " << segment_upper[i] -1 << " ... " << endl;
 
 			if(rell_segments > 1){
-				cout << "NOTE: REPS computation is segmented into " << rell_segments << " parts for speed..." << endl;
-				pllComputeRellRemainBound();
+				pllComputeRellRemainBound(nunit);
 			}
+			cout << getCPUTime() - starts << " seconds." << endl;
 		}
 
 		if(params->spr_parsimony){
@@ -2414,7 +2499,7 @@ void IQTree::saveCurrentTree(double cur_logl) {
 //							res += site_pars[site] * boot_sample[site];
 //					}
 					int site = 0;
-					for(; site < nsite; site++)
+					for(; site < nunit; site++)
 						res += site_pars[site] * boot_sample[site];
 					rell = -(double)res;
 				}else{
@@ -2428,7 +2513,7 @@ void IQTree::saveCurrentTree(double cur_logl) {
 						}
 						res += horizontal_add(vc_rell);
 
-						if(rell_segments > 1 && segment_id < rell_segments - 1){
+						if(rell_segments > 1 && segment_id > rell_segments / 4 && segment_id < rell_segments - 1){
 							if(-(double)(res + boot_samples_pars_remain_bounds[sample][segment_id]) < boot_logl[sample]){
 //								cout << "Current best of sample " << sample << " = " << int(-boot_logl[sample]) << endl;
 //								cout << "REPS = " << res + boot_samples_pars_remain_bounds[sample][segment_id] << endl;
@@ -2465,7 +2550,7 @@ void IQTree::saveCurrentTree(double cur_logl) {
 //							res += _pattern_pars[ptn] * boot_sample[ptn];
 //					}
 					int ptn = 0, res = 0;
-					for (; ptn < nptn; ptn++)
+					for (; ptn < nunit; ptn++)
 						res += _pattern_pars[ptn] * boot_sample[ptn];
 					rell = -(double)res;
 				}else{
@@ -2476,7 +2561,7 @@ void IQTree::saveCurrentTree(double cur_logl) {
 							vc_rell = VectorClassUShort().load_a(&_pattern_pars[ptn]) * VectorClassUShort().load_a(&boot_sample[ptn]) + vc_rell;
 						res += horizontal_add(vc_rell);
 						vc_rell = 0;
-						if(rell_segments > 1 && segment_id < rell_segments - 1){
+						if(rell_segments > 1 && segment_id > rell_segments / 4 && segment_id < rell_segments - 1){
 							if(-(double)(res + boot_samples_pars_remain_bounds[sample][segment_id]) < boot_logl[sample]){
 //								cout << "Current best of sample " << sample << " = " << int(-boot_logl[sample]) << endl;
 //								cout << "REPS = " << res + boot_samples_pars_remain_bounds[sample][segment_id] << endl;
@@ -2603,8 +2688,8 @@ void IQTree::saveCurrentTree(double cur_logl) {
     if(site_pars) aligned_free(site_pars);
 }
 
-void IQTree::pllComputeRellRemainBound(){
-	int nunit = (params->spr_parsimony) ? (getAlnNSite()) : (getAlnNPattern());
+void IQTree::pllComputeRellRemainBound(int nunit){
+//	int nunit = (params->spr_parsimony) ? (getAlnNSite()) : (getAlnNPattern());
 	int nptn = getAlnNPattern();
 	int nsite = getAlnNSite();
 	int * min_unit_pars = new int[nunit];
@@ -2626,14 +2711,23 @@ void IQTree::pllComputeRellRemainBound(){
 		delete [] min_pll_ptn_pars;
 	}else{
 		// compute the array of min_unit_pars (pattern-wise)
+		/*
+		// old & slow
 		if(!pll2iqtree_pattern_index) pllBuildIQTreePatternIndex(); // to be able to use the map
 		int * min_pll_ptn_pars = new int[nptn];
 		int iqtree_ptn = 0;
 		for(int i = 0; i < nptn; i++){
+			if(pll2iqtree_pattern_index[i] >= nunit) continue;
 			min_pll_ptn_pars[i] = pllCalcMinParsScorePattern(pllInst, pllPartitions->partitionData[0]->dataType, i);
 			min_unit_pars[pll2iqtree_pattern_index[i]] = min_pll_ptn_pars[i];
 		}
 		delete [] min_pll_ptn_pars;
+		*/
+
+		// New version since December 11 - because I'm done impl pllSortedAlignmentRemoveDups
+		for(int i = 0; i < nunit; i++){
+			min_unit_pars[i] = pllCalcMinParsScorePattern(pllInst, pllPartitions->partitionData[0]->dataType, i);
+		}
 	}
 
 	for(int b = 0; b < params->gbo_replicates; b++){

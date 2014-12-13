@@ -771,6 +771,7 @@ void parseArg(int argc, char *argv[], Params &params) {
     params.site_freq_file = NULL;
 
     params.maximum_parsimony = false;
+    params.compute_parsimony = false;
     params.sankoff_cost_file = NULL;
     params.condense_parsimony_equiv_sites = false;
     params.spr_parsimony = false;
@@ -2076,7 +2077,9 @@ void parseArg(int argc, char *argv[], Params &params) {
 				if (params.gbo_replicates < 1000)
 					throw "#replicates must be >= 1000";
 				params.consensus_type = CT_CONSENSUS_TREE;
-				params.stop_condition = SC_BOOTSTRAP_CORRELATION;
+				// Diep added the if
+				// so -n will overpower -bb if cooccur in the command line
+				if(params.stop_condition != SC_FIXED_ITERATION) params.stop_condition = SC_BOOTSTRAP_CORRELATION;
 				//params.nni5Branches = true;
 				continue;
 			}
@@ -2240,6 +2243,12 @@ void parseArg(int argc, char *argv[], Params &params) {
 			}
 			if(strcmp(argv[cnt], "-mpars") == 0){
             	params.maximum_parsimony = true;
+            	params.nni5 = false;
+            	params.nni_type = NNI1;
+            	continue;
+            }
+			if(strcmp(argv[cnt], "-comppars") == 0){
+            	params.compute_parsimony = true;
             	params.nni5 = false;
             	params.nni_type = NNI1;
             	continue;

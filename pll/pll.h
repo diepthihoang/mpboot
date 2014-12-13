@@ -1635,6 +1635,7 @@ void pllBaseSubstitute (pllAlignmentData * alignmentData, partitionList * partit
 partitionList * pllPartitionsCommit (pllQueue * parts, pllAlignmentData * alignmentData);
 int pllPartitionsValidate (pllQueue * parts, pllAlignmentData * alignmentData);
 extern void pllAlignmentRemoveDups (pllAlignmentData * alignmentData, partitionList * pl);
+extern void pllSortedAlignmentRemoveDups (pllAlignmentData * alignmentData, partitionList * pl); /* Diep added */
 void pllPartitionsDestroy (pllInstance *, partitionList **);
 
 /* alignment data declarations */
