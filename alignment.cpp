@@ -91,6 +91,8 @@ void Alignment::updateSitePatternAfterSorted(){
 	int nptn = getNPattern();
     site_pattern.resize(nsite);
     pattern_index.clear();
+	n_informative_patterns = 0;
+	n_informative_sites = 0;
     int site = 0;
     for(int i = 0; i < nptn; ++i) {
     	for(int j = 0; j < at(i).frequency; ++j){

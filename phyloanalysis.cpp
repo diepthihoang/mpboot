@@ -1202,7 +1202,7 @@ int initCandidateTreeSet(Params &params, IQTree &iqtree, int numInitTrees) {
     cout.flush();
     double startTime = getCPUTime();
     int numDupPars = 0;
-    if(params.maximum_parsimony) iqtree.candidateTrees.clear(); // Diep: added this to fix the bug of sorted aln <> orig aln
+//    if(params.maximum_parsimony) iqtree.candidateTrees.clear(); // Diep: added this to fix the bug of sorted aln <> orig aln
     for (int treeNr = 1; treeNr < numInitTrees; treeNr++) {
         string curParsTree;
         if (params.start_tree == STT_PLL_PARSIMONY) {
@@ -1238,20 +1238,31 @@ int initCandidateTreeSet(Params &params, IQTree &iqtree, int numInitTrees) {
                     pllTreeCounter[curParsTree]++;
                 }
         	}
-        	iqtree.candidateTrees.update(curParsTree, -DBL_MAX);
+            // Diep added IF statement for MP doesn't need branch optimization
+            if(params.maximum_parsimony){
+        		iqtree.initializeAllPartialPars();
+        		iqtree.clearAllPartialLH();
+        		iqtree.curScore = -iqtree.computeParsimony();
+        		iqtree.candidateTrees.update(curParsTree, iqtree.curScore);
+                if (iqtree.curScore > iqtree.bestScore) {
+                    iqtree.setBestTree(curParsTree, iqtree.curScore);
+                }
+            }else
+            	iqtree.candidateTrees.update(curParsTree, -DBL_MAX);
         }
     }
     double parsTime = getCPUTime() - startTime;
     cout << "(" << numDupPars << " duplicated parsimony trees)" << endl;
     cout << "CPU time: " << parsTime << endl;
 
-    // Diep: Tests showed that parsimony search still needs the following loop to faster converge
-    // example.phy x 1000 times: if include the for loop cost 7401s; if not, cost = 8468s
-    if(!params.maximum_parsimony)
-    	cout << "Computing log-likelihood of the parsimony trees ... " << endl;
-    else
-    	cout << "Revising the set of initial parsimony trees ..." << endl;
-    startTime = getCPUTime();
+	// do not do anything for parsimony because tree was already optimized by SPR
+	if (params.maximum_parsimony){
+		return -1;
+	}
+
+	cout << "Computing log-likelihood of the parsimony trees ... " << endl;
+
+	startTime = getCPUTime();
     vector<string> unOptParTrees = iqtree.candidateTrees.getHighestScoringTrees(numInitTrees);
     for (vector<string>::iterator it = unOptParTrees.begin()+1; it != unOptParTrees.end(); it++) {
     	iqtree.readTreeString(*it);
@@ -1276,9 +1287,6 @@ int initCandidateTreeSet(Params &params, IQTree &iqtree, int numInitTrees) {
     }
     double loglTime = getCPUTime() - startTime;
     cout << "CPU time: " << loglTime << endl;
-
-	// do not do anything for parsimony because tree was already optimized by SPR
-	if (params.maximum_parsimony) return -1;
 
     CandidateSet initParsimonyTrees = iqtree.candidateTrees.getBestCandidateTrees(params.numNNITrees);
     iqtree.candidateTrees.clear();
@@ -1631,11 +1639,19 @@ void runTreeReconstruction(Params &params, string &original_model, IQTree &iqtre
     }
 
     // Optimize model parameters and branch lengths using ML for the initial tree
-    initTree = iqtree.optimizeModelParameters(true);
+    if(!params.maximum_parsimony)
+    	initTree = iqtree.optimizeModelParameters(true);
+    else{
+    	iqtree.readTreeString(initTree);
+		iqtree.initializeAllPartialPars();
+		iqtree.clearAllPartialLH();
+		iqtree.curScore = -iqtree.computeParsimony();
+    }
 
     /****************** NOW PERFORM MAXIMUM LIKELIHOOD TREE RECONSTRUCTION ******************/
 
     // Update best tree
+    iqtree.candidateTrees.clear(); // Diep added
     iqtree.setBestTree(initTree, iqtree.curScore);
     cout << "Current best tree score: " << iqtree.bestScore << endl << endl;
     iqtree.candidateTrees.update(initTree, iqtree.curScore);
@@ -1701,12 +1717,14 @@ void runTreeReconstruction(Params &params, string &original_model, IQTree &iqtre
 	NodeVector pruned_taxa;
 	StrVector linked_name;
 	double *saved_dist_mat = iqtree.dist_matrix;
-	double *pattern_lh;
+	double *pattern_lh = NULL;
 
-	pattern_lh = new double[iqtree.getAlnNPattern()];
+	if(!params.maximum_parsimony){ // MP doesn't need this
+		pattern_lh = new double[iqtree.getAlnNPattern()];
 
-	// prune stable taxa
-	pruneTaxa(params, iqtree, pattern_lh, pruned_taxa, linked_name);
+		// prune stable taxa
+		pruneTaxa(params, iqtree, pattern_lh, pruned_taxa, linked_name);
+	}
 
 	/****************** Do tree search ***************************/
 	if (params.min_iterations > 1) {
@@ -1728,8 +1746,10 @@ void runTreeReconstruction(Params &params, string &original_model, IQTree &iqtre
 		}
 	}
 
+
 	// restore pruned taxa
-	restoreTaxa(iqtree, saved_dist_mat, pruned_taxa, linked_name);
+	if(!params.maximum_parsimony)
+		restoreTaxa(iqtree, saved_dist_mat, pruned_taxa, linked_name);
 
 	double search_cpu_time = getCPUTime() - cputime_search_start;
 	double search_real_time = getRealTime() - realtime_search_start;
@@ -1808,7 +1828,7 @@ void runTreeReconstruction(Params &params, string &original_model, IQTree &iqtre
 	if (params.out_file)
 		iqtree.printTree(params.out_file);
 
-	delete[] pattern_lh;
+	if(pattern_lh) delete[] pattern_lh;
 
 	runApproximateBranchLengths(params, iqtree);
 
@@ -2398,8 +2418,8 @@ void optimizeAlignment(IQTree * & tree, Params & params){
 	double start = getCPUTime();
 
 	cout << "Reordering patterns in alignment by decreasing order of pattern parsimony...";
-//	tree->initTopologyByPLLRandomAdition(params);
-	tree->computeParsimonyTree(params.out_prefix, tree->aln);
+//	tree->initTopologyByPLLRandomAdition(params); // this pll version needs further sync to work with the rest
+	tree->computeParsimonyTree(params.out_prefix, tree->aln); // this iqtree version plays nicely with the rest
 	// extract the vector of pattern pars of the initialized tree
 	tree->initializeAllPartialPars();
 	tree->clearAllPartialLH();

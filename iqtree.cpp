@@ -219,7 +219,10 @@ void IQTree::setParams(Params &params) {
 				boot_samples[i] = mem + i*nunit;
         }
 
-        boot_logl.resize(params.gbo_replicates, -DBL_MAX);
+        if(params.maximum_parsimony)
+        	boot_logl.resize(params.gbo_replicates, -LONG_MAX); // Diep: Leaving this out might affect REPS computation
+        else
+        	boot_logl.resize(params.gbo_replicates, -DBL_MAX);
         boot_trees.resize(params.gbo_replicates, -1);
         boot_counts.resize(params.gbo_replicates, 0);
         VerboseMode saved_mode = verbose_mode;
@@ -1572,7 +1575,7 @@ double IQTree::doTreeSearch() {
                 if (params->iqp) {
                     doIQP();
                 } else {
-                    doRandomNNIs(numNNI);
+                    doRandomNNIs(numNNI); // Diep: This doesn't work well with sorted parsimony. Why?
                 }
             } else {
                 doIQP();
@@ -2429,7 +2432,7 @@ void IQTree::saveCurrentTree(double cur_logl) {
 			int i = 0;
 			 // take 'informative' into account
 			nunit = (params->spr_parsimony) ? (nsite) : (aln->n_informative_patterns);
-			rell_segments = 1 + int(fabs(cur_logl)) * 4 / USHRT_MAX;
+			rell_segments = 1 + int(fabs(cur_logl)) * 16 / USHRT_MAX;
 			double starts = getCPUTime();
 			if(rell_segments > 1)
 				cout << "NOTE: REPS computation is segmented into " << rell_segments << " parts for speed..." << endl;
@@ -2438,7 +2441,7 @@ void IQTree::saveCurrentTree(double cur_logl) {
 			// .... segment_upper[0] .... segment_upper[1] ..... segment_upper[last]==nunit
 
 			for(i = 0; i < rell_segments - 1; i++){
-				segment_upper[i] = (i + 1) * nunit / rell_segments;
+				segment_upper[i] = ((i + 1) * nunit / rell_segments / VCSIZE_USHORT) * VCSIZE_USHORT; // my oh my, this cost me a week to find out
 //				cout << "Segment " << i + 1 << " ends at " << segment_upper[i] -1 << endl;
 			}
 			segment_upper[i] = nunit;
@@ -2514,7 +2517,7 @@ void IQTree::saveCurrentTree(double cur_logl) {
 						res += horizontal_add(vc_rell);
 
 						if(rell_segments > 1 && segment_id > rell_segments / 4 && segment_id < rell_segments - 1){
-							if(-(double)(res + boot_samples_pars_remain_bounds[sample][segment_id]) < boot_logl[sample]){
+							if(-(double)(res + boot_samples_pars_remain_bounds[sample][segment_id]) < boot_logl[sample] - params->ufboot_epsilon){
 //								cout << "Current best of sample " << sample << " = " << int(-boot_logl[sample]) << endl;
 //								cout << "REPS = " << res + boot_samples_pars_remain_bounds[sample][segment_id] << endl;
 //								cout << "NOTE: estimated value for boot sample parsimony  exceeds its current best."
@@ -2524,18 +2527,6 @@ void IQTree::saveCurrentTree(double cur_logl) {
 							}
 						}
 					}
-
-//					unsigned long res2 = 0;
-//					int site2 = 0;
-//					for(site2 = 0; site2 < nsite; site2++){
-//						res2 += site_pars[site2] * boot_sample[site2];
-//					}
-//
-//					if(skipped == false && res != res2){
-//						cout << "res = " << res << ", res2 = " << res2 << endl;
-//						outError("Something went wrong in the calc of RES.");
-//					}
-
 					rell = -(double)res;
 				}
 			}else if (params->maximum_parsimony && !params->spr_parsimony) {
@@ -2561,10 +2552,12 @@ void IQTree::saveCurrentTree(double cur_logl) {
 							vc_rell = VectorClassUShort().load_a(&_pattern_pars[ptn]) * VectorClassUShort().load_a(&boot_sample[ptn]) + vc_rell;
 						res += horizontal_add(vc_rell);
 						vc_rell = 0;
-						if(rell_segments > 1 && segment_id > rell_segments / 4 && segment_id < rell_segments - 1){
-							if(-(double)(res + boot_samples_pars_remain_bounds[sample][segment_id]) < boot_logl[sample]){
+
+						if((!skipped) && (rell_segments > 1) && (segment_id > rell_segments / 4) && (segment_id < rell_segments - 1)){
+							int reps_total = res + boot_samples_pars_remain_bounds[sample][segment_id];
+							if((double)(-reps_total) < boot_logl[sample] - params->ufboot_epsilon){
 //								cout << "Current best of sample " << sample << " = " << int(-boot_logl[sample]) << endl;
-//								cout << "REPS = " << res + boot_samples_pars_remain_bounds[sample][segment_id] << endl;
+//								cout << "REPS at segment " << segment_id << " = " << res + boot_samples_pars_remain_bounds[sample][segment_id] << endl;
 //								cout << "NOTE: estimated value for boot sample parsimony exceeds its current best."
 //										<< "Skip on sample " << sample << " at site " << segment_upper[segment_id] << endl;
 								skipped = true;
@@ -2572,6 +2565,7 @@ void IQTree::saveCurrentTree(double cur_logl) {
 							}
 						}
 					}
+
 					rell = -(double)res;
 				}
 			} else {
@@ -2726,7 +2720,9 @@ void IQTree::pllComputeRellRemainBound(int nunit){
 
 		// New version since December 11 - because I'm done impl pllSortedAlignmentRemoveDups
 		for(int i = 0; i < nunit; i++){
-			min_unit_pars[i] = pllCalcMinParsScorePattern(pllInst, pllPartitions->partitionData[0]->dataType, i);
+			int pll_min = pllCalcMinParsScorePattern(pllInst, pllPartitions->partitionData[0]->dataType, i);
+			int ras = aln->at(i).ras_pars_score;
+			min_unit_pars[i] = pll_min < ras ? pll_min : ras;
 		}
 	}
 
