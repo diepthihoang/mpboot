@@ -1832,10 +1832,10 @@ void PhyloTree::computePatternParsimony(double *ptn_npars, double *cur_npars){
 	if(!params)
 		outError("No params detected!");
 
-	if(params->snni && params->spr_parsimony){
-		// Need to call pllComputePatternParsimony of sprparsimony.cpp
-		pllComputePatternParsimony(dynamic_cast<IQTree*>(this)->pllInst, dynamic_cast<IQTree*>(this)->pllPartitions , ptn_npars, cur_npars);
-	}
+//	if(params->snni && params->spr_parsimony){
+//		// Need to call pllComputePatternParsimony of sprparsimony.cpp
+//		pllComputePatternParsimony(dynamic_cast<IQTree*>(this)->pllInst, dynamic_cast<IQTree*>(this)->pllPartitions , ptn_npars, cur_npars);
+//	}
 	// As IQTree::computeParsimonBranch already computed _pattern_pars
 	// just copy from that
 	int nptn = aln->getNPattern();
@@ -1844,7 +1844,6 @@ void PhyloTree::computePatternParsimony(double *ptn_npars, double *cur_npars){
 		// TODO: this is a bit inefficient, should change everthing to int operations
 		ptn_npars[i] = -double(_pattern_pars[i]);
 	}
-
 
 //	// If cur_npars is not NULL then check the correctness of pattern parsimony
 //	// IMHO, this is kind of a waste of time if not for debugging

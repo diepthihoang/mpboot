@@ -1825,6 +1825,12 @@ void runTreeReconstruction(Params &params, string &original_model, IQTree &iqtre
 	// BUG FIX: readTreeString(bestTreeString) not needed before this line
 	iqtree.printResultTree();
 
+
+	// To free data structures of PLL parsimony at the very end
+    if(params.maximum_parsimony && params.spr_parsimony && (params.snni || params.pll)){
+    	_pllFreeParsimonyDataStructures(iqtree.pllInst, iqtree.pllPartitions);
+    }
+
 	if (params.out_file)
 		iqtree.printTree(params.out_file);
 

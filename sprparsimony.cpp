@@ -35,23 +35,6 @@
  * @file fastDNAparsimony.c
  */
 
-#ifndef WIN32
-#include <sys/times.h>
-#include <sys/types.h>
-#include <sys/time.h>
-#include <unistd.h>
-#endif
-
-#include <limits.h>
-#include <math.h>
-#include <time.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <ctype.h>
-#include <string.h>
-#include <stdint.h>
-#include <assert.h>
-
 #if defined(__MIC_NATIVE)
 
 #include <immintrin.h>
@@ -111,6 +94,9 @@
 #define VECTOR_AND_NOT _mm_andnot_si128
 
 #endif
+
+#include "pll/pll.h"
+#include "pll/pllInternal.h"
 
 
 static pllBoolean tipHomogeneityCheckerPars(pllInstance *tr, nodeptr p, int grouping);
@@ -182,8 +168,8 @@ static inline void storePerSiteNodeScores (partitionList * pr, int model, INT_TY
 	int partialParsLength = pr->partitionData[model]->parsimonyLength * PLL_PCF;
 	int nodeStart = partialParsLength * nodeNumber;
 	for (i = 0; i < LONG_INTS_PER_VECTOR; ++i){
-//		buf = &(pr->partitionData[model]->perSitePartialPars[nodeStart + offset * PLL_PCF + i * ULINT_SIZE]);
-		buf = &(pr->partitionData[model]->perSitePartialPars[nodeStart + offset * PLL_PCF + i]);
+		buf = &(pr->partitionData[model]->perSitePartialPars[nodeStart + offset * PLL_PCF + i * ULINT_SIZE]);
+//		buf = &(pr->partitionData[model]->perSitePartialPars[nodeStart + offset * PLL_PCF + i]);
 		for (j = 0; j < ULINT_SIZE; ++ j)
 			buf[j] += ((counts[i] >> j) & 1);
 	}
@@ -2213,7 +2199,7 @@ int pllOptimizeSprParsimony(pllInstance * tr, partitionList * pr, int mintrav, i
 		}
 	}while(randomMP < startMP);
 
-	// deallocation will occur once at the end of doTreeSearch()
+	// deallocation will occur once at the end of runTreeReconstruction()
 
 	return startMP;
 }
@@ -2224,6 +2210,47 @@ int pllSaveCurrentTreeSprParsimony(pllInstance * tr, partitionList * pr, int cur
 }
 
 void pllComputePatternParsimony(pllInstance * tr, partitionList * pr, double *ptn_npars, double *cur_npars){
+	int ptn = 0;
+	int site = 0;
+	int sum = 0;
+
+	for(int i = 0; i < pr->numberOfPartitions; i++){
+		int partialParsLength = pr->partitionData[i]->parsimonyLength * PLL_PCF;
+		parsimonyNumber * p = &(pr->partitionData[i]->perSitePartialPars[partialParsLength * tr->start->number]);
+
+		for(ptn = pr->partitionData[i]->lower; ptn < pr->partitionData[i]->upper; ptn++){
+			ptn_npars[ptn] = -p[site];
+			sum += ptn_npars[ptn] * tr->aliaswgt[ptn];
+			site += tr->aliaswgt[ptn];
+		}
+	}
+	if(cur_npars) *cur_npars = -sum;
+}
+
+void pllComputePatternParsimony(pllInstance * tr, partitionList * pr, unsigned short *ptn_pars, int *cur_pars){
+	int ptn = 0;
+	int site = 0;
+	int sum = 0;
+
+//	cout << "Pattern pars by PLL: ";
+	for(int i = 0; i < pr->numberOfPartitions; i++){
+		int partialParsLength = pr->partitionData[i]->parsimonyLength * PLL_PCF;
+		parsimonyNumber * p = &(pr->partitionData[i]->perSitePartialPars[partialParsLength * tr->start->number]);
+
+		for(ptn = pr->partitionData[i]->lower; ptn < pr->partitionData[i]->upper; ptn++){
+//			cout << p[site] << ", ";
+			ptn_pars[ptn] = p[site];
+			sum += ptn_pars[ptn] * tr->aliaswgt[ptn];
+			site += tr->aliaswgt[ptn];
+		}
+	}
+//	cout << endl;
+
+	if(cur_pars) *cur_pars = sum;
+}
+
+
+void pllComputePatternParsimonySlow(pllInstance * tr, partitionList * pr, double *ptn_npars, double *cur_npars){
 	iqtree->initializeAllPartialPars();
 	iqtree->clearAllPartialLH();
 	if(cur_npars) *cur_npars = -(iqtree->computeParsimony());
