@@ -1470,12 +1470,12 @@ static nodeptr  removeNodeParsimony (nodeptr p)
 
 static int rearrangeParsimony(pllInstance *tr, partitionList *pr, nodeptr p, int mintrav, int maxtrav, pllBoolean doAll, int perSiteScores)
 {
-  nodeptr
-    p1,
-    p2,
-    q,
-    q1,
-    q2;
+	nodeptr
+		p1,
+		p2,
+		q,
+		q1,
+		q2;
 
   int
     mintrav2;
@@ -1493,6 +1493,8 @@ static int rearrangeParsimony(pllInstance *tr, partitionList *pr, nodeptr p, int
     return 0;
 
   q = p->back;
+
+	evaluateParsimony(tr, pr, p, PLL_FALSE, perSiteScores); // Diep: This is VERY important to make sure SPR is accurate*****
 
   if(tr->constrained)
     {
@@ -2271,11 +2273,11 @@ void pllComputeSiteParsimony(pllInstance * tr, partitionList * pr, unsigned shor
 		site_pars[site] = 0;
 	}
 
-	cout << "Site parsimony by PLL: " << endl;
-	for(site = 0; site < nsite; site++){
-		cout << site_pars[site] << ", ";
-	}
-	cout << endl;
+//	cout << "Site parsimony by PLL: " << endl;
+//	for(site = 0; site < nsite; site++){
+//		cout << site_pars[site] << ", ";
+//	}
+//	cout << endl;
 
 	if(cur_pars) *cur_pars = sum;
 }
