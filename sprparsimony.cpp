@@ -41,6 +41,7 @@
 
 #define INTS_PER_VECTOR 16
 #define LONG_INTS_PER_VECTOR 8
+//#define LONG_INTS_PER_VECTOR (64/sizeof(long))
 #define INT_TYPE __m512i
 #define CAST double*
 #define SET_ALL_BITS_ONE _mm512_set1_epi32(0xFFFFFFFF)
@@ -60,6 +61,7 @@
 #define ULINT_SIZE 64
 #define INTS_PER_VECTOR 8
 #define LONG_INTS_PER_VECTOR 4
+//#define LONG_INTS_PER_VECTOR (32/sizeof(long))
 #define INT_TYPE __m256d
 #define CAST double*
 #define SET_ALL_BITS_ONE (__m256d)_mm256_set_epi32(0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF)
@@ -79,9 +81,11 @@
 #ifdef __i386__
 #define ULINT_SIZE 32
 #define LONG_INTS_PER_VECTOR 4
+//#define LONG_INTS_PER_VECTOR (16/sizeof(long))
 #else
 #define ULINT_SIZE 64
 #define LONG_INTS_PER_VECTOR 2
+//#define LONG_INTS_PER_VECTOR (16/sizeof(long))
 #endif
 #define INT_TYPE __m128i
 #define CAST __m128i*
@@ -1650,7 +1654,8 @@ static pllBoolean isInformative2(pllInstance *tr, int site)
    whether it will generate a score */
 static pllBoolean isInformative(pllInstance *tr, int dataType, int site)
 {
-//	return PLL_TRUE;
+	if(globalParam && !globalParam->sort_alignment)
+		return PLL_TRUE; // because of the sync between IQTree and PLL alignment (to get correct freq of pattern)
 
 	int
 		informativeCounter = 0,
@@ -2005,7 +2010,6 @@ void _allocateParsimonyDataStructures(pllInstance *tr, partitionList *pr, int pe
 {
 	  int i;
 	  int * informative = (int *)rax_malloc(sizeof(int) * (size_t)tr->originalCrunchedLength);
-
 	  determineUninformativeSites(tr, pr, informative);
 
 	  compressDNA(tr, pr, informative, perSiteScores);
@@ -2186,7 +2190,6 @@ int pllOptimizeSprParsimony(pllInstance * tr, partitionList * pr, int mintrav, i
 	tr->bestParsimony = evaluateParsimony(tr, pr, tr->start, PLL_TRUE, perSiteScores);
 	randomMP = tr->bestParsimony;
 	tr->ntips = tr->mxtips;
-
 	do{
 		startMP = randomMP;
 		nodeRectifierPars(tr);
@@ -2200,7 +2203,6 @@ int pllOptimizeSprParsimony(pllInstance * tr, partitionList * pr, int mintrav, i
 	}while(randomMP < startMP);
 
 	// deallocation will occur once at the end of runTreeReconstruction()
-
 	return startMP;
 }
 

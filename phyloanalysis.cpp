@@ -2063,7 +2063,8 @@ void runPhyloAnalysis(Params &params) {
 		}
 		tree = new IQTree(alignment);
 
-		if(params.maximum_parsimony && params.sort_alignment){
+//		if(params.maximum_parsimony && params.sort_alignment){
+		if(params.maximum_parsimony){
 			optimizeAlignment(tree, params);// Diep: this is to rearrange columns for better speed in REPS
 		}
 	}
@@ -2420,7 +2421,7 @@ void computeConsensusNetwork(const char *input_trees, int burnin, int max_count,
 }
 
 void optimizeAlignment(IQTree * & tree, Params & params){
-	cout << "Reordering patterns in alignment by decreasing order of pattern parsimony...";
+
 	double start = getCPUTime();
 //	tree->initTopologyByPLLRandomAdition(params); // this pll version needs further sync to work with the rest
 	tree->computeParsimonyTree(params.out_prefix, tree->aln); // this iqtree version plays nicely with the rest
@@ -2433,17 +2434,21 @@ void optimizeAlignment(IQTree * & tree, Params & params){
 	for(int i = 0; i < tree->getAlnNPattern(); i++)
 		(tree->aln)->at(i).ras_pars_score = tmpPatternPars[i];
 
-	// sort
-	PatternComp pcomp;
-	sort(tree->aln->begin(), tree->aln->end(), pcomp);
-	tree->aln->updateSitePatternAfterSorted();
+	if(params.sort_alignment){
+		cout << "Reordering patterns in alignment by decreasing order of pattern parsimony...";
+		// sort
+		PatternComp pcomp;
+		sort(tree->aln->begin(), tree->aln->end(), pcomp);
+		tree->aln->updateSitePatternAfterSorted();
 
-	tree->initializeAllPartialPars();
-	tree->clearAllPartialLH();
-	int pars_after = tree->computeParsimony();
-	if(pars_after != pars_before) outError("Reordering alignment has bug.");
-	cout << getCPUTime() - start << " seconds" << endl;
-
+		tree->initializeAllPartialPars();
+		tree->clearAllPartialLH();
+		int pars_after = tree->computeParsimony();
+		if(pars_after != pars_before) outError("Reordering alignment has bug.");
+		cout << getCPUTime() - start << " seconds" << endl;
+	}else{
+		tree->aln->updateSitePatternAfterSorted();
+	}
 //	string tree_after = tree->getTreeString();
 //	cout << "TREE BEFORE: " << tree_before << endl;
 //	cout << "TREE AFTER: " << tree_after << endl;

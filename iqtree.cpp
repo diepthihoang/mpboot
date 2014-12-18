@@ -484,7 +484,7 @@ void IQTree::initializePLL(Params &params) {
     // Diep: 	Added this IF statement so that UFBoot-MP SPR code doesn't affect other IQTree mode
     // 			alignment in  UFBoot-MP SPR branch will be sorted by pattern and site pars score
     // PLL eliminates duplicate sites from the alignment and update weights vector
-    if(params.maximum_parsimony && params.gbo_replicates && params.sort_alignment)
+    if(params.maximum_parsimony && params.gbo_replicates)
     	pllSortedAlignmentRemoveDups(pllAlignment, pllPartitions); // to sync sorted IQTree aln and PLL one
     else
     	pllAlignmentRemoveDups(pllAlignment, pllPartitions);
@@ -1602,6 +1602,7 @@ double IQTree::doTreeSearch() {
                 perturbScore = curScore;
             }
         }
+
 
     	/*----------------------------------------
     	 * Optimize tree with NNI
