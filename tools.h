@@ -1504,6 +1504,11 @@ struct Params {
      */
     bool auto_vectorize;
 
+    /*
+     * Diep: option for sorting alignment by decreasing (score * freq) of pattern
+     */
+    bool sort_alignment;
+
 
 #ifdef _OPENMP
     int num_threads;

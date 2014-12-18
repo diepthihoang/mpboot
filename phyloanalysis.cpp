@@ -2063,9 +2063,8 @@ void runPhyloAnalysis(Params &params) {
 		}
 		tree = new IQTree(alignment);
 
-		// Diep: this is to rearrange columns for better speed in REPS
-		if(params.maximum_parsimony){
-			optimizeAlignment(tree, params);
+		if(params.maximum_parsimony && params.sort_alignment){
+			optimizeAlignment(tree, params);// Diep: this is to rearrange columns for better speed in REPS
 		}
 	}
 
@@ -2421,9 +2420,8 @@ void computeConsensusNetwork(const char *input_trees, int burnin, int max_count,
 }
 
 void optimizeAlignment(IQTree * & tree, Params & params){
-	double start = getCPUTime();
-
 	cout << "Reordering patterns in alignment by decreasing order of pattern parsimony...";
+	double start = getCPUTime();
 //	tree->initTopologyByPLLRandomAdition(params); // this pll version needs further sync to work with the rest
 	tree->computeParsimonyTree(params.out_prefix, tree->aln); // this iqtree version plays nicely with the rest
 	// extract the vector of pattern pars of the initialized tree
@@ -2444,6 +2442,7 @@ void optimizeAlignment(IQTree * & tree, Params & params){
 	tree->clearAllPartialLH();
 	int pars_after = tree->computeParsimony();
 	if(pars_after != pars_before) outError("Reordering alignment has bug.");
+	cout << getCPUTime() - start << " seconds" << endl;
 
 //	string tree_after = tree->getTreeString();
 //	cout << "TREE BEFORE: " << tree_before << endl;
@@ -2458,6 +2457,4 @@ void optimizeAlignment(IQTree * & tree, Params & params){
 ////	tree->setAlignment(alignment);
 //	IQTree * tree1 = new IQTree(alignment);
 //	tree = tree1;
-
-	cout << getCPUTime() - start << " seconds" << endl;
 }
