@@ -36,7 +36,7 @@ add_definitions(-DIQ_TREE)
 # The version number.
 set (iqtree_VERSION_MAJOR 1)
 set (iqtree_VERSION_MINOR 1)
-set (iqtree_VERSION_PATCH 3)
+set (iqtree_VERSION_PATCH 5)
 
 set(BUILD_SHARED_LIBS OFF)
 
@@ -285,7 +285,7 @@ include_directories("${PROJECT_BINARY_DIR}/zlib-1.2.7")
 ##################################################################
 # subdirectories containing necessary libraries for the build 
 ##################################################################
-add_subdirectory(pll)
+add_subdirectory(pllrepo/src)
 add_subdirectory(ncl)
 add_subdirectory(whtest)
 add_subdirectory(sprng)

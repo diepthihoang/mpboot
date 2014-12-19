@@ -690,32 +690,39 @@ void reportPhyloAnalysis(Params &params, string &original_model,
 			string con_file = params.out_prefix;
 			con_file += ".contree";
 			bool rooted = false;
-
-			tree.freeNode();
-			tree.readTree(con_file.c_str(), rooted);
-			if (removed_seqs.size() > 0) {
-				tree.reinsertIdenticalSeqs(tree.aln, removed_seqs, twin_seqs);
-			}
-			tree.setAlignment(tree.aln);
+			MTree contree;
+			contree.readTree(con_file.c_str(), rooted);
+			contree.drawTree(out, WT_BR_SCALE);
+			out << endl << "Consensus tree in newick format: " << endl << endl;
+			contree.printTree(out);
+			out << endl << endl;
+//			tree.freeNode();
+//			tree.root = NULL;
+//			tree.readTree(con_file.c_str(), rooted);
+//			if (removed_seqs.size() > 0) {
+//				tree.reinsertIdenticalSeqs(tree.aln, removed_seqs, twin_seqs);
+//			}
+//			tree.setAlignment(tree.aln);
 
 			// bug fix
-			if ((tree.sse == LK_EIGEN || tree.sse == LK_EIGEN_SSE) && !tree.isBifurcating()) {
-				cout << "NOTE: Changing to old kernel as consensus tree is multifurcating" << endl;
-				tree.changeLikelihoodKernel(LK_SSE);
-			}
+//			if ((tree.sse == LK_EIGEN || tree.sse == LK_EIGEN_SSE) && !tree.isBifurcating()) {
+//				cout << "NOTE: Changing to old kernel as consensus tree is multifurcating" << endl;
+//				tree.changeLikelihoodKernel(LK_SSE);
+//			}
 
-			tree.initializeAllPartialLh();
-			tree.fixNegativeBranch(false);
-			if (tree.isSuperTree())
-				((PhyloSuperTree*) &tree)->mapTrees();
-			tree.optimizeAllBranches();
-			tree.printTree(con_file.c_str(), WT_BR_LEN | WT_BR_LEN_FIXED_WIDTH | WT_SORT_TAXA);
-			tree.sortTaxa();
-			tree.drawTree(out, WT_BR_SCALE);
-			out << endl << "Consensus tree in newick format: " << endl << endl;
-			tree.printResultTree(out);
-			out << endl << endl;
+//			tree.initializeAllPartialLh();
+//			tree.fixNegativeBranch(false);
+//			if (tree.isSuperTree())
+//				((PhyloSuperTree*) &tree)->mapTrees();
+//			tree.optimizeAllBranches();
+//			tree.printTree(con_file.c_str(), WT_BR_LEN | WT_BR_LEN_FIXED_WIDTH | WT_SORT_TAXA);
+//			tree.sortTaxa();
+//			tree.drawTree(out, WT_BR_SCALE);
+//			out << endl << "Consensus tree in newick format: " << endl << endl;
+//			tree.printResultTree(out);
+//			out << endl << endl;
 		}
+
 
 		/* evaluate user trees */
 		vector<TreeInfo> info;
@@ -854,56 +861,54 @@ void reportPhyloAnalysis(Params &params, string &original_model,
 		cout << "  Candidate trees (" << tree.candidateTrees.size() << "):      " << params.out_prefix << ".localtrees" << endl;
 	}
 	if (!params.user_file && params.start_tree == STT_BIONJ) {
-		cout << "  BIONJ tree:               " << params.out_prefix << ".bionj"
+		cout << "  BIONJ tree:                    " << params.out_prefix << ".bionj"
 				<< endl;
 	}
 	if (!params.dist_file) {
 		//cout << "  Juke-Cantor distances:    " << params.out_prefix << ".jcdist" << endl;
 		if (params.compute_ml_dist)
-			cout << "  Likelihood distances:     " << params.out_prefix
+		cout << "  Likelihood distances:          " << params.out_prefix
 					<< ".mldist" << endl;
 		if (params.print_conaln)
-			cout << "  Concatenated alignment:   " << params.out_prefix
+		cout << "  Concatenated alignment:        " << params.out_prefix
 					<< ".conaln" << endl;
 	}
 	if (tree.getRate()->getGammaShape() > 0 && params.print_site_rate)
-		cout << "  Gamma-distributed rates:  " << params.out_prefix << ".rate"
+		cout << "  Gamma-distributed rates:       " << params.out_prefix << ".rate"
 				<< endl;
 
 	if ((tree.getRate()->isSiteSpecificRate() || tree.getRate()->getPtnCat(0) >= 0) && params.print_site_rate)
-		cout << "  Site-rates by MH model:   " << params.out_prefix << ".rate"
+		cout << "  Site-rates by MH model:        " << params.out_prefix << ".rate"
 				<< endl;
 
 	if (params.print_site_lh)
-		cout << "  Site log-likelihoods:     " << params.out_prefix << ".sitelh"
+		cout << "  Site log-likelihoods:          " << params.out_prefix << ".sitelh"
 				<< endl;
 
 	if (params.write_intermediate_trees)
-		cout << "  All intermediate trees:   " << params.out_prefix << ".treels"
+		cout << "  All intermediate trees:        " << params.out_prefix << ".treels"
 				<< endl;
 
 	if (params.gbo_replicates) {
-		cout << endl << "Ultrafast bootstrap approximation results written to:"
-				<< endl << "  Split support values:     " << params.out_prefix
-				<< ".splits.nex" << endl << "  Consensus tree:           "
-				<< params.out_prefix << ".contree" << endl;
+		cout << endl << "Ultrafast bootstrap approximation results written to:" << endl
+			 << "  Split support values:          " << params.out_prefix << ".splits.nex" << endl
+			 << "  Consensus tree:                " << params.out_prefix << ".contree" << endl;
 		if (params.print_ufboot_trees)
-			cout << "  UFBoot trees:             " << params.out_prefix << ".ufboot" << endl;
+		cout << "  UFBoot trees:                  " << params.out_prefix << ".ufboot" << endl;
 
 	}
 
 	if (params.treeset_file) {
-		cout << "  Evaluated user trees:     " << params.out_prefix << ".trees" << endl;
+		cout << "  Evaluated user trees:          " << params.out_prefix << ".trees" << endl;
 
 		if (params.print_tree_lh) {
-			cout << "  Tree log-likelihoods:   " << params.out_prefix << ".treelh" << endl;
+		cout << "  Tree log-likelihoods:          " << params.out_prefix << ".treelh" << endl;
 		}
 		if (params.print_site_lh) {
-			cout << "  Site log-likelihoods:     " << params.out_prefix << ".sitelh" << endl;
+		cout << "  Site log-likelihoods:          " << params.out_prefix << ".sitelh" << endl;
 		}
 	}
-	cout << "  Screen log file:               " << params.out_prefix << ".log"
-			<< endl;
+	cout << "  Screen log file:               " << params.out_prefix << ".log" << endl;
 	/*	if (original_model == "WHTEST")
 	 cout <<"  WH-TEST report:           " << params.out_prefix << ".whtest" << endl;*/
 	cout << endl;
@@ -1146,7 +1151,8 @@ void computeInitialTree(Params &params, IQTree &iqtree, string &dist_file, int &
         pllNewickTree *newick = pllNewickParseString(initTree.c_str());
         pllTreeInitTopologyNewick(iqtree.pllInst, newick, PLL_TRUE);
         pllNewickParseDestroy(&newick);
-        pllInitModel(iqtree.pllInst, iqtree.pllPartitions, iqtree.pllAlignment);
+//        pllInitModel(iqtree.pllInst, iqtree.pllPartitions, iqtree.pllAlignment);
+        pllInitModel(iqtree.pllInst, iqtree.pllPartitions);
     }
 
 }
@@ -1269,12 +1275,13 @@ int initCandidateTreeSet(Params &params, IQTree &iqtree, int numInitTrees) {
         // Initialize branch lengths for the parsimony tree
         iqtree.initializeAllPartialPars();
         iqtree.clearAllPartialLH();
-        if (iqtree.isSuperTree()) {
-            iqtree.assignRandomBranchLengths(true);
-            ((PhyloSuperTree*)&iqtree)->mapTrees();
-        } else {
-        	iqtree.fixNegativeBranch(true);
-    	}
+        iqtree.fixNegativeBranch(true);
+//        if (iqtree.isSuperTree()) {
+//            iqtree.assignRandomBranchLengths(true);
+//            ((PhyloSuperTree*)&iqtree)->mapTrees();
+//        } else {
+//        	iqtree.fixNegativeBranch(true);
+//    	}
         iqtree.initializeAllPartialLh();
         iqtree.clearAllPartialLH();
         // Optimize the branch lengths
@@ -1316,8 +1323,11 @@ int initCandidateTreeSet(Params &params, IQTree &iqtree, int numInitTrees) {
         iqtree.clearAllPartialLH();
         iqtree.computeLogL();
         // THIS HAPPEN WHENEVER USING FULL PARTITION MODEL
-        while (iqtree.curScore - rit->first < -1.0) {
-        	iqtree.optimizeBranches(1);
+//        while (iqtree.curScore - rit->first < -1.0) {
+        if (iqtree.isSuperTree() && params.partition_type == 0) {
+        	if (verbose_mode >= VB_MED)
+        		cout << "curScore: " << iqtree.curScore << " expected score: " << rit->first << endl;
+        	iqtree.optimizeBranches(2);
         }
         initLogl = iqtree.curScore;
         tree = iqtree.doNNISearch(nniCount, nniStep);
@@ -1591,6 +1601,17 @@ void runTreeReconstruction(Params &params, string &original_model, IQTree &iqtre
     // Make sure that no partial likelihood of IQ-TREE is initialized when PLL is used to save memory
     if (params.pll) {
         iqtree.deleteAllPartialLh();
+    }
+
+    // Temporary fix since PLL only supports DNA/Protein: switch to IQ-TREE parsimony kernel
+    if (params.start_tree == STT_PLL_PARSIMONY) {
+		if (iqtree.isSuperTree()) {
+			PhyloSuperTree *stree = (PhyloSuperTree*)&iqtree;
+			for (PhyloSuperTree::iterator it = stree->begin(); it != stree->end(); it++)
+				if ((*it)->aln->seq_type != SEQ_DNA && (*it)->aln->seq_type != SEQ_PROTEIN)
+					params.start_tree = STT_PARSIMONY;
+		} else if (iqtree.aln->seq_type != SEQ_DNA && iqtree.aln->seq_type != SEQ_PROTEIN)
+			params.start_tree = STT_PARSIMONY;
     }
 
     /***************** Initialization for PLL and sNNI ******************/
@@ -2111,6 +2132,48 @@ void runPhyloAnalysis(Params &params) {
 			splitsfile += ".splits.nex";
 			computeConsensusTree(splitsfile.c_str(), 0, 1e6, params.split_threshold,
 					params.split_weight_threshold, NULL, params.out_prefix, NULL, &params);
+			// now optimize branch lengths of the consensus tree
+			string current_tree = tree->getTreeString();
+			splitsfile = params.out_prefix;
+			splitsfile += ".contree";
+			tree->readTreeFile(splitsfile);
+			// bug fix
+			if ((tree->sse == LK_EIGEN || tree->sse == LK_EIGEN_SSE) && !tree->isBifurcating()) {
+				cout << "NOTE: Changing to old kernel as consensus tree is multifurcating" << endl;
+				tree->changeLikelihoodKernel(LK_SSE);
+			}
+
+			tree->initializeAllPartialLh();
+			tree->fixNegativeBranch(true);
+//	        if (tree->isSuperTree()) {
+//	        	if (params.partition_type == 0) {
+//	        		PhyloSuperTree *stree = (PhyloSuperTree*) tree;
+//	        		tree->clearAllPartialLH();
+//	        		// full partition model
+//	        		for (PhyloSuperTree::iterator it = stree->begin(); it != stree->end(); it++) {
+//	        			(*it)->fixNegativeBranch(true);
+//	        		}
+//	        		tree->clearAllPartialLH();
+//	        	} else {
+//	        		// joint/prop. partition model
+//					tree->assignRandomBranchLengths(true);
+//					((PhyloSuperTree*)tree)->mapTrees();
+//	        	}
+//	        } else {
+//	        	tree->fixNegativeBranch(true);
+//	    	}
+
+			double conScore = tree->optimizeAllBranches();
+			cout << "Log-likelihood of consensus tree: " << conScore << endl;
+		    tree->setRootNode(params.root);
+		    tree->insertTaxa(removed_seqs, twin_seqs);
+			tree->printTree(splitsfile.c_str(), WT_BR_LEN | WT_BR_LEN_FIXED_WIDTH | WT_SORT_TAXA | WT_NEWLINE);
+			// revert the best tree
+			tree->readTreeString(current_tree);
+//			if (tree->isSuperTree()) {
+//				tree->optimizeAllBranches();
+//				((PhyloSuperTree*)tree)->computeBranchLengths();
+//			}
 		}
 		// reinsert identical sequences
 		if (removed_seqs.size() > 0) {
@@ -2333,7 +2396,11 @@ void computeConsensusTree(const char *input_trees, int burnin, int max_count,
 	//cout << "convert compatible split system into tree..." << endl;
 	mytree.convertToTree(maxsg);
 	//cout << "done" << endl;
-	string taxname = sg.getTaxa()->GetTaxonLabel(0);
+	string taxname;
+	if (params->root)
+		taxname = params->root;
+	else
+		taxname = sg.getTaxa()->GetTaxonLabel(0);
 	Node *node = mytree.findLeafName(taxname);
 	if (node)
 		mytree.root = node;
@@ -2353,6 +2420,9 @@ void computeConsensusTree(const char *input_trees, int burnin, int max_count,
 			out_file = input_trees;
 		out_file += ".contree";
 	}
+
+//	if (removed_seqs.size() > 0)
+//		mytree.insertTaxa(removed_seqs, twin_seqs);
 
 	mytree.printTree(out_file.c_str(), WT_BR_CLADE);
 	cout << "Consensus tree written to " << out_file << endl;

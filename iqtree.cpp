@@ -25,7 +25,7 @@
 #include "model/modelgtr.h"
 #include "model/rategamma.h"
 #include <numeric>
-#include "pll/pllInternal.h"
+#include "pllrepo/src/pllInternal.h"
 #include "nnisearch.h"
 #include "sprparsimony.h"
 #include "vectorclass/vectorclass.h"
@@ -492,7 +492,7 @@ void IQTree::initializePLL(Params &params) {
     pllTreeInitTopologyForAlignment(pllInst, pllAlignment);
 
     /* Connect the alignment and partition structure with the tree structure */
-    if (!pllLoadAlignment(pllInst, pllAlignment, pllPartitions, PLL_SHALLOW_COPY)) {
+    if (!pllLoadAlignment(pllInst, pllAlignment, pllPartitions)) {
         outError("Incompatible tree/alignment combination");
     }
 }
@@ -1885,13 +1885,15 @@ double IQTree::optimizeNNI(int &nni_count, int &nni_steps) {
             // This is important because after restoring the branch lengths, all partial
             // likelihood need to be cleared.
             clearAllPartialLH();
+            
+            // UPDATE: the following is not needed as clearAllPartialLH() is now also defined for SuperTree
             // BQM: This was missing: one should also clear all subtrees of a supertree
-            if (isSuperTree()) {
-            	PhyloSuperTree *stree = (PhyloSuperTree*)this;
-            	for (PhyloSuperTree::iterator it = stree->begin(); it != stree->end(); it++) {
-            		(*it)->clearAllPartialLH();
-            	}
-            }
+//            if (isSuperTree()) {
+//            	PhyloSuperTree *stree = (PhyloSuperTree*)this;
+//            	for (PhyloSuperTree::iterator it = stree->begin(); it != stree->end(); it++) {
+//            		(*it)->clearAllPartialLH();
+//            	}
+//            }
             rollBack = true;
             // only apply the best NNI
             numNNIs = 1;
@@ -2048,7 +2050,7 @@ void IQTree::pllDestroyUFBootData(){
     }
 
     if(params->online_bootstrap && params->gbo_replicates > 0){
-        pllHashDestroy(&(pllUFBootDataPtr->treels), PLL_TRUE);
+        pllHashDestroy(&(pllUFBootDataPtr->treels), rax_free);
 
         free(pllUFBootDataPtr->treels_logl);
 
@@ -2804,6 +2806,7 @@ void IQTree::writeUFBootTrees(Params &params, StrVector &removed_seqs, StrVector
 }
 
 void IQTree::summarizeBootstrap(Params &params) {
+	setRootNode(params.root);
 	if (verbose_mode >= VB_MED)
 		cout << "Summarizing from " << treels.size() << " candidate trees..." << endl;
     MTreeSet trees;

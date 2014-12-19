@@ -236,6 +236,22 @@ void PhyloTree::readTreeString(const string &tree_string) {
     }
 }
 
+void PhyloTree::readTreeFile(const string &file_name) {
+	ifstream str;
+	str.open(file_name.c_str());
+//	str << tree_string;
+//	str.seekg(0, ios::beg);
+	freeNode();
+	readTree(str, rooted);
+	setAlignment(aln);
+    if (isSuperTree()) {
+        ((PhyloSuperTree*) this)->mapTrees();
+    } else {
+    	clearAllPartialLH();
+    }
+    str.close();
+}
+
 string PhyloTree::getTreeString() {
 	stringstream tree_stream;
 	printTree(tree_stream);
@@ -1224,7 +1240,7 @@ void PhyloTree::searchNNI() {
 //ptrdiff_t (*p_myrandom)(ptrdiff_t) = myrandom;
 
 void PhyloTree::computeParsimonyTree(const char *out_prefix, Alignment *alignment) {
-    cout << "Computing parsimony tree by random stepwise addition..." << endl;
+//    cout << "Computing parsimony tree by random stepwise addition..." << endl;
     double start_time = getCPUTime();
     aln = alignment;
     int size = aln->getNSeq();
@@ -1293,7 +1309,7 @@ void PhyloTree::computeParsimonyTree(const char *out_prefix, Alignment *alignmen
     initializeAllPartialPars();
     clearAllPartialLH();
     fixNegativeBranch(true);
-    cout << "Time taken: " << getCPUTime() - start_time << " sec" << endl;
+//    cout << "Time taken: " << getCPUTime() - start_time << " sec" << endl;
     if (out_prefix) {
 		string file_name = out_prefix;
 		file_name += ".parstree";
@@ -3165,6 +3181,7 @@ double PhyloTree::optimizeOneBranch(PhyloNode *node1, PhyloNode *node2, bool cle
 	}
     double current_len = current_it->length;
     double ferror, optx;
+    assert(current_len >= 0.0);
     theta_computed = false;
     if (optimize_by_newton) // Newton-Raphson method
     	optx = minimizeNewton(MIN_BRANCH_LEN, current_len, MAX_BRANCH_LEN, TOL_BRANCH_LEN, negative_lh, maxNRStep);
@@ -3614,32 +3631,31 @@ int PhyloTree::fixNegativeBranch(bool force, Node *node, Node *dad) {
     return fixed;
 }
 
-int PhyloTree::assignRandomBranchLengths(bool force, Node *node, Node *dad) {
-
-    if (!node)
-        node = root;
-    int fixed = 0;
-
-    FOR_NEIGHBOR_IT(node, dad, it){
-    if ((*it)->length < 0.0 || force) { // negative branch length detected
-        if (verbose_mode >= VB_DEBUG)
-        cout << "Negative branch length " << (*it)->length << " was set to ";
-        (*it)->length = random_double() + 0.1;
-        if (verbose_mode >= VB_DEBUG)
-        cout << (*it)->length << endl;
-        // set the backward branch length
-        (*it)->node->findNeighbor(node)->length = (*it)->length;
-        fixed++;
-    }
-    if ((*it)->length <= 0.0) {
-        (
-                *it)->length = 1e-6;
-        (*it)->node->findNeighbor(node)->length = (*it)->length;
-    }
-    fixed += assignRandomBranchLengths(force, (*it)->node, node);
-}
-    return fixed;
-}
+//int PhyloTree::assignRandomBranchLengths(bool force, Node *node, Node *dad) {
+//
+//    if (!node)
+//        node = root;
+//    int fixed = 0;
+//
+//    FOR_NEIGHBOR_IT(node, dad, it){
+//		if ((*it)->length < 0.0 || force) { // negative branch length detected
+//			if (verbose_mode >= VB_DEBUG)
+//			cout << "Negative branch length " << (*it)->length << " was set to ";
+//			(*it)->length = random_double() + 0.1;
+//			if (verbose_mode >= VB_DEBUG)
+//			cout << (*it)->length << endl;
+//			// set the backward branch length
+//			(*it)->node->findNeighbor(node)->length = (*it)->length;
+//			fixed++;
+//		}
+//		if ((*it)->length <= 0.0) {
+//			(*it)->length = 1e-6;
+//			(*it)->node->findNeighbor(node)->length = (*it)->length;
+//		}
+//		fixed += assignRandomBranchLengths(force, (*it)->node, node);
+//    }
+//    return fixed;
+//}
 
 /****************************************************************************
  Nearest Neighbor Interchange by maximum likelihood
