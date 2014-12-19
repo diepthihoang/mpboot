@@ -99,8 +99,8 @@
 
 #endif
 
-#include "pll/pll.h"
-#include "pll/pllInternal.h"
+#include "pllrepo/src/pll.h"
+#include "pllrepo/src/pllInternal.h"
 
 
 static pllBoolean tipHomogeneityCheckerPars(pllInstance *tr, nodeptr p, int grouping);
@@ -1809,12 +1809,11 @@ static void determineUninformativeSites(pllInstance *tr, partitionList *pr, int 
 
   for(model = 0; model < pr->numberOfPartitions; model++)
     {
-	  pr->partitionData[model]->numInformativeSites = 0;
+
       for(i = pr->partitionData[model]->lower; i < pr->partitionData[model]->upper; i++)
         {
            if(isInformative(tr, pr->partitionData[model]->dataType, i)){
              informative[i] = 1;
-             pr->partitionData[model]->numInformativeSites += tr->aliaswgt[i];
            }
            else
              {
@@ -2266,10 +2265,9 @@ void pllComputeSiteParsimony(pllInstance * tr, partitionList * pr, int *site_par
 
 	for(int i = 0; i < pr->numberOfPartitions; i++){
 		int partialParsLength = pr->partitionData[i]->parsimonyLength * PLL_PCF;
-		int maxNSite = pr->partitionData[i]->numInformativeSites;
 		parsimonyNumber * p = &(pr->partitionData[i]->perSitePartialPars[partialParsLength * tr->start->number]);
 
-		for(int k = 0; k < maxNSite; k++){
+		for(int k = 0; k < pr->partitionData[i]->width; k++){
 			site_pars[site] = p[k];
 			sum += site_pars[site];
 			site++;
@@ -2288,10 +2286,9 @@ void pllComputeSiteParsimony(pllInstance * tr, partitionList * pr, unsigned shor
 
 	for(int i = 0; i < pr->numberOfPartitions; i++){
 		int partialParsLength = pr->partitionData[i]->parsimonyLength * PLL_PCF;
-		int maxNSite = pr->partitionData[i]->numInformativeSites;
 		parsimonyNumber * p = &(pr->partitionData[i]->perSitePartialPars[partialParsLength * tr->start->number]);
 
-		for(int k = 0; k < maxNSite; k++){
+		for(int k = 0; k < pr->partitionData[i]->width; k++){
 			site_pars[site] = p[k];
 			sum += site_pars[site];
 			site++;
@@ -2312,137 +2309,137 @@ void pllComputeSiteParsimony(pllInstance * tr, partitionList * pr, unsigned shor
 }
 
 void testSiteParsimony(Params &params) {
-	IQTree * iqtree;
-	iqtree = new IQTree;
-	iqtree->readTree(params.user_file, params.is_rooted);
-	Alignment alignment(params.aln_file, params.sequence_type, params.intype);
-	iqtree->setAlignment(&alignment);
-	iqtree->setParams(params);
-
-	/* Initialized all data structure for PLL*/
-	iqtree->pllAttr.rateHetModel = PLL_GAMMA;
-	iqtree->pllAttr.fastScaling = PLL_FALSE;
-	iqtree->pllAttr.saveMemory = PLL_FALSE;
-	iqtree->pllAttr.useRecom = PLL_FALSE;
-	iqtree->pllAttr.randomNumberSeed = params.ran_seed;
-	iqtree->pllAttr.numberOfThreads = 2; /* This only affects the pthreads version */
-
-	if (iqtree->pllInst != NULL) {
-		pllDestroyInstance(iqtree->pllInst);
-	}
-	/* Create a PLL instance */
-	iqtree->pllInst = pllCreateInstance(&iqtree->pllAttr);
-	cout << "is_rooted = " << params.is_rooted << endl;;
-
-	/* Read in the alignment file */
-	string pllAln = params.out_prefix;
-	pllAln += ".pllaln";
-	alignment.printPhylip(pllAln.c_str());
-
-	iqtree->pllAlignment = pllParseAlignmentFile(PLL_FORMAT_PHYLIP, pllAln.c_str());
-
-	/* Read in the partition information */
-	pllQueue *partitionInfo;
-	ofstream pllPartitionFileHandle;
-	string pllPartitionFileName = string(params.out_prefix) + ".pll_partitions";
-	pllPartitionFileHandle.open(pllPartitionFileName.c_str());
-
-	/* create a partition file */
-	string model;
-	if (alignment.seq_type == SEQ_DNA) {
-		model = "DNA";
-	} else if (alignment.seq_type == SEQ_PROTEIN) {
-		if (params.model_name != "" && params.model_name.substr(0, 4) != "TEST")
-			model = params.model_name.substr(0, params.model_name.find_first_of("+{"));
-		else
-			model = "WAG";
-	} else {
-		outError("PLL only works with DNA/protein alignments");
-	}
-	pllPartitionFileHandle << model << ", p1 = " << "1-" << iqtree->getAlnNSite() << endl;
-
-	pllPartitionFileHandle.close();
-	partitionInfo = pllPartitionParse(pllPartitionFileName.c_str());
-
-	/* Validate the partitions */
-	if (!pllPartitionsValidate(partitionInfo, iqtree->pllAlignment)) {
-		fprintf(stderr, "Error: Partitions do not cover all sites\n");
-		exit(EXIT_FAILURE);
-	}
-
-	/* Commit the partitions and build a partitions structure */
-	iqtree->pllPartitions = pllPartitionsCommit(partitionInfo, iqtree->pllAlignment);
-
-	/* We don't need the the intermediate partition queue structure anymore */
-	pllQueuePartitionsDestroy(&partitionInfo);
-
-	/* eliminate duplicate sites from the alignment and update weights vector */
-	pllAlignmentRemoveDups(iqtree->pllAlignment, iqtree->pllPartitions);
-
-
-	cout << "Finished initialization!" << endl;
-
-	/************************************ END: Initialization for PLL and sNNI *************************************************/
-	pllNewickTree * newick;
-	newick = pllNewickParseString (iqtree->getTreeString().c_str());
-	iqtree->pllInst->randomNumberSeed = params.ran_seed;
-	pllTreeInitTopologyNewick (iqtree->pllInst, newick, PLL_FALSE);
-	/* Connect the alignment and partition structure with the tree structure */
-	if (!pllLoadAlignment(iqtree->pllInst, iqtree->pllAlignment, iqtree->pllPartitions, PLL_SHALLOW_COPY)) {
-		printf("Incompatible tree/alignment combination\n");
-		exit(1);
-	}
-
-	int npatterns = iqtree->aln->getNPattern();
-
-	int i, j, uninformative_count = 0;
-	pllInitParsimonyStructures (iqtree->pllInst, iqtree->pllPartitions, PLL_TRUE);   // the last parameter is that you want to allocate buffers for the per site computation
-
-	iqtree->pllInst->bestParsimony = UINT_MAX;
-
-	for (i = 0; i < iqtree->pllPartitions->numberOfPartitions; ++i)
-	{
-		for (j = 0; j < iqtree->pllPartitions->partitionData[i]->width; ++j){
-			if(!isInformative(iqtree->pllInst, iqtree->pllPartitions->partitionData[i]->dataType, j))
-				uninformative_count++;
-		}
-	}
-	cout << "There are " << uninformative_count << " uninformative sites." << endl;
-
-	cout << "************** PARSIMONY SCORES BY PLL **************************" << endl;
-	printf ("Tree score: %d\n", pllEvaluateParsimony(iqtree->pllInst, iqtree->pllPartitions, iqtree->pllInst->start->back, PLL_TRUE, PLL_TRUE));
-	int sum_test = 0;
-	int zero_count = 0;
-	for (i = 0; i < iqtree->pllPartitions->numberOfPartitions; ++i)
-	{
-		cout << "parsimonyLength of partition " << i << " is " << iqtree->pllPartitions->partitionData[i]->parsimonyLength << endl;
-		for (j = 0; j < iqtree->pllPartitions->partitionData[i]->parsimonyLength * PLL_PCF; ++j){
-			cout << iqtree->pllPartitions->partitionData[i]->perSiteParsScores[j] << " ";
-			sum_test += iqtree->pllPartitions->partitionData[i]->perSiteParsScores[j];
-			if(iqtree->pllPartitions->partitionData[i]->perSiteParsScores[j] == 0) zero_count++;
-		}
-	}
-
-	cout << endl << "sum_test = " << sum_test << ", zero_count = " << zero_count << endl;
-
-	cout << endl << "************** PARSIMONY SCORES BY IQTREE **************************" << endl;
-    pllTreeToNewick(iqtree->pllInst->tree_string, iqtree->pllInst, iqtree->pllPartitions, iqtree->pllInst->start->back,
-            PLL_FALSE, PLL_TRUE, PLL_FALSE, PLL_FALSE, PLL_FALSE, PLL_SUMMARIZE_LH, PLL_FALSE, PLL_FALSE);
-    iqtree->readTreeString(string(iqtree->pllInst->tree_string));
-    iqtree->initializeAllPartialPars();
-    iqtree->clearAllPartialLH();
-
-	cout << "Tree score = " << iqtree->computeParsimony() << endl;
-
-	double * site_scores = new double[npatterns];
-	iqtree->computePatternParsimony(site_scores);
-	for(int k = 0; k < npatterns; k++)
-		for(int t = 0; t < iqtree->aln->at(k).frequency; t++)
-			cout << -int(site_scores[k]) << " ";
-	cout << endl;
-
-	if(site_scores) delete [] site_scores;
-	if(iqtree) delete iqtree;
+//	IQTree * iqtree;
+//	iqtree = new IQTree;
+//	iqtree->readTree(params.user_file, params.is_rooted);
+//	Alignment alignment(params.aln_file, params.sequence_type, params.intype);
+//	iqtree->setAlignment(&alignment);
+//	iqtree->setParams(params);
+//
+//	/* Initialized all data structure for PLL*/
+//	iqtree->pllAttr.rateHetModel = PLL_GAMMA;
+//	iqtree->pllAttr.fastScaling = PLL_FALSE;
+//	iqtree->pllAttr.saveMemory = PLL_FALSE;
+//	iqtree->pllAttr.useRecom = PLL_FALSE;
+//	iqtree->pllAttr.randomNumberSeed = params.ran_seed;
+//	iqtree->pllAttr.numberOfThreads = 2; /* This only affects the pthreads version */
+//
+//	if (iqtree->pllInst != NULL) {
+//		pllDestroyInstance(iqtree->pllInst);
+//	}
+//	/* Create a PLL instance */
+//	iqtree->pllInst = pllCreateInstance(&iqtree->pllAttr);
+//	cout << "is_rooted = " << params.is_rooted << endl;;
+//
+//	/* Read in the alignment file */
+//	string pllAln = params.out_prefix;
+//	pllAln += ".pllaln";
+//	alignment.printPhylip(pllAln.c_str());
+//
+//	iqtree->pllAlignment = pllParseAlignmentFile(PLL_FORMAT_PHYLIP, pllAln.c_str());
+//
+//	/* Read in the partition information */
+//	pllQueue *partitionInfo;
+//	ofstream pllPartitionFileHandle;
+//	string pllPartitionFileName = string(params.out_prefix) + ".pll_partitions";
+//	pllPartitionFileHandle.open(pllPartitionFileName.c_str());
+//
+//	/* create a partition file */
+//	string model;
+//	if (alignment.seq_type == SEQ_DNA) {
+//		model = "DNA";
+//	} else if (alignment.seq_type == SEQ_PROTEIN) {
+//		if (params.model_name != "" && params.model_name.substr(0, 4) != "TEST")
+//			model = params.model_name.substr(0, params.model_name.find_first_of("+{"));
+//		else
+//			model = "WAG";
+//	} else {
+//		outError("PLL only works with DNA/protein alignments");
+//	}
+//	pllPartitionFileHandle << model << ", p1 = " << "1-" << iqtree->getAlnNSite() << endl;
+//
+//	pllPartitionFileHandle.close();
+//	partitionInfo = pllPartitionParse(pllPartitionFileName.c_str());
+//
+//	/* Validate the partitions */
+//	if (!pllPartitionsValidate(partitionInfo, iqtree->pllAlignment)) {
+//		fprintf(stderr, "Error: Partitions do not cover all sites\n");
+//		exit(EXIT_FAILURE);
+//	}
+//
+//	/* Commit the partitions and build a partitions structure */
+//	iqtree->pllPartitions = pllPartitionsCommit(partitionInfo, iqtree->pllAlignment);
+//
+//	/* We don't need the the intermediate partition queue structure anymore */
+//	pllQueuePartitionsDestroy(&partitionInfo);
+//
+//	/* eliminate duplicate sites from the alignment and update weights vector */
+//	pllAlignmentRemoveDups(iqtree->pllAlignment, iqtree->pllPartitions);
+//
+//
+//	cout << "Finished initialization!" << endl;
+//
+//	/************************************ END: Initialization for PLL and sNNI *************************************************/
+//	pllNewickTree * newick;
+//	newick = pllNewickParseString (iqtree->getTreeString().c_str());
+//	iqtree->pllInst->randomNumberSeed = params.ran_seed;
+//	pllTreeInitTopologyNewick (iqtree->pllInst, newick, PLL_FALSE);
+//	/* Connect the alignment and partition structure with the tree structure */
+//	if (!pllLoadAlignment(iqtree->pllInst, iqtree->pllAlignment, iqtree->pllPartitions)) {
+//		printf("Incompatible tree/alignment combination\n");
+//		exit(1);
+//	}
+//
+//	int npatterns = iqtree->aln->getNPattern();
+//
+//	int i, j, uninformative_count = 0;
+//	pllInitParsimonyStructures (iqtree->pllInst, iqtree->pllPartitions, PLL_TRUE);   // the last parameter is that you want to allocate buffers for the per site computation
+//
+//	iqtree->pllInst->bestParsimony = UINT_MAX;
+//
+//	for (i = 0; i < iqtree->pllPartitions->numberOfPartitions; ++i)
+//	{
+//		for (j = 0; j < iqtree->pllPartitions->partitionData[i]->width; ++j){
+//			if(!isInformative(iqtree->pllInst, iqtree->pllPartitions->partitionData[i]->dataType, j))
+//				uninformative_count++;
+//		}
+//	}
+//	cout << "There are " << uninformative_count << " uninformative sites." << endl;
+//
+//	cout << "************** PARSIMONY SCORES BY PLL **************************" << endl;
+//	printf ("Tree score: %d\n", pllEvaluateParsimony(iqtree->pllInst, iqtree->pllPartitions, iqtree->pllInst->start->back, PLL_TRUE, PLL_TRUE));
+//	int sum_test = 0;
+//	int zero_count = 0;
+//	for (i = 0; i < iqtree->pllPartitions->numberOfPartitions; ++i)
+//	{
+//		cout << "parsimonyLength of partition " << i << " is " << iqtree->pllPartitions->partitionData[i]->parsimonyLength << endl;
+//		for (j = 0; j < iqtree->pllPartitions->partitionData[i]->parsimonyLength * PLL_PCF; ++j){
+//			cout << iqtree->pllPartitions->partitionData[i]->perSiteParsScores[j] << " ";
+//			sum_test += iqtree->pllPartitions->partitionData[i]->perSiteParsScores[j];
+//			if(iqtree->pllPartitions->partitionData[i]->perSiteParsScores[j] == 0) zero_count++;
+//		}
+//	}
+//
+//	cout << endl << "sum_test = " << sum_test << ", zero_count = " << zero_count << endl;
+//
+//	cout << endl << "************** PARSIMONY SCORES BY IQTREE **************************" << endl;
+//    pllTreeToNewick(iqtree->pllInst->tree_string, iqtree->pllInst, iqtree->pllPartitions, iqtree->pllInst->start->back,
+//            PLL_FALSE, PLL_TRUE, PLL_FALSE, PLL_FALSE, PLL_FALSE, PLL_SUMMARIZE_LH, PLL_FALSE, PLL_FALSE);
+//    iqtree->readTreeString(string(iqtree->pllInst->tree_string));
+//    iqtree->initializeAllPartialPars();
+//    iqtree->clearAllPartialLH();
+//
+//	cout << "Tree score = " << iqtree->computeParsimony() << endl;
+//
+//	double * site_scores = new double[npatterns];
+//	iqtree->computePatternParsimony(site_scores);
+//	for(int k = 0; k < npatterns; k++)
+//		for(int t = 0; t < iqtree->aln->at(k).frequency; t++)
+//			cout << -int(site_scores[k]) << " ";
+//	cout << endl;
+//
+//	if(site_scores) delete [] site_scores;
+//	if(iqtree) delete iqtree;
 }
 
 

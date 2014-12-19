@@ -330,7 +330,7 @@ void IQTree::initTopologyByPLLRandomAdition(Params &params){
     pllTreeInitTopologyForAlignment(tmpInst, tmpAlignmentData);
 
     /* Connect the aln and partition structure with the tree structure */
-    if (!pllLoadAlignment(tmpInst, tmpAlignmentData, tmpPartitions, PLL_SHALLOW_COPY)) {
+    if (!pllLoadAlignment(tmpInst, tmpAlignmentData, tmpPartitions)) {
         outError("Incompatible tree/aln combination");
     }
 

@@ -357,16 +357,21 @@ void reportTree(ofstream &out, Params &params, PhyloTree &tree, double tree_lh,
 	double AIC_score, AICc_score, BIC_score;
 	computeInformationScores(tree_lh, df, ssize, AIC_score, AICc_score, BIC_score);
 
-	out << "Log-likelihood of the tree: " << fixed << tree_lh << " (s.e. "
-			<< sqrt(lh_variance) << ")" << endl
-			<< "Number of free parameters: " << df << endl
-			<< "Akaike information criterion (AIC) score: " << AIC_score << endl
-			<< "Corrected Akaike information criterion (AICc) score: " << AICc_score << endl
-			<< "Bayesian information criterion (BIC) score: " << BIC_score << endl
-			<< "Unconstrained log-likelihood (without tree): "
-			<< tree.aln->computeUnconstrainedLogL() << endl << endl
-			//<< "Total tree length: " << tree.treeLength() << endl << endl
-			<< "Tree in newick format:" << endl << endl;
+	if(params.maximum_parsimony){
+		out << "Parsimony of the tree: " << fixed << tree_lh << " (s.e. "
+				<< sqrt(lh_variance) << ")" << endl;
+	}else{
+		out << "Log-likelihood of the tree: " << fixed << tree_lh << " (s.e. "
+				<< sqrt(lh_variance) << ")" << endl
+				<< "Number of free parameters: " << df << endl
+				<< "Akaike information criterion (AIC) score: " << AIC_score << endl
+				<< "Corrected Akaike information criterion (AICc) score: " << AICc_score << endl
+				<< "Bayesian information criterion (BIC) score: " << BIC_score << endl
+				<< "Unconstrained log-likelihood (without tree): "
+				<< tree.aln->computeUnconstrainedLogL() << endl << endl;
+				//<< "Total tree length: " << tree.treeLength() << endl << endl
+	}
+	out << "Tree in newick format:" << endl << endl;
 
 	tree.printTree(out, WT_BR_LEN | WT_BR_LEN_FIXED_WIDTH | WT_SORT_TAXA);
 
@@ -855,7 +860,7 @@ void reportPhyloAnalysis(Params &params, string &original_model,
 			<< "  IQ-TREE report:                " << params.out_prefix << ".iqtree"
 			<< endl;
 	if (params.compute_ml_tree) {
-		cout << "  Maximum-likelihood tree:       " << params.out_prefix
+		cout << "  Maximum-" << (params.maximum_parsimony ? "parsimony " : "likelihood") << " tree:       " << params.out_prefix
 				<< ".treefile" << endl;
 		if (params.write_local_optimal_trees)
 		cout << "  Candidate trees (" << tree.candidateTrees.size() << "):      " << params.out_prefix << ".localtrees" << endl;
@@ -1778,7 +1783,7 @@ void runTreeReconstruction(Params &params, string &original_model, IQTree &iqtre
 	if (iqtree.isSuperTree())
 			((PhyloSuperTree*) &iqtree)->mapTrees();
 	if (params.snni && params.min_iterations) {
-		cout << "Log-likelihoods of best " << params.popSize << " trees: " << endl;
+		cout << (params.maximum_parsimony ? "Parsimony" : "Log-likelihoods") << " of best " << params.popSize << " trees: " << endl;
 		iqtree.printBestScores(iqtree.candidateTrees.popSize);
 	}
 
@@ -1787,7 +1792,10 @@ void runTreeReconstruction(Params &params, string &original_model, IQTree &iqtre
 		iqtree.readTreeString(iqtree.bestTreeString);
         iqtree.initializeAllPartialLh();
         iqtree.clearAllPartialLH();
-		iqtree.bestTreeString = iqtree.optimizeModelParameters(true);
+        if(params.maximum_parsimony)
+        	iqtree.computeParsimony();
+        else
+			iqtree.bestTreeString = iqtree.optimizeModelParameters(true);
 	} else {
         iqtree.setBestScore(iqtree.curScore);
     }
