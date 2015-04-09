@@ -2453,6 +2453,85 @@ void computeConsensusTree(const char *input_trees, int burnin, int max_count,
 
 }
 
+void testCompConsensus(const char * infile, const char * outfile, Params *params){
+	StringIntMap treels;
+	int index=0;
+	ifstream fin(infile);
+	string tree;
+	while(getline(fin, tree)){
+		treels[tree] = index;
+		index++;
+	}
+	cout << "Total trees read = " << index << endl;
+	fin.close();
+	IntVector weight;
+	weight.resize(treels.size(), 1);
+	string con_str = computeConsensusTreeNoFileIO(treels, weight, params->tree_max_count,
+		params->split_threshold,params->split_weight_threshold,params);
+
+
+	ofstream fout(outfile);
+	fout << con_str;
+	fout.close();
+
+	cout << "All DONE" << endl;
+}
+
+string computeConsensusTreeNoFileIO(StringIntMap& input_trees, IntVector & weight, int max_count,
+		double cutoff, double weight_threshold, Params *params) {
+	bool rooted = false;
+
+	SplitGraph sg;
+	SplitIntMap hash_ss;
+
+	// read the bootstrap tree file
+	double scale = 100.0;
+	if (params->scaling_factor > 0)
+		scale = params->scaling_factor;
+
+	MTreeSet boot_trees;
+//	IntVector weight;
+//	weight.resize(input_trees.size(), 1);
+
+	boot_trees.init(input_trees, rooted, weight);
+	boot_trees.convertSplits(sg, cutoff, SW_COUNT, weight_threshold);
+	scale /= boot_trees.sumTreeWeights();
+//	cout << sg.size() << " splits found" << endl;
+
+	//sg.report(cout);
+	if (verbose_mode >= VB_MED)
+		cout << "Rescaling split weights by " << scale << endl;
+	if (params->scaling_factor < 0)
+		sg.scaleWeight(scale, true);
+	else {
+		sg.scaleWeight(scale, false, params->numeric_precision);
+	}
+
+	//cout << "Creating greedy consensus tree..." << endl;
+	MTree mytree;
+	SplitGraph maxsg;
+	sg.findMaxCompatibleSplits(maxsg);
+
+	mytree.convertToTree(maxsg);
+
+	//cout << "done" << endl;
+	string taxname;
+	if (params->root)
+		taxname = params->root;
+	else
+		taxname = sg.getTaxa()->GetTaxonLabel(0);
+	Node *node = mytree.findLeafName(taxname);
+	if (node)
+		mytree.root = node;
+
+    ostringstream ostr;
+    string tree_str;
+//    mytree.printTree(ostr, WT_BR_CLADE); // for testing by testCompConsensus
+	mytree.printTree(ostr, WT_TAXON_ID | WT_SORT_TAXA);
+	tree_str = ostr.str();
+	return tree_str;
+}
+
 void computeConsensusNetwork(const char *input_trees, int burnin, int max_count,
 		double cutoff, int weight_summary, double weight_threshold, const char *output_tree,
 		const char *out_prefix, const char* tree_weight_file) {
@@ -2499,7 +2578,6 @@ void computeConsensusNetwork(const char *input_trees, int burnin, int max_count,
 }
 
 void optimizeAlignment(IQTree * & tree, Params & params){
-
 	double start = getCPUTime();
 //	tree->initTopologyByPLLRandomAdition(params); // this pll version needs further sync to work with the rest
 	tree->computeParsimonyTree(params.out_prefix, tree->aln); // this iqtree version plays nicely with the rest

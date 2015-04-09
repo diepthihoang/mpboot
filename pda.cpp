@@ -2286,6 +2286,8 @@ int main(int argc, char *argv[])
 	if (params.tree_gen != NONE) {
 		generateRandomTree(params);
 	} else if (params.do_pars_multistate) {
+//		cout << "Starting the test for computing concensus NOT from file:" << endl;
+//		testCompConsensus("test.fa.boottrees.treefile", "test.out", &params); // (const char * infile, const char * outfile, Params *params);
 		doParsMultiState(params);
 	} else if (params.compute_parsimony) {
 		computeUserTreeParsimomy(params);

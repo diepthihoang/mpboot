@@ -714,6 +714,11 @@ public:
 	/** number of multiple optimal trees per replicate */
 	IntVector boot_counts;
 
+	IntVector boot_best_hits; // Diep: added to count # best trees on each boot aln
+	vector<IntVector> boot_trees_parsimony;
+//	vector<IntVector> boot_trees_parsimony_score;
+	vector<StringIntMap> boot_trees_ls_parsimony;
+
     /** corresponding RELL log-likelihood */
     DoubleVector boot_logl;
 
@@ -727,9 +732,13 @@ public:
     void summarizeBootstrap(Params &params, MTreeSet &trees);
 
     void summarizeBootstrap(Params &params);
+	void summarizeBootstrapParsimony(Params &params);
+	void summarizeBootstrapParsimonyWeight(Params &params);
 
     /** summarize bootstrap trees into split set */
     void summarizeBootstrap(SplitGraph &sg);
+    void summarizeBootstrapParsimony(SplitGraph &sg);
+    void summarizeBootstrapParsimonyWeight(SplitGraph &sg);
 
     void writeUFBootTrees(Params &params, StrVector &removed_seqs, StrVector &twin_seqs);
 

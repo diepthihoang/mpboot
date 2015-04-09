@@ -771,6 +771,7 @@ void parseArg(int argc, char *argv[], Params &params) {
     params.site_freq_file = NULL;
 
     params.maximum_parsimony = false;
+    params.multiple_hits = false;
     params.compute_parsimony = false;
     params.sankoff_cost_file = NULL;
     params.condense_parsimony_equiv_sites = false;
@@ -2243,10 +2244,16 @@ void parseArg(int argc, char *argv[], Params &params) {
 				params.pll = true;
 				continue;
 			}
+
+
 			if(strcmp(argv[cnt], "-mpars") == 0){
             	params.maximum_parsimony = true;
             	params.nni5 = false;
             	params.nni_type = NNI1;
+            	continue;
+            }
+            if(strcmp(argv[cnt], "-mulhits") == 0){
+            	params.multiple_hits = true;
             	continue;
             }
 			if(strcmp(argv[cnt], "-comppars") == 0){
@@ -2299,6 +2306,7 @@ void parseArg(int argc, char *argv[], Params &params) {
             	params.sort_alignment = false;
             	continue;
             }
+
 			if (strcmp(argv[cnt], "-me") == 0) {
 				cnt++;
 				if (cnt >= argc)
@@ -2564,6 +2572,11 @@ void parseArg(int argc, char *argv[], Params &params) {
     if(params.spr_parsimony && !params.snni){
     	outError("-spr_pars must work with -snni");
     }
+
+	// Diep: for storing multiple best trees for each boot aln
+	if(params.multiple_hits && !params.maximum_parsimony){
+		outError("-mulhits must work with -mpars");
+	}
 
     // Diep: NNI is equivalent to SPR radius = 1
     if(params.sprDist == -1){

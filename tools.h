@@ -1472,6 +1472,8 @@ struct Params {
      */
     bool maximum_parsimony;
 
+	bool multiple_hits;
+
     bool compute_parsimony; // to compute parsimony of a user tree
 
     /** TRUE to condense parsimony equivalent sites, default: false */

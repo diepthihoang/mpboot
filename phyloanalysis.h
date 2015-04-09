@@ -111,4 +111,9 @@ struct PatternComp{
  */
 void optimizeAlignment(IQTree * & tree, Params & params);
 
+void testCompConsensus(const char * infile, const char * outfile, Params *params);
+
+string computeConsensusTreeNoFileIO(StringIntMap& input_trees, IntVector & weight, int max_count,
+		double cutoff, double weight_threshold, Params *params);
+
 #endif

@@ -91,8 +91,38 @@ void MTreeSet::init(StringIntMap &treels, bool &is_rooted, IntVector &weights) {
 		tree->readTree(ss, myrooted);
 		NodeVector taxa;
 		tree->getTaxa(taxa);
-		for (NodeVector::iterator taxit = taxa.begin(); taxit != taxa.end(); taxit++)
-			(*taxit)->id = atoi((*taxit)->name.c_str());
+
+//		// Diep modification begins
+//		bool mulhits_check = false;
+//		for (NodeVector::iterator taxit = taxa.begin(); taxit != taxa.end(); taxit++){
+//			char *s,*p;
+//			s = new char[strlen((*taxit)->name.c_str()) + 1];
+//			p=s;
+//			strcpy(s, (*taxit)->name.c_str());
+//			while(*s){
+//				if(*s < '0' || *s > '9'){
+//					mulhits_check = true;
+//					break;
+//				}
+//				s++;
+//			}
+//			delete [] p;
+//		}
+//
+//		if(!mulhits_check){
+			// Minh's code
+			for (NodeVector::iterator taxit = taxa.begin(); taxit != taxa.end(); taxit++){
+				(*taxit)->id = atoi((*taxit)->name.c_str());
+			}
+//		}else{
+//			sort(taxa.begin(), taxa.end(), nodenamecmp);
+//			int i = 0;
+//			for (NodeVector::iterator taxit = taxa.begin(); taxit != taxa.end(); taxit++, i++){
+//				(*taxit)->id = i;
+//			}
+//		}
+//		// Diep modification ends
+
 		//at(it->second) = tree;
 		push_back(tree);
 		tree_weights.push_back(weights[it->second]);
@@ -310,12 +340,16 @@ void MTreeSet::convertSplits(SplitGraph &sg, double split_threshold, int weighti
 	temp.sets = NULL;
 	temp.trees = NULL;
 	*/
-	cout << nsplits - sg.getNSplits() << " split(s) discarded because frequency <= " << split_threshold << endl;
+	// Diep: temporarily comment the below out (because it spams -mulhits screen)
+//	cout << nsplits - sg.getNSplits() << " split(s) discarded because frequency <= " << split_threshold << endl;
 }
 
 
 void MTreeSet::convertSplits(SplitGraph &sg, SplitIntMap &hash_ss, 
 	int weighting_type, double weight_threshold) {
+	ostringstream ostr;
+	front()->printTree(ostr, WT_TAXON_ID | WT_SORT_TAXA);
+	string tree_str = ostr.str();
 	vector<string> taxname(front()->leafNum);
 	// make sure that the split system contains at least 1 split
 	if (size() == 0)
@@ -368,6 +402,7 @@ void MTreeSet::convertSplits(vector<string> &taxname, SplitGraph &sg, SplitIntMa
 			NodeVector taxa;
 			tree->getTaxa(taxa);
 			sort(taxa.begin(), taxa.end(), nodenamecmp);
+
 			int i = 0;
 			for (NodeVector::iterator it2 = taxa.begin(); it2 != taxa.end(); it2++) {
 				if ((*it2)->name != taxname[i]) 
