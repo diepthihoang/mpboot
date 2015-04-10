@@ -772,6 +772,7 @@ void parseArg(int argc, char *argv[], Params &params) {
 
     params.maximum_parsimony = false;
     params.multiple_hits = false;
+    params.store_top_boot_trees = 0;
     params.compute_parsimony = false;
     params.sankoff_cost_file = NULL;
     params.condense_parsimony_equiv_sites = false;
@@ -2254,6 +2255,13 @@ void parseArg(int argc, char *argv[], Params &params) {
             }
             if(strcmp(argv[cnt], "-mulhits") == 0){
             	params.multiple_hits = true;
+            	continue;
+            }
+            if(strcmp(argv[cnt], "-topboot") == 0){
+            	cnt++;
+                if (cnt >= argc)
+                    throw "Use -topboot <number of top trees stored for each boot sample>";
+            	params.store_top_boot_trees = convert_int(argv[cnt]);
             	continue;
             }
 			if(strcmp(argv[cnt], "-comppars") == 0){

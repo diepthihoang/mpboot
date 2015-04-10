@@ -719,6 +719,11 @@ public:
 //	vector<IntVector> boot_trees_parsimony_score;
 	vector<StringIntMap> boot_trees_ls_parsimony;
 
+	typedef pair<int,int> IntPair;
+	typedef vector<IntPair> IntPairVector;
+	vector<IntPairVector> boot_trees_parsimony_top;
+	vector<int> boot_threshold;
+
     /** corresponding RELL log-likelihood */
     DoubleVector boot_logl;
 
@@ -734,11 +739,13 @@ public:
     void summarizeBootstrap(Params &params);
 	void summarizeBootstrapParsimony(Params &params);
 	void summarizeBootstrapParsimonyWeight(Params &params);
+	void summarizeBootstrapParsimonyTop(Params &params);
 
     /** summarize bootstrap trees into split set */
     void summarizeBootstrap(SplitGraph &sg);
     void summarizeBootstrapParsimony(SplitGraph &sg);
     void summarizeBootstrapParsimonyWeight(SplitGraph &sg);
+    void summarizeBootstrapParsimonyTop(SplitGraph &sg);
 
     void writeUFBootTrees(Params &params, StrVector &removed_seqs, StrVector &twin_seqs);
 

@@ -133,7 +133,8 @@ bool CandidateSet::update(string tree, double score) {
 			// insert tree into candidate set
 			insert(CandidateSet::value_type(score, candidate));
 			topologies[candidate.topology] = score;
-		}
+		}else
+			newTree = false; // Diep added
 	}
 	return newTree;
 }
