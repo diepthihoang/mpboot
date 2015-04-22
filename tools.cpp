@@ -773,6 +773,9 @@ void parseArg(int argc, char *argv[], Params &params) {
     params.maximum_parsimony = false;
     params.multiple_hits = false;
     params.store_top_boot_trees = 0;
+    params.ratchet_iter = -1;
+    params.ratchet_wgt = 0;
+    params.ratchet_percent = 0;
     params.compute_parsimony = false;
     params.sankoff_cost_file = NULL;
     params.condense_parsimony_equiv_sites = false;
@@ -2262,6 +2265,27 @@ void parseArg(int argc, char *argv[], Params &params) {
                 if (cnt >= argc)
                     throw "Use -topboot <number of top trees stored for each boot sample>";
             	params.store_top_boot_trees = convert_int(argv[cnt]);
+            	continue;
+            }
+            if(strcmp(argv[cnt], "-ratchet_iter") == 0){
+            	cnt++;
+                if (cnt >= argc)
+                    throw "Use -ratchet_iter <number iterations between 2 ratchets>";
+            	params.ratchet_iter = convert_int(argv[cnt]);
+            	continue;
+            }
+            if(strcmp(argv[cnt], "-ratchet_wgt") == 0){
+            	cnt++;
+                if (cnt >= argc)
+                    throw "Use -ratchet_wgt <weight to add to each resampled character>";
+            	params.ratchet_wgt = convert_int(argv[cnt]);
+            	continue;
+            }
+            if(strcmp(argv[cnt], "-ratchet_percent") == 0){
+            	cnt++;
+                if (cnt >= argc)
+                    throw "Use -ratchet_percent <percentage of characters in subset picked for ratchet>";
+            	params.ratchet_percent = convert_int(argv[cnt]);
             	continue;
             }
 			if(strcmp(argv[cnt], "-comppars") == 0){

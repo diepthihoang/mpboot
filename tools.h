@@ -1472,9 +1472,12 @@ struct Params {
      */
     bool maximum_parsimony;
 
-	bool multiple_hits;
+	bool multiple_hits; // to store multiple MP trees per boot sample
 
-	int store_top_boot_trees;
+	int store_top_boot_trees; // number of top trees to store per boot sample (e.g. top 10, top 5)
+	int ratchet_iter; // # of iterations between two ratchet iterations
+	int ratchet_wgt; // weight to add to selected site during ratchet
+	int ratchet_percent; // 0-100; percent of informative sites to upweight during ratchet
 
     bool compute_parsimony; // to compute parsimony of a user tree
 

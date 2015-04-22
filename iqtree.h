@@ -724,6 +724,9 @@ public:
 	vector<IntPairVector> boot_trees_parsimony_top;
 	vector<int> boot_threshold;
 
+	bool on_ratchet_iter;
+	Alignment * saved_aln_on_ratchet_iter;
+
     /** corresponding RELL log-likelihood */
     DoubleVector boot_logl;
 

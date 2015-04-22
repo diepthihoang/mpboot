@@ -103,8 +103,13 @@ void IQTree::setParams(Params &params) {
             params.min_iterations = 100;
         }
     }
-    if (params.gbo_replicates)
+
+    // Minh's assignment for max_iterations
+    if (params.gbo_replicates && !params.maximum_parsimony)
         params.max_iterations = max(params.max_iterations, max(params.min_iterations, 1000));
+
+    if (params.gbo_replicates && params.maximum_parsimony)
+        params.max_iterations = max(params.max_iterations, params.min_iterations);
 
     k_represent = params.k_representative;
 
@@ -229,6 +234,8 @@ void IQTree::setParams(Params &params) {
         boot_trees_parsimony_top.resize(params.gbo_replicates);
         for(int k = 0; k < params.gbo_replicates; k++) boot_trees_parsimony_top[k].clear();
 		boot_threshold.resize(params.gbo_replicates, -INT_MAX);
+
+		on_ratchet_iter = false;
 
         VerboseMode saved_mode = verbose_mode;
         verbose_mode = VB_QUIET;
@@ -1502,6 +1509,7 @@ double IQTree::doTreeSearch() {
     searchinfo.curPerStrength = params->initPerStrength;
 
 	double cur_correlation = 0.0;
+	int ratchet_iter_count = 0;
 
 	/*====================================================
 	 * MAIN LOOP OF THE IQ-TREE ALGORITHM
@@ -1542,6 +1550,28 @@ double IQTree::doTreeSearch() {
         }
 
         Alignment *saved_aln = aln;
+        /*--------------------------------------------------------------------------
+         * PARSIMONY RATCHET-LIKE IDEA
+         * -------------------------------------------------------------------------*/
+
+        if(params->ratchet_iter >= 0){
+        	if(params->ratchet_iter == ratchet_iter_count){
+				Alignment* perturb_alignment;
+				if (aln->isSuperAlignment())
+					perturb_alignment = new SuperAlignment;
+				else
+					perturb_alignment = new Alignment;
+				perturb_alignment->createPerturbAlignment(aln, params->ratchet_percent, params->ratchet_wgt, params->sort_alignment);
+				saved_aln_on_ratchet_iter = aln;
+				setAlignment(perturb_alignment);
+				on_ratchet_iter = true;
+
+				initializeAllPartialLh();
+				clearAllPartialLH();
+				curScore = optimizeAllBranches();
+        	}
+			ratchet_iter_count++;
+        }
 
     	/*----------------------------------------
     	 * Perturb the tree
@@ -1637,6 +1667,35 @@ double IQTree::doTreeSearch() {
             ((PhyloSuperTree*) this)->computeBranchLengths();
         }
 
+        /*--------------------------------------------------------------------------
+         * PARSIMONY RATCHET-LIKE IDEA
+         * -------------------------------------------------------------------------*/
+        if(params->ratchet_iter >= 0){
+			if(ratchet_iter_count == params->ratchet_iter + 1){
+				ratchet_iter_count = 0;
+
+				// restore alignment
+				delete aln;
+				setAlignment(saved_aln_on_ratchet_iter);
+				on_ratchet_iter = false;
+
+				initializeAllPartialLh();
+				clearAllPartialLH();
+				// update current score
+				curScore = optimizeAllBranches();
+
+				/*----------------------------------------
+				 * Optimize tree with NNI
+				 *---------------------------------------*/
+				int nni_count = 0;
+				int nni_steps = 0;
+
+				imd_tree = doNNISearch(nni_count, nni_steps);
+
+				cout << "RATCHET ";
+			}
+		}
+
     	/*----------------------------------------
     	 * Print information
     	 *---------------------------------------*/
@@ -1692,8 +1751,7 @@ double IQTree::doTreeSearch() {
 
         // check whether the tree can be put into the reference set
         if (params->snni) {
-        	bool isAdded = candidateTrees.update(imd_tree, curScore);
-			if(isAdded) cout << "Candidate set UPDATED!" << endl;
+        	candidateTrees.update(imd_tree, curScore);
         	if (verbose_mode >= VB_MED) {
             	printBestScores(candidateTrees.popSize);
         	}
@@ -2362,6 +2420,28 @@ void IQTree::estimateNNICutoff(Params* params) {
 }
 
 void IQTree::saveCurrentTree(double cur_logl) {
+	/* -------------------------------------
+	 * Diep: Preprocess for MP
+	 * -------------------------------------*/
+	if(params->spr_parsimony){
+		int test_pars = 0;
+		pllComputePatternParsimony(pllInst, pllPartitions, _pattern_pars, &test_pars);
+		if(!on_ratchet_iter && test_pars != -int(cur_logl))
+			outError("WRONG pllComputeSiteParsimony: sum of site parsimony is different from alignment parsimony");
+	}
+
+	// if on_ratchet_iter, update cur_logl
+	if(params->maximum_parsimony && on_ratchet_iter){
+		int score = 0;
+	    int nptn = getAlnNPattern();
+		if(params->sort_alignment) nptn = saved_aln_on_ratchet_iter->n_informative_patterns;// take 'informative' into account
+		for(int p = 0; p < nptn; p++) score += _pattern_pars[p] * saved_aln_on_ratchet_iter->at(p).frequency;
+		cur_logl = -score;
+	}
+
+	/* -------------------------------------
+	 * Diep: Main old saveCurrentTree
+	 * -------------------------------------*/
     ostringstream ostr;
     string tree_str;
     StringIntMap::iterator it = treels.end();
@@ -2426,13 +2506,6 @@ void IQTree::saveCurrentTree(double cur_logl) {
     double *pattern_lh_orig = NULL;
 
 	if (params->maximum_parsimony){
-		if(params->spr_parsimony){
-			int test_pars = 0;
-			pllComputePatternParsimony(pllInst, pllPartitions, _pattern_pars, &test_pars);
-			if(test_pars != -int(cur_logl))
-				outError("WRONG pllComputeSiteParsimony: sum of site parsimony is different from alignment parsimony");
-		}
-
 		if(!params->auto_vectorize && reps_segments == -1){
 			// do this once
 			int i = 0;

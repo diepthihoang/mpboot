@@ -2595,7 +2595,7 @@ void optimizeAlignment(IQTree * & tree, Params & params){
 		// sort
 		PatternComp pcomp;
 		sort(tree->aln->begin(), tree->aln->end(), pcomp);
-		tree->aln->updateSitePatternAfterSorted();
+		tree->aln->updateSitePatternAfterOptimized();
 
 		tree->initializeAllPartialPars();
 		tree->clearAllPartialLH();
@@ -2603,7 +2603,7 @@ void optimizeAlignment(IQTree * & tree, Params & params){
 		if(pars_after != pars_before) outError("Reordering alignment has bug.");
 		cout << getCPUTime() - start << " seconds" << endl;
 	}else{
-		tree->aln->updateSitePatternAfterSorted();
+		tree->aln->updateSitePatternAfterOptimized();
 	}
 //	string tree_after = tree->getTreeString();
 //	cout << "TREE BEFORE: " << tree_before << endl;

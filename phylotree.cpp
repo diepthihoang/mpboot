@@ -1042,6 +1042,7 @@ int PhyloTree::computeParsimonyBranch(PhyloNeighbor *dad_branch, PhyloNode *dad,
         *branch_subst = tree_pars;
 
     tree_pars += node_branch->partial_pars[pars_size - 1] + dad_branch->partial_pars[pars_size - 1];
+
     return tree_pars;
 }
 

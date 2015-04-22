@@ -85,7 +85,7 @@ void Alignment::operator=(Alignment & aln){
     countConstSite();
 }
 
-void Alignment::updateSitePatternAfterSorted(){
+void Alignment::updateSitePatternAfterOptimized(){
 	frac_const_sites = 0.0;
 	int nsite = getNSite();
 	int nptn = getNPattern();
@@ -1742,6 +1742,112 @@ void Alignment::createBootstrapAlignment(Alignment *aln, IntVector* pattern_freq
     countConstSite();
     buildSeqStates();
 }
+/*
+void Alignment::createRatchetAlignment(Alignment *aln, int percentage, int weight, bool sort_aln) {
+    if (aln->isSuperAlignment()) outError("Internal error: ", __func__);
+    int site, nsite = aln->getNSite();
+    seq_names.insert(seq_names.begin(), aln->seq_names.begin(), aln->seq_names.end());
+    num_states = aln->num_states;
+    seq_type = aln->seq_type;
+    STATE_UNKNOWN = aln->STATE_UNKNOWN;
+    site_pattern.resize(nsite * (1 + weight), -1);
+    clear();
+    pattern_index.clear();
+    VerboseMode save_mode = verbose_mode;
+    verbose_mode = min(verbose_mode, VB_MIN); // to avoid printing gappy sites in addPattern
+
+	int nptn = aln->getNPattern();
+	int ratchet_nptn = nptn * percentage / 100;
+
+	vector<bool> chosen_ptn;
+	chosen_ptn.resize(nptn, false);
+	for(int p = 0; p < ratchet_nptn; p++){
+		int ptn_id = random_int(nptn);
+		chosen_ptn[ptn_id] = true;
+	}
+//	int ptn_count = 0;
+//	for(int k = 0; k < nptn; k++)
+//		if(chosen_ptn[k]) ptn_count++;
+//	cout << "Percentage of chosen_ptn: " << ptn_count * 100 / nptn << endl;
+
+	site = 0;
+	for(int p = 0; p < nptn; p++){
+		Pattern pat = aln->at(p);
+		if(chosen_ptn[p]){
+			// add 'weight' to original frequency
+			for(int i = 0; i < aln->at(p).frequency + weight; i++){
+				addPattern(pat, site);
+				site++;
+			}
+		}else{
+			// keep original frequency
+			for(int i = 0; i < aln->at(p).frequency; i++){
+				addPattern(pat, site);
+				site++;
+			}
+		}
+		at(p).ras_pars_score = aln->at(p).ras_pars_score;
+	}
+	site_pattern.resize(site);
+
+    verbose_mode = save_mode;
+    countConstSite();
+    buildSeqStates();
+    if(sort_aln) updateSitePatternAfterOptimized();
+}
+*/
+
+void Alignment::createPerturbAlignment(Alignment *aln, int percentage, int weight, bool sort_aln) {
+    if (aln->isSuperAlignment()) outError("Internal error: ", __func__);
+    int site, nsite = aln->getNSite();
+    seq_names.insert(seq_names.begin(), aln->seq_names.begin(), aln->seq_names.end());
+    num_states = aln->num_states;
+    seq_type = aln->seq_type;
+    STATE_UNKNOWN = aln->STATE_UNKNOWN;
+    site_pattern.resize(nsite + (aln->n_informative_sites * percentage / 100) * weight, -1);
+    clear();
+    pattern_index.clear();
+    VerboseMode save_mode = verbose_mode;
+    verbose_mode = min(verbose_mode, VB_MIN); // to avoid printing gappy sites in addPattern
+
+	int nptn = aln->getNPattern();
+	site = 0;
+	for(int p = 0; p < nptn; p++){
+		Pattern pat = aln->at(p);
+		// keep original frequency
+		for(int i = 0; i < aln->at(p).frequency; i++){
+			addPattern(pat, site);
+			site++;
+		}
+		at(p).ras_pars_score = aln->at(p).ras_pars_score;
+	}
+
+	int ratchet_nsite = aln->n_informative_sites * percentage / 100; // only resample from informative site
+	int orig_nsite = aln->getNSite();
+
+	for(int s = 0; s < ratchet_nsite; s++){
+		// Select informative site
+		int site_id, ptn_id, ras;
+		do{
+			site_id = random_int(orig_nsite);
+			ptn_id = aln->site_pattern[site_id];
+			ras = aln->at(ptn_id).ras_pars_score;
+		}while(ras == 0); // to make sure it's informative site
+
+		// Upweight
+		for(int w = 0; w < weight; w++){
+			Pattern pat = aln->at(ptn_id);
+			addPattern(pat, site);
+			site++;
+		}
+	}
+
+    verbose_mode = save_mode;
+    countConstSite();
+    buildSeqStates();
+    if(sort_aln) updateSitePatternAfterOptimized();
+}
+
 
 void Alignment::createBootstrapAlignment(IntVector &pattern_freq, const char *spec) {
 	int nptn = getNPattern();

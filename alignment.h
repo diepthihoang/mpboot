@@ -66,7 +66,7 @@ public:
     virtual ~Alignment();
 
     void operator=(Alignment & some_aln);
-    void updateSitePatternAfterSorted();
+    void updateSitePatternAfterOptimized();
 
     /****************************************************************************
             input alignment reader
@@ -342,6 +342,13 @@ public:
             	If spec == NULL, a standard procedure is applied, i.e., randomly draw m sites.
      */
     virtual void createBootstrapAlignment(Alignment *aln, IntVector* pattern_freq = NULL, const char *spec = NULL);
+
+	/**
+	 * Create an alignment for ratchet
+	 * by selecting a subset of informative sites (specify by percentage)
+	 * and upweighting them
+	 */
+	virtual void createPerturbAlignment(Alignment *aln, int percentage, int weight, bool sort_aln);
 
     /**
             resampling pattern frequency by a non-parametric bootstrap 
