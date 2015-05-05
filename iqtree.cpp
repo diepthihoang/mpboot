@@ -1550,6 +1550,7 @@ double IQTree::doTreeSearch() {
         }
 
         Alignment *saved_aln = aln;
+
         /*--------------------------------------------------------------------------
          * PARSIMONY RATCHET-LIKE IDEA
          * -------------------------------------------------------------------------*/
@@ -1573,80 +1574,81 @@ double IQTree::doTreeSearch() {
 			ratchet_iter_count++;
         }
 
+
     	/*----------------------------------------
     	 * Perturb the tree
     	 *---------------------------------------*/
-        double perturbScore;
-        if (iqp_assess_quartet == IQP_BOOTSTRAP) {
-            // create bootstrap sample
-            Alignment* bootstrap_alignment;
-            if (aln->isSuperAlignment())
-                bootstrap_alignment = new SuperAlignment;
-            else
-                bootstrap_alignment = new Alignment;
-            bootstrap_alignment->createBootstrapAlignment(aln, NULL, params->bootstrap_spec);
-            setAlignment(bootstrap_alignment);
-            initializeAllPartialLh();
-            clearAllPartialLH();
-            curScore = optimizeAllBranches();
-        } else {
-            if (params->snni) {
-                int numNNI = floor(searchinfo.curPerStrength * (aln->getNSeq() - 3));
-                //cout << "candidateTrees.size() = " << candidateTrees.size() << endl;
-                string candidateTree = candidateTrees.getRandCandTree();
-                readTreeString(candidateTree);
-                if (params->iqp) {
-                    doIQP();
-                } else {
-                    doRandomNNIs(numNNI); // Diep: This doesn't work well with sorted parsimony. Why?
-                }
-            } else {
-                doIQP();
-            }
-            setAlignment(aln);
-            setRootNode(params->root);
-            perturb_tree_string = getTreeString();
-            if (params->count_trees) {
-                string perturb_tree_topo = getTopology();
-                if (pllTreeCounter.find(perturb_tree_topo) == pllTreeCounter.end()) {
-                    // not found in hash_map
-                    pllTreeCounter[perturb_tree_topo] = 1;
-                } else {
-                    // found in hash_map
-                    pllTreeCounter[perturb_tree_topo]++;
-                }
-            }
+		double perturbScore;
+		if(!on_ratchet_iter){
+			if (iqp_assess_quartet == IQP_BOOTSTRAP) {
+				// create bootstrap sample
+				Alignment* bootstrap_alignment;
+				if (aln->isSuperAlignment())
+					bootstrap_alignment = new SuperAlignment;
+				else
+					bootstrap_alignment = new Alignment;
+				bootstrap_alignment->createBootstrapAlignment(aln, NULL, params->bootstrap_spec);
+				setAlignment(bootstrap_alignment);
+				initializeAllPartialLh();
+				clearAllPartialLH();
+				curScore = optimizeAllBranches();
+			} else {
+				if (params->snni) {
+					int numNNI = floor(searchinfo.curPerStrength * (aln->getNSeq() - 3));
+					//cout << "candidateTrees.size() = " << candidateTrees.size() << endl;
+					string candidateTree = candidateTrees.getRandCandTree();
+					readTreeString(candidateTree);
+					if (params->iqp) {
+						doIQP();
+					} else {
+						doRandomNNIs(numNNI); // Diep: This doesn't work well with sorted parsimony. Why?
+					}
+				} else {
+					doIQP();
+				}
+				setAlignment(aln);
+				setRootNode(params->root);
+				perturb_tree_string = getTreeString();
+				if (params->count_trees) {
+					string perturb_tree_topo = getTopology();
+					if (pllTreeCounter.find(perturb_tree_topo) == pllTreeCounter.end()) {
+						// not found in hash_map
+						pllTreeCounter[perturb_tree_topo] = 1;
+					} else {
+						// found in hash_map
+						pllTreeCounter[perturb_tree_topo]++;
+					}
+				}
 
-            if(params->maximum_parsimony && params->spr_parsimony && (params->snni || params->pll)){ // SPR for mpars
-            	pllNewickTree *perturbTree = pllNewickParseString(perturb_tree_string.c_str());
-				assert(perturbTree != NULL);
-				pllTreeInitTopologyNewick(pllInst, perturbTree, PLL_FALSE);
-				initializeAllPartialPars();
-			    clearAllPartialLH();
-			    curScore = perturbScore = -computeParsimony();
-            }else if (params->pll) {
-                pllNewickTree *perturbTree = pllNewickParseString(perturb_tree_string.c_str());
-                assert(perturbTree != NULL);
-                pllTreeInitTopologyNewick(pllInst, perturbTree, PLL_FALSE);
-                pllEvaluateLikelihood(pllInst, pllPartitions, pllInst->start, PLL_TRUE, PLL_FALSE);
-                if (params->numSmoothTree >= 1) {
-                    pllOptimizeBranchLengths(pllInst, pllPartitions, params->numSmoothTree);
-                }
-                pllNewickParseDestroy(&perturbTree);
-                curScore = pllInst->likelihood;
-                perturbScore = curScore;
-            } else {
-                initializeAllPartialLh();
-                clearAllPartialLH();
-                if (isSuperTree()) {
-                    ((PhyloSuperTree*) this)->mapTrees();
-                }
-                curScore = optimizeAllBranches(params->numSmoothTree, TOL_LIKELIHOOD, PLL_NEWZPERCYCLE);
-                perturbScore = curScore;
-            }
-        }
-
-
+				if(params->maximum_parsimony && params->spr_parsimony && (params->snni || params->pll)){ // SPR for mpars
+					pllNewickTree *perturbTree = pllNewickParseString(perturb_tree_string.c_str());
+					assert(perturbTree != NULL);
+					pllTreeInitTopologyNewick(pllInst, perturbTree, PLL_FALSE);
+					initializeAllPartialPars();
+					clearAllPartialLH();
+					curScore = perturbScore = -computeParsimony();
+				}else if (params->pll) {
+					pllNewickTree *perturbTree = pllNewickParseString(perturb_tree_string.c_str());
+					assert(perturbTree != NULL);
+					pllTreeInitTopologyNewick(pllInst, perturbTree, PLL_FALSE);
+					pllEvaluateLikelihood(pllInst, pllPartitions, pllInst->start, PLL_TRUE, PLL_FALSE);
+					if (params->numSmoothTree >= 1) {
+						pllOptimizeBranchLengths(pllInst, pllPartitions, params->numSmoothTree);
+					}
+					pllNewickParseDestroy(&perturbTree);
+					curScore = pllInst->likelihood;
+					perturbScore = curScore;
+				} else {
+					initializeAllPartialLh();
+					clearAllPartialLH();
+					if (isSuperTree()) {
+						((PhyloSuperTree*) this)->mapTrees();
+					}
+					curScore = optimizeAllBranches(params->numSmoothTree, TOL_LIKELIHOOD, PLL_NEWZPERCYCLE);
+					perturbScore = curScore;
+				}
+			}
+		}
     	/*----------------------------------------
     	 * Optimize tree with NNI
     	 *---------------------------------------*/
@@ -1670,30 +1672,28 @@ double IQTree::doTreeSearch() {
         /*--------------------------------------------------------------------------
          * PARSIMONY RATCHET-LIKE IDEA
          * -------------------------------------------------------------------------*/
-        if(params->ratchet_iter >= 0){
-			if(ratchet_iter_count == params->ratchet_iter + 1){
-				ratchet_iter_count = 0;
+        if(on_ratchet_iter){
+			ratchet_iter_count = 0;
 
-				// restore alignment
-				delete aln;
-				setAlignment(saved_aln_on_ratchet_iter);
-				on_ratchet_iter = false;
+			// restore alignment
+			delete aln;
+			setAlignment(saved_aln_on_ratchet_iter);
+			on_ratchet_iter = false;
 
-				initializeAllPartialLh();
-				clearAllPartialLH();
-				// update current score
-				curScore = optimizeAllBranches();
+			initializeAllPartialLh();
+			clearAllPartialLH();
+			// update current score
+			curScore = optimizeAllBranches();
 
-				/*----------------------------------------
-				 * Optimize tree with NNI
-				 *---------------------------------------*/
-				int nni_count = 0;
-				int nni_steps = 0;
+			/*----------------------------------------
+			 * Optimize tree with NNI
+			 *---------------------------------------*/
+			int nni_count = 0;
+			int nni_steps = 0;
 
-				imd_tree = doNNISearch(nni_count, nni_steps);
+			imd_tree = doNNISearch(nni_count, nni_steps);
 
-				cout << "RATCHET ";
-			}
+			cout << "RATCHET ";
 		}
 
     	/*----------------------------------------
