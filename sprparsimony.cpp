@@ -1371,7 +1371,7 @@ static void testInsertParsimony (pllInstance *tr, partitionList *pr, nodeptr p, 
 			pllSaveCurrentTreeSprParsimony(tr, pr, mp); // run UFBoot
 		}
 
-		if(mp < tr->bestParsimony)
+		if(mp <= tr->bestParsimony)
         {
           tr->bestParsimony = mp;
           tr->insertNode = q;
@@ -2187,6 +2187,13 @@ int pllOptimizeSprParsimony(pllInstance * tr, partitionList * pr, int mintrav, i
 	nodeRectifierPars(tr);
 	tr->bestParsimony = UINT_MAX;
 	tr->bestParsimony = evaluateParsimony(tr, pr, tr->start, PLL_TRUE, perSiteScores);
+
+	/*
+	// Diep: to be investigated
+	tr->bestParsimony = -iqtree->logl_cutoff;
+	evaluateParsimony(tr, pr, tr->start, PLL_TRUE, perSiteScores);
+	*/
+
 	randomMP = tr->bestParsimony;
 	tr->ntips = tr->mxtips;
 	do{

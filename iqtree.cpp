@@ -105,12 +105,14 @@ void IQTree::setParams(Params &params) {
     }
 
     // Minh's assignment for max_iterations
-    if (params.gbo_replicates && !params.maximum_parsimony)
+    if (params.gbo_replicates)
         params.max_iterations = max(params.max_iterations, max(params.min_iterations, 1000));
 
+	/*
+	// Diep's assignment for max_iterations >> causing 100 iteration BUG
     if (params.gbo_replicates && params.maximum_parsimony)
         params.max_iterations = max(params.max_iterations, params.min_iterations);
-
+	*/
     k_represent = params.k_representative;
 
     if (params.p_delete == -1.0) {
@@ -1722,23 +1724,34 @@ double IQTree::doTreeSearch() {
     	/*----------------------------------------
     	 * Update if better tree is found
     	 *---------------------------------------*/
-        if (curScore > bestScore) {
+//        if (curScore > bestScore) { // Minh&Tung for ML
+		if (curScore > bestScore || (curScore == bestScore && params->maximum_parsimony)) { // Diep added condition for MP
             stringstream cur_tree_topo_ss;
             setRootNode(params->root);
             printTree(cur_tree_topo_ss, WT_TAXON_ID | WT_SORT_TAXA);
-            if (cur_tree_topo_ss.str() != best_tree_topo) {
+
+			bool isNewTree = false;
+			if(params->maximum_parsimony)
+				isNewTree = !candidateTrees.treeTopologyExist(cur_tree_topo_ss.str());
+			else
+				isNewTree = (cur_tree_topo_ss.str() != best_tree_topo);
+
+            if (isNewTree) {
                 best_tree_topo = cur_tree_topo_ss.str();
                 // Diep: fix Minh's old if which wrongly set imd_tree = best_tree_topo for mpars
                 if (!params->maximum_parsimony)
                 	imd_tree = optimizeModelParameters();
                 stop_rule.addImprovedIteration(curIt);
+                if(curScore == bestScore && params->maximum_parsimony)
+					cout << "NOTE: A new MP tree with same score as the best." << endl;
                 cout << "BETTER TREE FOUND at iteration " << curIt << ": " << curScore;
                 cout << " / CPU time: " << (int) round(getCPUTime() - params->startCPUTime) << "s" << endl << endl;
                 if (curScore > bestScore) {
                     searchinfo.curPerStrength = params->initPerStrength;
                 }
             } else {
-                cout << "UPDATE BEST LOG-LIKELIHOOD: " << curScore << endl;
+            	if(!params->maximum_parsimony)
+	                cout << "UPDATE BEST LOG-LIKELIHOOD: " << curScore << endl;
             }
             setBestTree(imd_tree, curScore);
             if (params->write_best_trees) {
@@ -2737,6 +2750,7 @@ void IQTree::saveCurrentTree(double cur_logl) {
 						}
 						printTree(ostr, WT_TAXON_ID | WT_SORT_TAXA);
 						tree_str = ostr.str();
+
 						it = treels.find(tree_str);
 						if (it != treels.end()) {
 							tree_index = it->second;
