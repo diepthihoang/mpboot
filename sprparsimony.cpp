@@ -2172,9 +2172,9 @@ void _pllComputeRandomizedStepwiseAdditionParsimonyTree(pllInstance * tr, partit
  */
 int pllOptimizeSprParsimony(pllInstance * tr, partitionList * pr, int mintrav, int maxtrav, IQTree *_iqtree){
 	int perSiteScores = globalParam->gbo_replicates > 0;
-	if(!iqtree){
+	if(globalParam->ratchet_iter >= 0 || (!iqtree)){
 		iqtree = _iqtree;
-		_allocateParsimonyDataStructures(tr, pr, perSiteScores); // called once
+		_allocateParsimonyDataStructures(tr, pr, perSiteScores); // called once if not running ratchet
 	}
 
 	int i;
@@ -2208,7 +2208,11 @@ int pllOptimizeSprParsimony(pllInstance * tr, partitionList * pr, int mintrav, i
 		}
 	}while(randomMP < startMP);
 
-	// deallocation will occur once at the end of runTreeReconstruction()
+	// deallocation will occur once at the end of runTreeReconstruction() if not running ratchet
+    if(globalParam->ratchet_iter >= 0){
+    	_pllFreeParsimonyDataStructures(tr, pr);
+    }
+
 	return startMP;
 }
 
