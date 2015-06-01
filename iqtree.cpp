@@ -1657,7 +1657,7 @@ double IQTree::doTreeSearch() {
         int nni_count = 0;
         int nni_steps = 0;
 
-        imd_tree = doNNISearch(nni_count, nni_steps);
+		imd_tree = doNNISearch(nni_count, nni_steps);
 
         if (iqp_assess_quartet == IQP_BOOTSTRAP) {
             // restore alignment
@@ -1684,7 +1684,6 @@ double IQTree::doTreeSearch() {
 
 			initializeAllPartialLh();
 			clearAllPartialLH();
-			// update current score
 			curScore = optimizeAllBranches();
 
 			/*----------------------------------------
@@ -1694,6 +1693,8 @@ double IQTree::doTreeSearch() {
 			int nni_steps = 0;
 
 			imd_tree = doNNISearch(nni_count, nni_steps);
+			// update current score
+			curScore = optimizeAllBranches();
 
 			cout << "RATCHET ";
 		}
@@ -1845,14 +1846,21 @@ double IQTree::doTreeSearch() {
 string IQTree::doNNISearch(int& nniCount, int& nniSteps) {
 	string treeString;
 	if(params->maximum_parsimony && params->spr_parsimony && (params->snni || params->pll)){ // SPR for mpars
+		string treeString1 = getTreeString();
 		pllOptimizeSprParsimony(pllInst, pllPartitions, params->spr_mintrav, params->spr_maxtrav, this);
 		pllTreeToNewick(pllInst->tree_string, pllInst, pllPartitions, pllInst->start->back, PLL_TRUE,
 				PLL_TRUE, 0, 0, 0, PLL_SUMMARIZE_LH, 0, 0);
 		treeString = string(pllInst->tree_string);
+		if(treeString == treeString1) outError("Tree string stays the same after SPR.");
 		readTreeString(treeString);
 		initializeAllPartialPars();
 		clearAllPartialLH();
 		curScore = -computeParsimony();
+
+		// deallocation will occur once at the end of runTreeReconstruction() if not running ratchet
+		if(params->ratchet_iter >= 0){
+			_pllFreeParsimonyDataStructures(pllInst, pllPartitions);
+		}
 	}else
 	if (params->pll) {
     	if (params->partition_file)
@@ -2450,6 +2458,7 @@ void IQTree::saveCurrentTree(double cur_logl) {
 		if(params->sort_alignment) nptn = saved_aln_on_ratchet_iter->n_informative_patterns;// take 'informative' into account
 		for(int p = 0; p < nptn; p++) score += _pattern_pars[p] * saved_aln_on_ratchet_iter->at(p).frequency;
 		cur_logl = -score;
+//		curScore = -score;
 	}
 
 	/* -------------------------------------

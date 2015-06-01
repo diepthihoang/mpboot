@@ -1371,7 +1371,7 @@ static void testInsertParsimony (pllInstance *tr, partitionList *pr, nodeptr p, 
 			pllSaveCurrentTreeSprParsimony(tr, pr, mp); // run UFBoot
 		}
 
-		if(mp <= tr->bestParsimony)
+		if(mp < tr->bestParsimony)
         {
           tr->bestParsimony = mp;
           tr->insertNode = q;
@@ -2005,6 +2005,15 @@ static void stepwiseAddition(pllInstance *tr, partitionList *pr, nodeptr p, node
 }
 
 
+void _updateInternalPllOnRatchet(pllInstance *tr, partitionList *pr){
+	for(int i = 0; i < pr->numberOfPartitions; i++){
+		for(int ptn = pr->partitionData[i]->lower; ptn < pr->partitionData[i]->upper; ptn++){
+			tr->aliaswgt[ptn] = iqtree->aln->at(ptn).frequency;
+		}
+	}
+}
+
+
 void _allocateParsimonyDataStructures(pllInstance *tr, partitionList *pr, int perSiteScores)
 {
 	  int i;
@@ -2174,6 +2183,8 @@ int pllOptimizeSprParsimony(pllInstance * tr, partitionList * pr, int mintrav, i
 	int perSiteScores = globalParam->gbo_replicates > 0;
 	if(globalParam->ratchet_iter >= 0 || (!iqtree)){
 		iqtree = _iqtree;
+		// consider updating tr->yVector, then tr->aliaswgt (similar as in pllLoadAlignment)
+		if(globalParam->ratchet_iter >= 0) _updateInternalPllOnRatchet(tr, pr);
 		_allocateParsimonyDataStructures(tr, pr, perSiteScores); // called once if not running ratchet
 	}
 
@@ -2187,7 +2198,7 @@ int pllOptimizeSprParsimony(pllInstance * tr, partitionList * pr, int mintrav, i
 	nodeRectifierPars(tr);
 	tr->bestParsimony = UINT_MAX;
 	tr->bestParsimony = evaluateParsimony(tr, pr, tr->start, PLL_TRUE, perSiteScores);
-
+//	cout << "\ttr->bestParsimony (initial tree) = " << tr->bestParsimony << endl;
 	/*
 	// Diep: to be investigated
 	tr->bestParsimony = -iqtree->logl_cutoff;
@@ -2205,16 +2216,13 @@ int pllOptimizeSprParsimony(pllInstance * tr, partitionList * pr, int mintrav, i
 				restoreTreeRearrangeParsimony(tr, pr, perSiteScores);
 				randomMP = tr->bestParsimony;
 			}
+//			cout << "\ttr->bestParsimony = " << tr->bestParsimony << endl;
 		}
 	}while(randomMP < startMP);
 
-	// deallocation will occur once at the end of runTreeReconstruction() if not running ratchet
-    if(globalParam->ratchet_iter >= 0){
-    	_pllFreeParsimonyDataStructures(tr, pr);
-    }
-
 	return startMP;
 }
+
 
 int pllSaveCurrentTreeSprParsimony(pllInstance * tr, partitionList * pr, int cur_search_pars){
 	iqtree->saveCurrentTree(-cur_search_pars);
