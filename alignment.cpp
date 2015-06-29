@@ -1825,6 +1825,8 @@ void Alignment::createPerturbAlignment(Alignment *aln, int percentage, int weigh
 	int ratchet_nsite = aln->n_informative_sites * percentage / 100; // only resample from informative site
 	int orig_nsite = aln->getNSite();
 
+	vector<bool> selected_sites(orig_nsite, false); // Diep add June 19, 2015
+
 	for(int s = 0; s < ratchet_nsite; s++){
 		// Select informative site
 		int site_id, ptn_id, ras;
@@ -1832,7 +1834,9 @@ void Alignment::createPerturbAlignment(Alignment *aln, int percentage, int weigh
 			site_id = random_int(orig_nsite);
 			ptn_id = aln->site_pattern[site_id];
 			ras = aln->at(ptn_id).ras_pars_score;
-		}while(ras == 0); // to make sure it's informative site
+		}while(ras == 0 || (selected_sites[site_id])); // to make sure it's informative site
+
+		selected_sites[site_id] = true;
 
 		// Upweight
 		for(int w = 0; w < weight; w++){

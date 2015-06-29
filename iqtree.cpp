@@ -104,9 +104,22 @@ void IQTree::setParams(Params &params) {
         }
     }
 
+	/*
     // Minh's assignment for max_iterations
     if (params.gbo_replicates)
         params.max_iterations = max(params.max_iterations, max(params.min_iterations, 1000));
+    */
+
+    if (params.gbo_replicates & !params.maximum_parsimony){
+        params.max_iterations = max(params.max_iterations, max(params.min_iterations, 1000));
+    }
+
+	// These stopcond should work for both search and UFBoot-MP
+	if(params.maximum_parsimony){
+		params.max_iterations = max(params.max_iterations, 10 * aln->getNSeq());
+		if(params.unsuccess_iteration < 0)
+			params.unsuccess_iteration = ((aln->getNSeq() - 1) / 100 + 1) * 100;
+	}
 
 	/*
 	// Diep's assignment for max_iterations >> causing 100 iteration BUG
@@ -1763,6 +1776,35 @@ double IQTree::doTreeSearch() {
             printResultTree();
         }
 
+		/*
+		// Diep: This is old code for updating best tree >> to be removed
+		if (curScore > bestScore) {
+             stringstream cur_tree_topo_ss;
+             setRootNode(params->root);
+             printTree(cur_tree_topo_ss, WT_TAXON_ID | WT_SORT_TAXA);
+             if (cur_tree_topo_ss.str() != best_tree_topo) {
+                 best_tree_topo = cur_tree_topo_ss.str();
+                 // Diep: fix Minh's old if which wrongly set imd_tree = best_tree_topo for mpars
+                 if (!params->maximum_parsimony)
+                 	imd_tree = optimizeModelParameters();
+                 stop_rule.addImprovedIteration(curIt);
+                 cout << "BETTER TREE FOUND at iteration " << curIt << ": " << curScore;
+                 cout << " / CPU time: " << (int) round(getCPUTime() - params->startCPUTime) << "s" << endl << endl;
+                 if (curScore > bestScore) {
+                     searchinfo.curPerStrength = params->initPerStrength;
+                 }
+             } else {
+                 cout << "UPDATE BEST LOG-LIKELIHOOD: " << curScore << endl;
+             }
+             setBestTree(imd_tree, curScore);
+             if (params->write_best_trees) {
+                 ostringstream iter_string;
+                 iter_string << curIt;
+                 printResultTree(iter_string.str());
+             }
+             printResultTree();
+        }
+		*/
         // check whether the tree can be put into the reference set
         if (params->snni) {
         	candidateTrees.update(imd_tree, curScore);

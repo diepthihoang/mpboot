@@ -759,7 +759,7 @@ void parseArg(int argc, char *argv[], Params &params) {
     params.bestStart = true;
     params.snni = true; // turn on sNNI default now
 //    params.autostop = true; // turn on auto stopping rule by default now
-    params.unsuccess_iteration = 100;
+    params.unsuccess_iteration = -1;
     params.speednni = true; // turn on reduced hill-climbing NNI by default now
     params.adaptPert = false;
     params.numParsTrees = 100;
