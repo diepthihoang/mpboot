@@ -2084,9 +2084,7 @@ void parseArg(int argc, char *argv[], Params &params) {
 				if (params.gbo_replicates < 1000)
 					throw "#replicates must be >= 1000";
 				params.consensus_type = CT_CONSENSUS_TREE;
-				// Diep added the if
-				// so -n will overpower -bb if cooccur in the command line
-				if(params.stop_condition != SC_FIXED_ITERATION) params.stop_condition = SC_BOOTSTRAP_CORRELATION;
+				params.stop_condition = SC_BOOTSTRAP_CORRELATION;
 				//params.nni5Branches = true;
 				continue;
 			}

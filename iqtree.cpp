@@ -116,8 +116,9 @@ void IQTree::setParams(Params &params) {
 
 	// These stopcond should work for both search and UFBoot-MP
 	if(params.maximum_parsimony){
-		params.max_iterations = max(params.max_iterations, 10 * aln->getNSeq());
-		if(params.unsuccess_iteration < 0)
+		if(params.max_iterations == 1) // if not specifying -nm
+			params.max_iterations = max(params.max_iterations, 10 * aln->getNSeq());
+		if(params.unsuccess_iteration < 0) // if not specifying -stop_cond
 			params.unsuccess_iteration = ((aln->getNSeq() - 1) / 100 + 1) * 100;
 	}
 	/*
@@ -1745,7 +1746,7 @@ double IQTree::doTreeSearch() {
     	/*----------------------------------------
     	 * Update if better tree is found
     	 *---------------------------------------*/
-    	 /*
+		/*
 //        if (curScore > bestScore) { // Minh&Tung for ML
 		if (curScore > bestScore || (curScore == bestScore && params->maximum_parsimony)) { // Diep added condition for MP
             stringstream cur_tree_topo_ss;
@@ -1783,7 +1784,8 @@ double IQTree::doTreeSearch() {
             }
             printResultTree();
         }
-		*/
+        */
+
 
 		// Diep: This is old code for updating best tree >> to be removed
 		if (curScore > bestScore) {
@@ -2498,13 +2500,6 @@ void IQTree::saveCurrentTree(double cur_logl) {
 	/* -------------------------------------
 	 * Diep: Preprocess for MP
 	 * -------------------------------------*/
-	if(params->spr_parsimony){
-		int test_pars = 0;
-		pllComputePatternParsimony(pllInst, pllPartitions, _pattern_pars, &test_pars);
-		if(!on_ratchet_iter && test_pars != -int(cur_logl))
-			outError("WRONG pllComputeSiteParsimony: sum of site parsimony is different from alignment parsimony");
-	}
-
 	// if on_ratchet_iter, update cur_logl
 	if(params->maximum_parsimony && on_ratchet_iter){
 		int score = 0;
@@ -2582,6 +2577,13 @@ void IQTree::saveCurrentTree(double cur_logl) {
     double *pattern_lh_orig = NULL;
 
 	if (params->maximum_parsimony){
+		if(params->spr_parsimony){
+			int test_pars = 0;
+			pllComputePatternParsimony(pllInst, pllPartitions, _pattern_pars, &test_pars);
+			if(!on_ratchet_iter && test_pars != -int(cur_logl))
+				outError("WRONG pllComputeSiteParsimony: sum of site parsimony is different from alignment parsimony");
+		}
+
 		if(!params->auto_vectorize && reps_segments == -1){
 			// do this once
 			int i = 0;
