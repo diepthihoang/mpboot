@@ -238,17 +238,22 @@ void IQTree::setParams(Params &params) {
         	boot_logl.resize(params.gbo_replicates, -LONG_MAX); // Diep: Leaving this out might affect REPS computation
         else
         	boot_logl.resize(params.gbo_replicates, -DBL_MAX);
+
         boot_trees.resize(params.gbo_replicates, -1);
         boot_counts.resize(params.gbo_replicates, 0);
-        boot_best_hits.resize(params.gbo_replicates, 0);
-        boot_trees_parsimony.resize(params.gbo_replicates);
-//        boot_trees_parsimony_score.resize(params.gbo_replicates);
-        boot_trees_ls_parsimony.resize(params.gbo_replicates);
 
-        boot_trees_parsimony_top.resize(params.gbo_replicates);
-        for(int k = 0; k < params.gbo_replicates; k++) boot_trees_parsimony_top[k].clear();
-		boot_threshold.resize(params.gbo_replicates, -INT_MAX);
+        if(params.maximum_parsimony && params.multiple_hits){
+	//        boot_best_hits.resize(params.gbo_replicates, 0);
+			boot_trees_parsimony.resize(params.gbo_replicates);
+	//        boot_trees_parsimony_score.resize(params.gbo_replicates);
+			boot_trees_ls_parsimony.resize(params.gbo_replicates);
+		}
 
+		if(params.maximum_parsimony && params.store_top_boot_trees){
+			boot_trees_parsimony_top.resize(params.gbo_replicates);
+			for(int k = 0; k < params.gbo_replicates; k++) boot_trees_parsimony_top[k].clear();
+			boot_threshold.resize(params.gbo_replicates, -INT_MAX);
+		}
 		on_ratchet_iter = false;
 
         VerboseMode saved_mode = verbose_mode;
@@ -1558,7 +1563,8 @@ double IQTree::doTreeSearch() {
 //			logl_cutoff = 0.0;
 //		}
 
-		cout << "***TEST: max_candidate_trees = " << max_candidate_trees << ", logl_cutoff = " << logl_cutoff << endl;
+		cout << "***TEST: max_candidate_trees = " << max_candidate_trees << ", logl_cutoff = " << logl_cutoff
+			<< ", treels.size() = " << treels.size() << ", treels_logl.size() = " << treels_logl.size() << endl;
 
         if (estimate_nni_cutoff && nni_info.size() >= 500) {
             estimate_nni_cutoff = false;
@@ -1925,7 +1931,6 @@ string IQTree::doNNISearch(int& nniCount, int& nniSteps) {
         treeString = getTreeString();
     }
 
-    if(params->gbo_replicates && params->maximum_parsimony) cout << "*** treels.size() = " << treels.size() << endl;
     return treeString;
 }
 
@@ -2708,6 +2713,7 @@ void IQTree::saveCurrentTree(double cur_logl) {
 
 			if(skipped) continue;
 
+			/*
 			if(params->maximum_parsimony){
 				// Diep: for counting best score hit
 				if (rell == boot_logl[sample]) {
@@ -2716,6 +2722,7 @@ void IQTree::saveCurrentTree(double cur_logl) {
 					boot_best_hits[sample] = 1;
 				}
 			}
+			*/
 			// Diep: separate MP from ML because of multiple hits to best score
 			if(params->multiple_hits){
 				// Implementing -mulhits option (without -top10boot) BEGIN
