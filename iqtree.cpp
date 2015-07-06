@@ -120,7 +120,6 @@ void IQTree::setParams(Params &params) {
 		if(params.unsuccess_iteration < 0)
 			params.unsuccess_iteration = ((aln->getNSeq() - 1) / 100 + 1) * 100;
 	}
-
 	/*
 	// Diep's assignment for max_iterations >> causing 100 iteration BUG
     if (params.gbo_replicates && params.maximum_parsimony)
@@ -1559,6 +1558,8 @@ double IQTree::doTreeSearch() {
 //			logl_cutoff = 0.0;
 //		}
 
+		cout << "***TEST: max_candidate_trees = " << max_candidate_trees << ", logl_cutoff = " << logl_cutoff << endl;
+
         if (estimate_nni_cutoff && nni_info.size() >= 500) {
             estimate_nni_cutoff = false;
             estimateNNICutoff(params);
@@ -1738,6 +1739,7 @@ double IQTree::doTreeSearch() {
     	/*----------------------------------------
     	 * Update if better tree is found
     	 *---------------------------------------*/
+    	 /*
 //        if (curScore > bestScore) { // Minh&Tung for ML
 		if (curScore > bestScore || (curScore == bestScore && params->maximum_parsimony)) { // Diep added condition for MP
             stringstream cur_tree_topo_ss;
@@ -1775,8 +1777,8 @@ double IQTree::doTreeSearch() {
             }
             printResultTree();
         }
+		*/
 
-		/*
 		// Diep: This is old code for updating best tree >> to be removed
 		if (curScore > bestScore) {
              stringstream cur_tree_topo_ss;
@@ -1804,7 +1806,7 @@ double IQTree::doTreeSearch() {
              }
              printResultTree();
         }
-		*/
+
         // check whether the tree can be put into the reference set
         if (params->snni) {
         	candidateTrees.update(imd_tree, curScore);
@@ -1869,6 +1871,7 @@ double IQTree::doTreeSearch() {
         pllDestroyUFBootData();
     }
 
+	/*
 	// Diep: print boot aln best score hits
 	if(params->gbo_replicates && params->maximum_parsimony){
 		string boot_best_hits_file = params->out_prefix;
@@ -1879,6 +1882,8 @@ double IQTree::doTreeSearch() {
 		}
 		out.close();
 	}
+	*/
+
     return bestScore;
 }
 
@@ -1919,6 +1924,8 @@ string IQTree::doNNISearch(int& nniCount, int& nniSteps) {
         }
         treeString = getTreeString();
     }
+
+    if(params->gbo_replicates && params->maximum_parsimony) cout << "*** treels.size() = " << treels.size() << endl;
     return treeString;
 }
 
@@ -2725,7 +2732,7 @@ void IQTree::saveCurrentTree(double cur_logl) {
 						if (it != treels.end()) {
 							tree_index = it->second;
 						} else {
-							tree_index = treels.size();
+							tree_index = treels_logl.size() - 1; // old statement is wrong: treels.size();
 							treels[tree_str] = tree_index;
 						}
 					}
@@ -2760,7 +2767,7 @@ void IQTree::saveCurrentTree(double cur_logl) {
 							if (it != treels.end()) {
 								tree_index = it->second;
 							} else {
-								tree_index = treels.size();
+								tree_index = treels_logl.size() - 1; // old statement is wrong: treels.size();
 								treels[tree_str] = tree_index;
 							}
 						}
@@ -2806,7 +2813,7 @@ void IQTree::saveCurrentTree(double cur_logl) {
 						if (it != treels.end()) {
 							tree_index = it->second;
 						} else {
-							tree_index = treels.size();
+							tree_index = treels_logl.size() - 1; // old statement is wrong: treels.size();
 							treels[tree_str] = tree_index;
 						}
 					}
