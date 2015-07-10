@@ -715,7 +715,7 @@ public:
 	IntVector boot_counts;
 
 	IntVector boot_best_hits; // Diep: added to count # best trees on each boot aln
-	vector<IntVector> boot_trees_parsimony;
+	vector<IntegerSet> boot_trees_parsimony;
 //	vector<IntVector> boot_trees_parsimony_score;
 	vector<StringIntMap> boot_trees_ls_parsimony;
 
@@ -726,6 +726,7 @@ public:
 
 	bool on_ratchet_iter;
 	Alignment * saved_aln_on_ratchet_iter;
+	BootValTypePars * original_sample;
 
     /** corresponding RELL log-likelihood */
     DoubleVector boot_logl;

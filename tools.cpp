@@ -654,7 +654,7 @@ void parseArg(int argc, char *argv[], Params &params) {
     params.manuel_analytic_approx = false;
     params.leastSquareNNI = false;
     params.ls_var_type = OLS;
-    params.maxCandidates = 100;
+    params.maxCandidates = 1000; // Diep: MP needs more candidates than ML
     params.popSize = 5;
     params.p_delete = -1;
     params.min_iterations = -1;
@@ -774,8 +774,8 @@ void parseArg(int argc, char *argv[], Params &params) {
     params.multiple_hits = false;
     params.store_top_boot_trees = 0;
     params.ratchet_iter = -1;
-    params.ratchet_wgt = 0;
-    params.ratchet_percent = 0;
+    params.ratchet_wgt = 1; // default if just specify -ratchet
+    params.ratchet_percent = 50; // default if just specify -ratchet
     params.compute_parsimony = false;
     params.sankoff_cost_file = NULL;
     params.condense_parsimony_equiv_sites = false;
@@ -2263,6 +2263,10 @@ void parseArg(int argc, char *argv[], Params &params) {
                 if (cnt >= argc)
                     throw "Use -topboot <number of top trees stored for each boot sample>";
             	params.store_top_boot_trees = convert_int(argv[cnt]);
+            	continue;
+            }
+            if(strcmp(argv[cnt], "-ratchet") == 0){
+            	if(params.ratchet_iter < 0) params.ratchet_iter = 1;
             	continue;
             }
             if(strcmp(argv[cnt], "-ratchet_iter") == 0){

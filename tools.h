@@ -183,6 +183,11 @@ typedef vector<int> IntList;
 typedef vector<int> IntVector;
 
 /**
+ 		set of int
+ */
+typedef set<int> IntegerSet; // Diep added
+
+/**
         vector of bool
  */
 typedef vector<bool> BoolVector;
