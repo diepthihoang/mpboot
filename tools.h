@@ -1521,6 +1521,10 @@ struct Params {
      */
     bool sort_alignment;
 
+	/*
+	 * Diep: for determining logl_cutoff in master_pars_simple
+	 */
+	int cutoff_percent;
 
 #ifdef _OPENMP
     int num_threads;

@@ -1557,6 +1557,7 @@ double IQTree::doTreeSearch() {
     for ( ; !stop_rule.meetStopCondition(curIt, cur_correlation); curIt++) {
         searchinfo.curIter = curIt;
 //		if(!params->maximum_parsimony){
+		if(params->cutoff_percent < 0){
 			// estimate logl_cutoff for bootstrap
 			if (params->avoid_duplicated_trees && max_candidate_trees > 0 && treels_logl.size() > 1000) {
 				int predicted_iteration = ((curIt+params->step_iterations-1)/params->step_iterations)*params->step_iterations;
@@ -1565,7 +1566,6 @@ double IQTree::doTreeSearch() {
 					DoubleVector logl = treels_logl;
 					nth_element(logl.begin(), logl.begin() + (treels_logl.size() - num_entries), logl.end());
 					logl_cutoff = logl[treels_logl.size() - num_entries] - 1.0;
-					last_nonzero_cutoff = logl_cutoff; // Diep added
 				} else
 					logl_cutoff = 0.0;
 				if (verbose_mode >= VB_MED) {
@@ -1579,11 +1579,13 @@ double IQTree::doTreeSearch() {
 					}
 				}
 			}
-//		}
-//
-//		if(params->maximum_parsimony){
-//			logl_cutoff = 0.0;
-//		}
+		}else {
+			if (params->avoid_duplicated_trees && treels_logl.size() > 1000) {
+				DoubleVector logl = treels_logl;
+				nth_element(logl.begin(), logl.begin() + logl.size() * params->cutoff_percent / 100 , logl.end(), std::greater<double>());
+				logl_cutoff = logl[logl.size() * params->cutoff_percent / 100];
+			}
+		}
 
 //		cout << "***TEST: max_candidate_trees = " << max_candidate_trees << ", logl_cutoff = " << logl_cutoff
 //			<< ", treels.size() = " << treels.size() << ", treels_logl.size() = " << treels_logl.size() << endl;
@@ -1914,13 +1916,14 @@ double IQTree::doTreeSearch() {
 	}
 	*/
 
+/*
    	cout << "NOTE: For bootstrap trees, worst_logl = " << worst_boot_logl
 	   	<< " , saved_logl_cutoff = " << saved_logl_cutoff
 	   	<< " , last_nonzero_logl_cutoff = " << last_nonzero_cutoff
 	   	<< " , last logl_cutoff = " << logl_cutoff << endl
    		<< "NOTE: last_update_it = " << last_update_it
    		<< " , last it = " << curIt - 1 << endl;
-
+*/
     return bestScore;
 }
 
@@ -2878,13 +2881,13 @@ void IQTree::saveCurrentTree(double cur_logl) {
         if (updated && verbose_mode >= VB_MAX)
             cout << updated << " boot trees updated" << endl;
 
-        if(updated && curIt >= 51){
-        	last_update_it = curIt;
-			if(cur_logl < worst_boot_logl){
-				worst_boot_logl = cur_logl;
-				saved_logl_cutoff = logl_cutoff;
-			}
-        }
+//        if(updated && curIt >= 51){
+//        	last_update_it = curIt;
+//			if(cur_logl < worst_boot_logl){
+//				worst_boot_logl = cur_logl;
+//				saved_logl_cutoff = logl_cutoff;
+//			}
+//        }
 
         /*
          if (tree_index >= max_candidate_trees/2 && boot_splits->empty()) {

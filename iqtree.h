@@ -728,10 +728,6 @@ public:
 	Alignment * saved_aln_on_ratchet_iter;
 	BootValTypePars * original_sample;
 
-	int worst_boot_logl; // to track the worst value of cur_logl among bootstrap candidate trees
-	int last_update_it; // to track the last iteration that bootstrap tree set is updated
-	int saved_logl_cutoff; // to save the value of logl_cutoff when saving worst_boot_logl
-	int last_nonzero_cutoff;
 
     /** corresponding RELL log-likelihood */
     DoubleVector boot_logl;

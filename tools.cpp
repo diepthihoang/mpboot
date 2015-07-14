@@ -785,6 +785,7 @@ void parseArg(int argc, char *argv[], Params &params) {
     params.test_site_pars = false;
     params.auto_vectorize = false;
     params.sort_alignment = true;
+    params.cutoff_percent = -1;
 #ifdef _OPENMP
     params.num_threads = 0;
 #endif
@@ -2340,7 +2341,13 @@ void parseArg(int argc, char *argv[], Params &params) {
             	params.sort_alignment = false;
             	continue;
             }
-
+			if(strcmp(argv[cnt], "-cutoff_percent") == 0){
+            	cnt++;
+                if (cnt >= argc)
+                    throw "Use -cutoff_percent <integer from 0 to 100>";
+            	params.cutoff_percent = convert_int(argv[cnt]);
+            	continue;
+            }
 			if (strcmp(argv[cnt], "-me") == 0) {
 				cnt++;
 				if (cnt >= argc)
