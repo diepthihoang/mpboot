@@ -267,6 +267,11 @@ void IQTree::setParams(Params &params) {
 				original_sample[i] = aln->at(i).frequency;
 		}
 
+		worst_boot_logl = 0;
+		last_update_it = -1;
+		saved_logl_cutoff = 0;
+		last_nonzero_cutoff = 1;
+
         VerboseMode saved_mode = verbose_mode;
         verbose_mode = VB_QUIET;
 
@@ -1560,6 +1565,7 @@ double IQTree::doTreeSearch() {
 					DoubleVector logl = treels_logl;
 					nth_element(logl.begin(), logl.begin() + (treels_logl.size() - num_entries), logl.end());
 					logl_cutoff = logl[treels_logl.size() - num_entries] - 1.0;
+					last_nonzero_cutoff = logl_cutoff; // Diep added
 				} else
 					logl_cutoff = 0.0;
 				if (verbose_mode >= VB_MED) {
@@ -1907,6 +1913,13 @@ double IQTree::doTreeSearch() {
 		out.close();
 	}
 	*/
+
+   	cout << "NOTE: For bootstrap trees, worst_logl = " << worst_boot_logl
+	   	<< " , saved_logl_cutoff = " << saved_logl_cutoff
+	   	<< " , last_nonzero_logl_cutoff = " << last_nonzero_cutoff
+	   	<< " , last logl_cutoff = " << logl_cutoff << endl
+   		<< "NOTE: last_update_it = " << last_update_it
+   		<< " , last it = " << curIt - 1 << endl;
 
     return bestScore;
 }
@@ -2773,10 +2786,10 @@ void IQTree::saveCurrentTree(double cur_logl) {
 					// Diep: fix since July 9, 2015
 					// Change boot_trees_parsimony[sample] type from IntVector to IntegerSet
 					// We can keep using the IntVec and check whether tree_index == treels_logl.size() - 1
-					if(boot_trees_parsimony[sample].find(tree_index) == boot_trees_parsimony[sample].end())
+					if(boot_trees_parsimony[sample].find(tree_index) == boot_trees_parsimony[sample].end()){
 						boot_trees_parsimony[sample].insert(tree_index);
-
-					updated++;
+						updated++;
+					}
 				} // Implementing -mulhits option (without -top10boot) END
 
 				// Implementing -mulhits -topboot 10 option BEGIN
@@ -2821,6 +2834,7 @@ void IQTree::saveCurrentTree(double cur_logl) {
 								boot_trees_parsimony_top[sample].insert(it, std::make_pair(tree_index, rell));
 								boot_threshold[sample] = boot_trees_parsimony_top[sample][params->store_top_boot_trees - 1].second;
 							}
+							updated++;
 						}
 					}
 				} // Implementing -mulhits -topboot 10 option END
@@ -2863,6 +2877,15 @@ void IQTree::saveCurrentTree(double cur_logl) {
         }
         if (updated && verbose_mode >= VB_MAX)
             cout << updated << " boot trees updated" << endl;
+
+        if(updated && curIt >= 51){
+        	last_update_it = curIt;
+			if(cur_logl < worst_boot_logl){
+				worst_boot_logl = cur_logl;
+				saved_logl_cutoff = logl_cutoff;
+			}
+        }
+
         /*
          if (tree_index >= max_candidate_trees/2 && boot_splits->empty()) {
          // summarize split support half way for stopping criterion
