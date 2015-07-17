@@ -267,11 +267,6 @@ void IQTree::setParams(Params &params) {
 				original_sample[i] = aln->at(i).frequency;
 		}
 
-		worst_boot_logl = 0;
-		last_update_it = -1;
-		saved_logl_cutoff = 0;
-		last_nonzero_cutoff = 1;
-
         VerboseMode saved_mode = verbose_mode;
         verbose_mode = VB_QUIET;
 
@@ -2533,15 +2528,16 @@ void IQTree::saveCurrentTree(double cur_logl) {
 	 * Diep: Preprocess for MP
 	 * -------------------------------------*/
 	// if on_ratchet_iter, update cur_logl
-	if(params->maximum_parsimony && on_ratchet_iter){
-		int score = 0;
-	    int nptn = getAlnNPattern();
-		if(params->sort_alignment) nptn = saved_aln_on_ratchet_iter->n_informative_patterns;// take 'informative' into account
-//		for(int p = 0; p < nptn; p++) score += _pattern_pars[p] * saved_aln_on_ratchet_iter->at(p).frequency;
+	if(params->maximum_parsimony && on_ratchet_iter && reps_segments != -1){
+		int ptn = 0, segment_id = 0, score = 0;
 		VectorClassUShort vc_score = 0;
-		for(int p = 0; p < nptn; p += VCSIZE_USHORT)
-		vc_score = VectorClassUShort().load_a(&_pattern_pars[p]) * VectorClassUShort().load_a(&original_sample[p]) + vc_score;
-		score += horizontal_add(vc_score);
+		// sum by segment to avoid data overflow
+		for(; segment_id < reps_segments; segment_id++){
+			for (; ptn < segment_upper[segment_id]; ptn+=VCSIZE_USHORT)
+				vc_score = VectorClassUShort().load_a(&_pattern_pars[ptn]) * VectorClassUShort().load_a(&original_sample[ptn]) + vc_score;
+			score += horizontal_add(vc_score);
+			vc_score = 0;
+		}
 		cur_logl = -score;
 	}
 
