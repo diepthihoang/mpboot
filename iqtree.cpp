@@ -257,7 +257,7 @@ void IQTree::setParams(Params &params) {
 			for(int k = 0; k < params.gbo_replicates; k++) boot_trees_parsimony_top[k].clear();
 			boot_threshold.resize(params.gbo_replicates, -INT_MAX);
 		}
-		on_ratchet_iter = false;
+		on_ratchet_hclimb1 = false;
 
 		if(params.ratchet_iter >= 0){
 			nunit = getAlnNPattern() + VCSIZE_USHORT;
@@ -1551,8 +1551,8 @@ double IQTree::doTreeSearch() {
 	 *====================================================*/
     for ( ; !stop_rule.meetStopCondition(curIt, cur_correlation); curIt++) {
         searchinfo.curIter = curIt;
-//		if(!params->maximum_parsimony){
 		if(params->cutoff_percent < 0){
+			// old way of updating logl_cutoff
 			// estimate logl_cutoff for bootstrap
 			if (params->avoid_duplicated_trees && max_candidate_trees > 0 && treels_logl.size() > 1000) {
 				int predicted_iteration = ((curIt+params->step_iterations-1)/params->step_iterations)*params->step_iterations;
@@ -1575,15 +1575,17 @@ double IQTree::doTreeSearch() {
 				}
 			}
 		}else {
+			// new way of updating logl_cutoff
+			// works for MP, possibly works for ML as well
 			if (params->avoid_duplicated_trees && treels_logl.size() > 1000) {
 				DoubleVector logl = treels_logl;
 				nth_element(logl.begin(), logl.begin() + logl.size() * params->cutoff_percent / 100 , logl.end(), std::greater<double>());
 				logl_cutoff = logl[logl.size() * params->cutoff_percent / 100];
 			}
+			cout << "***TEST: logl_cutoff = " << logl_cutoff
+				<< ", treels.size() = " << treels.size() << ", treels_logl.size() = " << treels_logl.size() << endl;
 		}
 
-//		cout << "***TEST: max_candidate_trees = " << max_candidate_trees << ", logl_cutoff = " << logl_cutoff
-//			<< ", treels.size() = " << treels.size() << ", treels_logl.size() = " << treels_logl.size() << endl;
 
         if (estimate_nni_cutoff && nni_info.size() >= 500) {
             estimate_nni_cutoff = false;
@@ -1595,9 +1597,14 @@ double IQTree::doTreeSearch() {
         /*--------------------------------------------------------------------------
          * PARSIMONY RATCHET-LIKE IDEA
          * -------------------------------------------------------------------------*/
+		long tmp_num_ratchet_trees = treels_logl.size();
+		long tmp_num_ratchet_bootcands = treels.size();
 
         if(params->ratchet_iter >= 0){
         	if(params->ratchet_iter == ratchet_iter_count){
+				string candidateTree = candidateTrees.getRandCandTree();
+				readTreeString(candidateTree);
+
 				Alignment* perturb_alignment;
 				if (aln->isSuperAlignment())
 					perturb_alignment = new SuperAlignment;
@@ -1607,7 +1614,8 @@ double IQTree::doTreeSearch() {
 				saved_aln_on_ratchet_iter = aln;
 
 				setAlignment(perturb_alignment);
-				on_ratchet_iter = true;
+				setRootNode(params->root);
+				on_ratchet_hclimb1 = true;
 
 				initializeAllPartialLh();
 				clearAllPartialLH();
@@ -1621,7 +1629,7 @@ double IQTree::doTreeSearch() {
     	 * Perturb the tree
     	 *---------------------------------------*/
 		double perturbScore;
-		if(!on_ratchet_iter){
+		if(!on_ratchet_hclimb1){
 			if (iqp_assess_quartet == IQP_BOOTSTRAP) {
 				// create bootstrap sample
 				Alignment* bootstrap_alignment;
@@ -1714,13 +1722,16 @@ double IQTree::doTreeSearch() {
         /*--------------------------------------------------------------------------
          * PARSIMONY RATCHET-LIKE IDEA
          * -------------------------------------------------------------------------*/
-        if(on_ratchet_iter){
+        if(on_ratchet_hclimb1){
+        	cout << "*** TEST: number of ratchet trees: " << treels_logl.size() - tmp_num_ratchet_trees
+        		<< ", number of ratchet bootstrap candidates: " << treels.size() - tmp_num_ratchet_bootcands << endl;
+
 			ratchet_iter_count = 0;
 
 			// restore alignment
 			delete aln;
 			setAlignment(saved_aln_on_ratchet_iter);
-			on_ratchet_iter = false;
+			on_ratchet_hclimb1 = false;
 
 			initializeAllPartialLh();
 			clearAllPartialLH();
@@ -1734,6 +1745,8 @@ double IQTree::doTreeSearch() {
 
 			imd_tree = doNNISearch(nni_count, nni_steps);
 			// update current score
+			initializeAllPartialLh();
+			clearAllPartialLH();
 			curScore = optimizeAllBranches();
 
 			cout << "RATCHET ";
@@ -1928,20 +1941,26 @@ double IQTree::doTreeSearch() {
 string IQTree::doNNISearch(int& nniCount, int& nniSteps) {
 	string treeString;
 	if(params->maximum_parsimony && params->spr_parsimony && (params->snni || params->pll)){ // SPR for mpars
-		string treeString1 = getTreeString();
-		pllOptimizeSprParsimony(pllInst, pllPartitions, params->spr_mintrav, params->spr_maxtrav, this);
-		pllTreeToNewick(pllInst->tree_string, pllInst, pllPartitions, pllInst->start->back, PLL_TRUE,
-				PLL_TRUE, 0, 0, 0, PLL_SUMMARIZE_LH, 0, 0);
-		treeString = string(pllInst->tree_string);
-		if(treeString == treeString1) outError("Tree string stays the same after SPR.");
-		readTreeString(treeString);
-		initializeAllPartialPars();
-		clearAllPartialLH();
-		curScore = -computeParsimony();
+//		if(false){
+		if(on_ratchet_hclimb1 && params->hclimb1_nni){
+			curScore = optimizeNNI(nniCount, nniSteps);
+			treeString = getTreeString();
+		}else{
+			string treeString1 = getTreeString();
+			pllOptimizeSprParsimony(pllInst, pllPartitions, params->spr_mintrav, params->spr_maxtrav, this);
+			pllTreeToNewick(pllInst->tree_string, pllInst, pllPartitions, pllInst->start->back, PLL_TRUE,
+					PLL_TRUE, 0, 0, 0, PLL_SUMMARIZE_LH, 0, 0);
+			treeString = string(pllInst->tree_string);
+			if(treeString == treeString1) outError("Tree string stays the same after SPR.");
+			readTreeString(treeString);
+			initializeAllPartialPars();
+			clearAllPartialLH();
+			curScore = -computeParsimony();
 
-		// deallocation will occur once at the end of runTreeReconstruction() if not running ratchet
-		if(params->ratchet_iter >= 0){
-			_pllFreeParsimonyDataStructures(pllInst, pllPartitions);
+			// deallocation will occur once at the end of runTreeReconstruction() if not running ratchet
+			if((params->ratchet_iter >= 0 && (!params->hclimb1_nni))){
+				_pllFreeParsimonyDataStructures(pllInst, pllPartitions);
+			}
 		}
 	}else
 	if (params->pll) {
@@ -2523,12 +2542,17 @@ void IQTree::estimateNNICutoff(Params* params) {
     delete[] delta;
 }
 
+/*
+ * Diep: 	For maximum parsimony, REMEMBER that
+ * 			params->spr_parsimony && !on_ratchet_hclimb1 && !params->hclimb1_nni
+ * 			means the tree is already in IQTREE data structure
+ */
 void IQTree::saveCurrentTree(double cur_logl) {
 	/* -------------------------------------
 	 * Diep: Preprocess for MP
 	 * -------------------------------------*/
 	// if on_ratchet_iter, update cur_logl
-	if(params->maximum_parsimony && on_ratchet_iter && reps_segments != -1){
+	if(params->maximum_parsimony && on_ratchet_hclimb1 && reps_segments != -1){
 		int ptn = 0, segment_id = 0, score = 0;
 		VectorClassUShort vc_score = 0;
 		// sum by segment to avoid data overflow
@@ -2548,7 +2572,7 @@ void IQTree::saveCurrentTree(double cur_logl) {
     string tree_str;
     StringIntMap::iterator it = treels.end();
     if (params->store_candidate_trees) {
-    	if(params->spr_parsimony){
+    	if(params->spr_parsimony && !(params->ratchet_iter >= 0 && on_ratchet_hclimb1 && params->hclimb1_nni)){
 			pllTreeToNewick(pllInst->tree_string, pllInst, pllPartitions, pllInst->start->back, PLL_TRUE, PLL_TRUE, 0, 0, 0, PLL_SUMMARIZE_LH, 0, 0);
 			string imd_tree = string(pllInst->tree_string);
 			readTreeString(imd_tree);
@@ -2608,10 +2632,10 @@ void IQTree::saveCurrentTree(double cur_logl) {
     double *pattern_lh_orig = NULL;
 
 	if (params->maximum_parsimony){
-		if(params->spr_parsimony){
+		if(params->spr_parsimony && !(params->ratchet_iter >= 0 && on_ratchet_hclimb1 && params->hclimb1_nni)){
 			int test_pars = 0;
 			pllComputePatternParsimony(pllInst, pllPartitions, _pattern_pars, &test_pars);
-			if(!on_ratchet_iter && test_pars != -int(cur_logl))
+			if(!on_ratchet_hclimb1 && test_pars != -int(cur_logl))
 				outError("WRONG pllComputeSiteParsimony: sum of site parsimony is different from alignment parsimony");
 		}
 
@@ -2761,7 +2785,7 @@ void IQTree::saveCurrentTree(double cur_logl) {
 				// Implementing -mulhits option (without -top10boot) BEGIN
 				if(rell >= boot_logl[sample] && !params->store_top_boot_trees){
 					if (tree_str == "") {
-						if(params->spr_parsimony){
+						if(params->spr_parsimony && !(params->ratchet_iter >= 0 && on_ratchet_hclimb1 && params->hclimb1_nni)){
 							pllTreeToNewick(pllInst->tree_string, pllInst, pllPartitions, pllInst->start->back, PLL_TRUE, PLL_TRUE, 0, 0, 0, PLL_SUMMARIZE_LH, 0, 0);
 							string imd_tree = string(pllInst->tree_string);
 							readTreeString(imd_tree);
@@ -2795,7 +2819,7 @@ void IQTree::saveCurrentTree(double cur_logl) {
 				if(params->store_top_boot_trees){
 					if(boot_trees_parsimony_top[sample].size() < params->store_top_boot_trees || rell > boot_threshold[sample]){
 						if (tree_str == "") {
-							if(params->spr_parsimony){
+							if(params->spr_parsimony && !(params->ratchet_iter >= 0 && on_ratchet_hclimb1 && params->hclimb1_nni)){
 								pllTreeToNewick(pllInst->tree_string, pllInst, pllPartitions, pllInst->start->back, PLL_TRUE, PLL_TRUE, 0, 0, 0, PLL_SUMMARIZE_LH, 0, 0);
 								string imd_tree = string(pllInst->tree_string);
 								readTreeString(imd_tree);
@@ -2844,7 +2868,7 @@ void IQTree::saveCurrentTree(double cur_logl) {
 						|| (rell > boot_logl[sample] - params->ufboot_epsilon
 								&& random_double() <= 1.0 / (boot_counts[sample] + 1))) {
 					if (tree_str == "") {
-						if(params->spr_parsimony){
+						if(params->spr_parsimony && !(params->ratchet_iter >= 0 && on_ratchet_hclimb1 && params->hclimb1_nni)){
 							pllTreeToNewick(pllInst->tree_string, pllInst, pllPartitions, pllInst->start->back, PLL_TRUE, PLL_TRUE, 0, 0, 0, PLL_SUMMARIZE_LH, 0, 0);
 							string imd_tree = string(pllInst->tree_string);
 							readTreeString(imd_tree);

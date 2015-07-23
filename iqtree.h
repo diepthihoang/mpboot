@@ -724,7 +724,7 @@ public:
 	vector<IntPairVector> boot_trees_parsimony_top;
 	vector<int> boot_threshold;
 
-	bool on_ratchet_iter;
+	bool on_ratchet_hclimb1;
 	Alignment * saved_aln_on_ratchet_iter;
 	BootValTypePars * original_sample;
 

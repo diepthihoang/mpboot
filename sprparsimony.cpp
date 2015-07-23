@@ -2181,10 +2181,10 @@ void _pllComputeRandomizedStepwiseAdditionParsimonyTree(pllInstance * tr, partit
  */
 int pllOptimizeSprParsimony(pllInstance * tr, partitionList * pr, int mintrav, int maxtrav, IQTree *_iqtree){
 	int perSiteScores = globalParam->gbo_replicates > 0;
-	if(globalParam->ratchet_iter >= 0 || (!iqtree)){
+	if((globalParam->ratchet_iter >= 0 && (!globalParam->hclimb1_nni)) || (!iqtree)){
 		iqtree = _iqtree;
 		// consider updating tr->yVector, then tr->aliaswgt (similar as in pllLoadAlignment)
-		if(globalParam->ratchet_iter >= 0) _updateInternalPllOnRatchet(tr, pr);
+		if(globalParam->ratchet_iter >= 0 && (!globalParam->hclimb1_nni)) _updateInternalPllOnRatchet(tr, pr);
 		_allocateParsimonyDataStructures(tr, pr, perSiteScores); // called once if not running ratchet
 	}
 

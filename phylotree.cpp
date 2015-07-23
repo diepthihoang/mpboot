@@ -3805,7 +3805,6 @@ void PhyloTree::changeNNIBrans(NNIMove nnimove) {
 }
 
 NNIMove PhyloTree::getBestNNIForBran(PhyloNode *node1, PhyloNode *node2, NNIMove* nniMoves) {
-
 	assert(!node1->isLeaf() && !node2->isLeaf());
     assert(node1->degree() == 3 && node2->degree() == 3);
 

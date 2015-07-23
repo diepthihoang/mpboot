@@ -1526,6 +1526,13 @@ struct Params {
 	 */
 	int cutoff_percent;
 
+	/*
+	 * Diep: to turn on the option for the 1st hill-climbing in ratchet iteration by NNI
+	 */
+	bool hclimb1_nni;
+
+
+
 #ifdef _OPENMP
     int num_threads;
 #endif

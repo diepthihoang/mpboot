@@ -786,6 +786,7 @@ void parseArg(int argc, char *argv[], Params &params) {
     params.auto_vectorize = false;
     params.sort_alignment = true;
     params.cutoff_percent = -1;
+    params.hclimb1_nni = false;
 #ifdef _OPENMP
     params.num_threads = 0;
 #endif
@@ -2346,6 +2347,10 @@ void parseArg(int argc, char *argv[], Params &params) {
                 if (cnt >= argc)
                     throw "Use -cutoff_percent <integer from 0 to 100>";
             	params.cutoff_percent = convert_int(argv[cnt]);
+            	continue;
+            }
+            if(strcmp(argv[cnt], "-hclimb1_nni") == 0){
+            	params.hclimb1_nni = true;
             	continue;
             }
 			if (strcmp(argv[cnt], "-me") == 0) {
