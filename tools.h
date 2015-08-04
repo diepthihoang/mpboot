@@ -1531,6 +1531,10 @@ struct Params {
 	 */
 	bool hclimb1_nni;
 
+	/*
+	 * Diep: to turn off saveCurrentTree() during the 1st hill-climbing in ratchet iteration
+	 */
+	bool no_hclimb1_bb;
 
 
 #ifdef _OPENMP

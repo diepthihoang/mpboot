@@ -1582,8 +1582,8 @@ double IQTree::doTreeSearch() {
 				nth_element(logl.begin(), logl.begin() + logl.size() * params->cutoff_percent / 100 , logl.end(), std::greater<double>());
 				logl_cutoff = logl[logl.size() * params->cutoff_percent / 100];
 			}
-			cout << "***TEST: logl_cutoff = " << logl_cutoff
-				<< ", treels.size() = " << treels.size() << ", treels_logl.size() = " << treels_logl.size() << endl;
+//			cout << "***TEST: logl_cutoff = " << logl_cutoff
+//				<< ", treels.size() = " << treels.size() << ", treels_logl.size() = " << treels_logl.size() << endl;
 		}
 
 
@@ -1723,8 +1723,9 @@ double IQTree::doTreeSearch() {
          * PARSIMONY RATCHET-LIKE IDEA
          * -------------------------------------------------------------------------*/
         if(on_ratchet_hclimb1){
-        	cout << "*** TEST: number of ratchet trees: " << treels_logl.size() - tmp_num_ratchet_trees
-        		<< ", number of ratchet bootstrap candidates: " << treels.size() - tmp_num_ratchet_bootcands << endl;
+        	if(params->gbo_replicates > 0)
+//	        	cout << "***TEST: number of ratchet trees: " << treels_logl.size() - tmp_num_ratchet_trees
+//    	    		<< ", number of ratchet bootstrap candidates: " << treels.size() - tmp_num_ratchet_bootcands << endl;
 
 			ratchet_iter_count = 0;
 
@@ -2551,7 +2552,10 @@ void IQTree::saveCurrentTree(double cur_logl) {
 	/* -------------------------------------
 	 * Diep: Preprocess for MP
 	 * -------------------------------------*/
-	// if on_ratchet_iter, update cur_logl
+	// if params->no_hclimb1_bb && on_ratchet_hclimb1, do nothing
+	if(params->maximum_parsimony && on_ratchet_hclimb1 && params->no_hclimb1_bb) return;
+
+	// if on_ratchet_hclimb1, update cur_logl
 	if(params->maximum_parsimony && on_ratchet_hclimb1 && reps_segments != -1){
 		int ptn = 0, segment_id = 0, score = 0;
 		VectorClassUShort vc_score = 0;
