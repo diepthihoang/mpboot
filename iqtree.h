@@ -561,6 +561,12 @@ public:
     */
    void pllConvertUFBootData2IQTree();
 
+   /**
+    * Diep: to optimize bootstrap trees at the end of doTreeSearch()
+    * if -opt_btree is ON along with -bb -mpars
+    */
+   void optimizeBootTrees();
+
 protected:
 
     /**
@@ -726,8 +732,9 @@ public:
 
 	bool on_ratchet_hclimb1;
 	Alignment * saved_aln_on_ratchet_iter;
+	Alignment * saved_aln_on_opt_btree;
 	BootValTypePars * original_sample;
-
+	bool on_opt_btree;
 
     /** corresponding RELL log-likelihood */
     DoubleVector boot_logl;

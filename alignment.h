@@ -66,7 +66,8 @@ public:
     virtual ~Alignment();
 
     void operator=(Alignment & some_aln);
-    void updateSitePatternAfterOptimized();
+    void updateSitePatternAfterOptimized(); // Diep added mostly for sorting aln
+    void modifyPatternFreq(IntVector new_pattern_freqs); // Diep added
 
     /****************************************************************************
             input alignment reader

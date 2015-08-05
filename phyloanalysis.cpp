@@ -1855,8 +1855,8 @@ void runTreeReconstruction(Params &params, string &original_model, IQTree &iqtre
 	iqtree.printResultTree();
 
 
-	// To free data structures of PLL parsimony at the very end if NOT running ratchet
-    if(params.maximum_parsimony && params.spr_parsimony && (params.ratchet_iter < 0) && (params.snni || params.pll)){
+	// To free data structures of PLL parsimony at the very end if NOT running ratchet or NOT -opt_btree
+    if(params.maximum_parsimony && params.spr_parsimony && (params.ratchet_iter < 0) && (!params.optimize_boot_trees) && (params.snni || params.pll)){
     	_pllFreeParsimonyDataStructures(iqtree.pllInst, iqtree.pllPartitions);
     }
 

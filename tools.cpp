@@ -788,6 +788,7 @@ void parseArg(int argc, char *argv[], Params &params) {
     params.cutoff_percent = -1;
     params.hclimb1_nni = false;
     params.no_hclimb1_bb = false;
+    params.optimize_boot_trees = false;
 #ifdef _OPENMP
     params.num_threads = 0;
 #endif
@@ -2356,6 +2357,10 @@ void parseArg(int argc, char *argv[], Params &params) {
             }
             if(strcmp(argv[cnt], "-no_hclimb1_bb") == 0){
             	params.no_hclimb1_bb = true;
+            	continue;
+            }
+            if(strcmp(argv[cnt], "-opt_btree") == 0){
+            	params.optimize_boot_trees = true;
             	continue;
             }
 			if (strcmp(argv[cnt], "-me") == 0) {

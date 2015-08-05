@@ -2181,12 +2181,24 @@ void _pllComputeRandomizedStepwiseAdditionParsimonyTree(pllInstance * tr, partit
  */
 int pllOptimizeSprParsimony(pllInstance * tr, partitionList * pr, int mintrav, int maxtrav, IQTree *_iqtree){
 	int perSiteScores = globalParam->gbo_replicates > 0;
-	if((globalParam->ratchet_iter >= 0 && (!globalParam->hclimb1_nni)) || (!iqtree)){
+	bool first_call = false; // is this the first call to pllOptimizeSprParsimony()
+	if(!iqtree){
 		iqtree = _iqtree;
-		// consider updating tr->yVector, then tr->aliaswgt (similar as in pllLoadAlignment)
-		if(globalParam->ratchet_iter >= 0 && (!globalParam->hclimb1_nni)) _updateInternalPllOnRatchet(tr, pr);
-		_allocateParsimonyDataStructures(tr, pr, perSiteScores); // called once if not running ratchet
+		first_call = true;
 	}
+	if(globalParam->ratchet_iter >= 0 || iqtree->on_opt_btree){
+		_updateInternalPllOnRatchet(tr, pr);
+		_allocateParsimonyDataStructures(tr, pr, perSiteScores); // called once if not running ratchet
+	}else if(first_call)
+		_allocateParsimonyDataStructures(tr, pr, perSiteScores); // called once if not running ratchet
+
+//	if(((globalParam->ratchet_iter >= 0 || globalParam->optimize_boot_trees) && (!globalParam->hclimb1_nni)) || (!iqtree)){
+//		iqtree = _iqtree;
+//		// consider updating tr->yVector, then tr->aliaswgt (similar as in pllLoadAlignment)
+//		if((globalParam->ratchet_iter >= 0  || globalParam->optimize_boot_trees) && (!globalParam->hclimb1_nni))
+//			_updateInternalPllOnRatchet(tr, pr);
+//		_allocateParsimonyDataStructures(tr, pr, perSiteScores); // called once if not running ratchet
+//	}
 
 	int i;
 	unsigned int

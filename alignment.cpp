@@ -83,6 +83,11 @@ void Alignment::operator=(Alignment & aln){
     	}
     }
     countConstSite();
+
+    // Diep added:
+    n_informative_patterns = aln.n_informative_patterns;
+    n_informative_sites = aln.n_informative_sites;
+
 }
 
 void Alignment::updateSitePatternAfterOptimized(){
@@ -105,6 +110,16 @@ void Alignment::updateSitePatternAfterOptimized(){
 			n_informative_sites += at(i).frequency;
 		}
     }
+	countConstSite();
+}
+
+void Alignment::modifyPatternFreq(IntVector new_pattern_freqs){
+	int nptn = getNPattern();
+	for(int i = 0; i < nptn; ++i) {
+		at(i).frequency = new_pattern_freqs[i];
+	}
+	n_informative_patterns = nptn;
+	n_informative_sites = getNSite();
 	countConstSite();
 }
 
@@ -1851,7 +1866,6 @@ void Alignment::createPerturbAlignment(Alignment *aln, int percentage, int weigh
     buildSeqStates();
     if(sort_aln) updateSitePatternAfterOptimized();
 }
-
 
 void Alignment::createBootstrapAlignment(IntVector &pattern_freq, const char *spec) {
 	int nptn = getNPattern();

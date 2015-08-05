@@ -258,6 +258,7 @@ void IQTree::setParams(Params &params) {
 			boot_threshold.resize(params.gbo_replicates, -INT_MAX);
 		}
 		on_ratchet_hclimb1 = false;
+		on_opt_btree = false;
 
 		if(params.ratchet_iter >= 0){
 			nunit = getAlnNPattern() + VCSIZE_USHORT;
@@ -1891,6 +1892,16 @@ double IQTree::doTreeSearch() {
         } // end of bootstrap convergence test
     }
 
+	// Diep: optimize bootstrap trees if -opt_btree is specified along with -bb -mpars
+	if(params->gbo_replicates && params->maximum_parsimony){
+		if(params->optimize_boot_trees){
+			double otime = getCPUTime();
+			cout << "Optimizing bootstrap trees ..."; cout.flush();
+			optimizeBootTrees();
+			cout << "CPU Time used:  " << getCPUTime() - otime << " sec." << endl;
+		}
+	}
+
     // Diep: added the text to output to observe the # of candidate trees
     if(params->gbo_replicates && ((curIt - 1) % (params->step_iterations / 2) != 0)){
     	cout << "NOTE: At the end, " << treels_logl.size() << " bootstrap candidate trees evaluated." << endl;
@@ -1959,7 +1970,8 @@ string IQTree::doNNISearch(int& nniCount, int& nniSteps) {
 			curScore = -computeParsimony();
 
 			// deallocation will occur once at the end of runTreeReconstruction() if not running ratchet
-			if((params->ratchet_iter >= 0 && (!params->hclimb1_nni))){
+			if(((params->ratchet_iter >= 0 || on_opt_btree) && (!params->hclimb1_nni))){
+//			if(((params->ratchet_iter >= 0) && (!params->hclimb1_nni))){
 				_pllFreeParsimonyDataStructures(pllInst, pllPartitions);
 			}
 		}
@@ -2282,6 +2294,157 @@ void IQTree::pllDestroyUFBootData(){
     }
     free(pllUFBootDataPtr);
     pllUFBootDataPtr = NULL;
+}
+
+
+void IQTree::optimizeBootTrees(){
+	on_opt_btree = true;
+	int num_boot_rep = params->gbo_replicates;
+	params->gbo_replicates = 0;
+	save_all_trees = 0;
+	string saved_tree = getTreeString();
+	saved_aln_on_opt_btree = aln;
+	int nptn = getAlnNPattern();
+	string tree;
+	int tree_index;
+	Alignment * bootstrap_aln;
+	IntVector pattern_freqs;
+	pattern_freqs.resize(nptn);
+	for(int sample = 0; sample < num_boot_rep; sample++){
+		for(int i = 0; i < nptn; i++) pattern_freqs[i] = boot_samples_pars[sample][i];
+		bootstrap_aln = new Alignment;
+		*bootstrap_aln = *saved_aln_on_opt_btree;
+		bootstrap_aln->modifyPatternFreq(pattern_freqs);
+
+		if(params->multiple_hits){ // process a few trees in boot_trees_parsimony[sample]
+			IntegerSet result;
+			int best_boot_score = -INT_MAX;
+
+			for(IntegerSet::iterator it = boot_trees_parsimony[sample].begin();
+					it != boot_trees_parsimony[sample].end(); ++it){
+				StringIntMap::iterator mit;
+				for(mit = treels.begin(); mit != treels.end(); ++mit){
+					if(mit->second == *it){
+						tree = mit->first;
+						break;
+					}
+				}
+
+//				readTreeString(tree);
+				stringstream str;
+				str << tree;
+				str.seekg(0, ios::beg);
+				freeNode();
+				readTree(str, rooted);
+
+				NodeVector taxa;
+				// change the taxa name from ID to real name
+				getOrderedTaxa(taxa);
+				for (int j = 0; j < taxa.size(); j++)
+					taxa[j]->name = saved_aln_on_opt_btree->getSeqName(taxa[j]->id);
+
+				setAlignment(bootstrap_aln);
+
+				initializeAllPartialLh();
+				clearAllPartialLH();
+				int count, step;
+				doNNISearch(count, step);
+
+				curScore = -computeParsimony();
+
+				stringstream ostr;
+				printTree(ostr, WT_TAXON_ID | WT_SORT_TAXA);
+				tree = ostr.str();
+				mit = treels.find(tree);
+				if (mit != treels.end()) {
+					tree_index = mit->second;
+				} else {
+					treels_logl.push_back(curScore); // TEMPORARILY
+					tree_index = treels_logl.size() - 1;
+					treels[tree] = tree_index;
+				}
+
+				if(result.empty() || curScore == best_boot_score){
+					result.insert(tree_index);
+					best_boot_score = curScore;
+				} else{
+					if(curScore > best_boot_score){
+						result.clear();
+						result.insert(tree_index);
+						best_boot_score = curScore;
+					}
+				}
+			}
+			boot_trees_parsimony[sample].clear();
+			boot_trees_parsimony[sample] = result;
+
+		}else{ // process one tree in boot_trees[sample]
+			StringIntMap::iterator mit;
+			for(mit = treels.begin(); mit != treels.end(); ++mit){
+				if(mit->second == boot_trees[sample]){
+					tree = mit->first;
+					break;
+				}
+			}
+
+//				readTreeString(tree);
+			stringstream str;
+			str << tree;
+			str.seekg(0, ios::beg);
+			freeNode();
+			readTree(str, rooted);
+
+			NodeVector taxa;
+			// change the taxa name from ID to real name
+			getOrderedTaxa(taxa);
+			for (int j = 0; j < taxa.size(); j++)
+				taxa[j]->name = saved_aln_on_opt_btree->getSeqName(taxa[j]->id);
+
+			setAlignment(bootstrap_aln);
+			initializeAllPartialLh();
+			clearAllPartialLH();
+			int count, step;
+			doNNISearch(count, step);
+
+			curScore = -computeParsimony();
+
+			stringstream ostr;
+			printTree(ostr, WT_TAXON_ID | WT_SORT_TAXA);
+			tree = ostr.str();
+			mit = treels.find(tree);
+			if (mit != treels.end()) {
+				tree_index = mit->second;
+			} else {
+				treels_logl.push_back(curScore); // TEMPORARILY
+				tree_index = treels_logl.size() - 1;
+				treels[tree] = tree_index;
+			}
+
+			boot_trees[sample] = tree_index;
+		}
+		delete aln;
+	}
+
+	// Recover the last status of IQTREE
+	params->gbo_replicates = num_boot_rep;
+	setAlignment(saved_aln_on_opt_btree);
+	readTreeString(saved_tree);
+
+
+	initializeAllPartialLh();
+	clearAllPartialLH();
+	curScore = optimizeAllBranches();
+
+//	cout << "*** RESULT:" << endl;
+//	for(int sample = 0; sample < num_boot_rep; sample++){
+//		for(IntegerSet::iterator it = boot_trees_parsimony[sample].begin();
+//				it != boot_trees_parsimony[sample].end(); ++it){
+//			cout << "id = " << *it << ", score = " << treels_logl[*it] << "; ";
+//		}
+//		cout << endl;
+//	}
+	save_all_trees = 2;
+	on_opt_btree = false;
 }
 
 

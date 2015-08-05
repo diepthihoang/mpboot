@@ -1536,6 +1536,10 @@ struct Params {
 	 */
 	bool no_hclimb1_bb;
 
+	/*
+	 * Diep: to allow optimize bootstrap trees at the end of doTreeSearch()
+	 */
+	bool optimize_boot_trees;
 
 #ifdef _OPENMP
     int num_threads;
