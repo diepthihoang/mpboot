@@ -67,7 +67,7 @@ public:
 
     void operator=(Alignment & some_aln);
     void updateSitePatternAfterOptimized(); // Diep added mostly for sorting aln
-    void modifyPatternFreq(IntVector new_pattern_freqs); // Diep added
+    void modifyPatternFreq(Alignment & aln, IntVector new_pattern_freqs); // Diep added
 
     /****************************************************************************
             input alignment reader

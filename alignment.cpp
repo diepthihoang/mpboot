@@ -113,14 +113,28 @@ void Alignment::updateSitePatternAfterOptimized(){
 	countConstSite();
 }
 
-void Alignment::modifyPatternFreq(IntVector new_pattern_freqs){
-	int nptn = getNPattern();
-	for(int i = 0; i < nptn; ++i) {
-		at(i).frequency = new_pattern_freqs[i];
-	}
-	n_informative_patterns = nptn;
-	n_informative_sites = getNSite();
-	countConstSite();
+void Alignment::modifyPatternFreq(Alignment & aln, IntVector new_pattern_freqs){
+	int nsite = aln.getNSite();
+    seq_names.insert(seq_names.begin(), aln.seq_names.begin(), aln.seq_names.end());
+    num_states = aln.num_states;
+    seq_type = aln.seq_type;
+    site_pattern.resize(nsite);
+    clear();
+    pattern_index.clear();
+
+    int site = 0;
+    std::vector<Pattern>::iterator it;
+    int p;
+    for(it = aln.begin(), p = 0; it != aln.end(); ++it, ++p) {
+    	for(int i = 0; i < new_pattern_freqs[p]; i++){
+    		addPattern(*it, site, 1);
+    		site++;
+    	}
+    }
+    countConstSite();
+
+	n_informative_patterns = aln.getNPattern();
+	n_informative_sites = nsite;
 }
 
 string &Alignment::getSeqName(int i) {

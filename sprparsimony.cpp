@@ -2006,6 +2006,7 @@ static void stepwiseAddition(pllInstance *tr, partitionList *pr, nodeptr p, node
 
 
 void _updateInternalPllOnRatchet(pllInstance *tr, partitionList *pr){
+	cout << "lower = " << pr->partitionData[0]->lower << ", upper = " << pr->partitionData[0]->upper << ", aln->size() = " << iqtree->aln->size() << endl;
 	for(int i = 0; i < pr->numberOfPartitions; i++){
 		for(int ptn = pr->partitionData[i]->lower; ptn < pr->partitionData[i]->upper; ptn++){
 			tr->aliaswgt[ptn] = iqtree->aln->at(ptn).frequency;
@@ -2186,10 +2187,10 @@ int pllOptimizeSprParsimony(pllInstance * tr, partitionList * pr, int mintrav, i
 		iqtree = _iqtree;
 		first_call = true;
 	}
-	if(globalParam->ratchet_iter >= 0 || iqtree->on_opt_btree){
+	if(globalParam->ratchet_iter >= 0){
 		_updateInternalPllOnRatchet(tr, pr);
 		_allocateParsimonyDataStructures(tr, pr, perSiteScores); // called once if not running ratchet
-	}else if(first_call)
+	}else if(first_call || (iqtree && iqtree->on_opt_btree))
 		_allocateParsimonyDataStructures(tr, pr, perSiteScores); // called once if not running ratchet
 
 //	if(((globalParam->ratchet_iter >= 0 || globalParam->optimize_boot_trees) && (!globalParam->hclimb1_nni)) || (!iqtree)){

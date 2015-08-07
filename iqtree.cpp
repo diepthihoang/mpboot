@@ -502,6 +502,7 @@ void IQTree::initializePLL(Params &params) {
     if (pllInst != NULL) {
         pllDestroyInstance(pllInst);
     }
+
     /* Create a PLL instance */
     pllInst = pllCreateInstance(&pllAttr);
 
@@ -1953,6 +1954,25 @@ double IQTree::doTreeSearch() {
 string IQTree::doNNISearch(int& nniCount, int& nniSteps) {
 	string treeString;
 	if(params->maximum_parsimony && params->spr_parsimony && (params->snni || params->pll)){ // SPR for mpars
+		if(on_opt_btree){
+			if (pllPartitions){
+				myPartitionsDestroy(pllPartitions);
+				pllPartitions = NULL;
+			}
+			if (pllAlignment){
+				pllAlignmentDataDestroy(pllAlignment);
+				pllAlignment = NULL;
+			}
+			if (pllInst){
+				pllDestroyInstance(pllInst);
+				pllInst = NULL;
+			}
+			initializePLL(*params); // because the set of patterns might be a subset of the orig
+			pllNewickTree *btree = pllNewickParseString(getTreeString().c_str());
+			assert(btree != NULL);
+			pllTreeInitTopologyNewick(pllInst, btree, PLL_FALSE);
+		}
+
 //		if(false){
 		if(on_ratchet_hclimb1 && params->hclimb1_nni){
 			curScore = optimizeNNI(nniCount, nniSteps);
@@ -2310,15 +2330,26 @@ void IQTree::optimizeBootTrees(){
 	Alignment * bootstrap_aln;
 	IntVector pattern_freqs;
 	pattern_freqs.resize(nptn);
+
+	string boot_score_file = params->out_prefix;
+	boot_score_file += ".boot.score";
+	ofstream out(boot_score_file.c_str());
+	out << "sample\tunrefined\trefined" << endl;
+
 	for(int sample = 0; sample < num_boot_rep; sample++){
-		for(int i = 0; i < nptn; i++) pattern_freqs[i] = boot_samples_pars[sample][i];
+		out << sample << "\t" << boot_logl[sample] << "\t";
+		for(int i = 0; i < nptn; i++){
+			pattern_freqs[i] = boot_samples_pars[sample][i];
+		}
 		bootstrap_aln = new Alignment;
-		*bootstrap_aln = *saved_aln_on_opt_btree;
-		bootstrap_aln->modifyPatternFreq(pattern_freqs);
+		bootstrap_aln->modifyPatternFreq(*saved_aln_on_opt_btree, pattern_freqs);
+
+		setAlignment(bootstrap_aln);
 
 		if(params->multiple_hits){ // process a few trees in boot_trees_parsimony[sample]
 			IntegerSet result;
 			int best_boot_score = -INT_MAX;
+
 
 			for(IntegerSet::iterator it = boot_trees_parsimony[sample].begin();
 					it != boot_trees_parsimony[sample].end(); ++it){
@@ -2330,12 +2361,15 @@ void IQTree::optimizeBootTrees(){
 					}
 				}
 
-//				readTreeString(tree);
-				stringstream str;
-				str << tree;
-				str.seekg(0, ios::beg);
+				// Read the bootstrap tree
+				stringstream str(tree);
 				freeNode();
 				readTree(str, rooted);
+				NodeVector taxai;
+				getTaxa(taxai);
+				for (NodeVector::iterator taxit = taxai.begin(); taxit != taxai.end(); taxit++){
+					(*taxit)->id = atoi((*taxit)->name.c_str());
+				}
 
 				NodeVector taxa;
 				// change the taxa name from ID to real name
@@ -2343,14 +2377,17 @@ void IQTree::optimizeBootTrees(){
 				for (int j = 0; j < taxa.size(); j++)
 					taxa[j]->name = saved_aln_on_opt_btree->getSeqName(taxa[j]->id);
 
-				setAlignment(bootstrap_aln);
-
 				initializeAllPartialLh();
 				clearAllPartialLH();
+
+//				curScore = -computeParsimony();
+//				cout << "before: " << curScore << ", ";
+
 				int count, step;
 				doNNISearch(count, step);
 
 				curScore = -computeParsimony();
+//				cout << "after: " << curScore << endl;
 
 				stringstream ostr;
 				printTree(ostr, WT_TAXON_ID | WT_SORT_TAXA);
@@ -2377,6 +2414,7 @@ void IQTree::optimizeBootTrees(){
 			}
 			boot_trees_parsimony[sample].clear();
 			boot_trees_parsimony[sample] = result;
+			boot_logl[sample] = best_boot_score;
 
 		}else{ // process one tree in boot_trees[sample]
 			StringIntMap::iterator mit;
@@ -2387,12 +2425,15 @@ void IQTree::optimizeBootTrees(){
 				}
 			}
 
-//				readTreeString(tree);
-			stringstream str;
-			str << tree;
-			str.seekg(0, ios::beg);
+			// Read the bootstrap tree
+			stringstream str(tree);
 			freeNode();
 			readTree(str, rooted);
+			NodeVector taxai;
+			getTaxa(taxai);
+			for (NodeVector::iterator taxit = taxai.begin(); taxit != taxai.end(); taxit++){
+				(*taxit)->id = atoi((*taxit)->name.c_str());
+			}
 
 			NodeVector taxa;
 			// change the taxa name from ID to real name
@@ -2400,13 +2441,18 @@ void IQTree::optimizeBootTrees(){
 			for (int j = 0; j < taxa.size(); j++)
 				taxa[j]->name = saved_aln_on_opt_btree->getSeqName(taxa[j]->id);
 
-			setAlignment(bootstrap_aln);
+
 			initializeAllPartialLh();
 			clearAllPartialLH();
+
+//			curScore = -computeParsimony();
+//			cout << "before: " << curScore << ", ";
+
 			int count, step;
 			doNNISearch(count, step);
 
 			curScore = -computeParsimony();
+//			cout << "after: " << curScore << endl;
 
 			stringstream ostr;
 			printTree(ostr, WT_TAXON_ID | WT_SORT_TAXA);
@@ -2421,9 +2467,13 @@ void IQTree::optimizeBootTrees(){
 			}
 
 			boot_trees[sample] = tree_index;
+			boot_logl[sample] = curScore;
 		}
 		delete aln;
+		out << boot_logl[sample] << endl;
 	}
+
+	out.close();
 
 	// Recover the last status of IQTREE
 	params->gbo_replicates = num_boot_rep;
