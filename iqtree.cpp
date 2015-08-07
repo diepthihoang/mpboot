@@ -2319,11 +2319,14 @@ void IQTree::pllDestroyUFBootData(){
 
 void IQTree::optimizeBootTrees(){
 	on_opt_btree = true;
+	int saved_ratchet_iter = params->ratchet_iter;
+	params->ratchet_iter = -1;
 	int num_boot_rep = params->gbo_replicates;
 	params->gbo_replicates = 0;
 	save_all_trees = 0;
 	string saved_tree = getTreeString();
 	saved_aln_on_opt_btree = aln;
+
 	int nptn = getAlnNPattern();
 	string tree;
 	int tree_index;
@@ -2477,6 +2480,7 @@ void IQTree::optimizeBootTrees(){
 
 	// Recover the last status of IQTREE
 	params->gbo_replicates = num_boot_rep;
+	params->ratchet_iter = saved_ratchet_iter;
 	setAlignment(saved_aln_on_opt_btree);
 	readTreeString(saved_tree);
 

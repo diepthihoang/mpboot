@@ -2006,7 +2006,7 @@ static void stepwiseAddition(pllInstance *tr, partitionList *pr, nodeptr p, node
 
 
 void _updateInternalPllOnRatchet(pllInstance *tr, partitionList *pr){
-	cout << "lower = " << pr->partitionData[0]->lower << ", upper = " << pr->partitionData[0]->upper << ", aln->size() = " << iqtree->aln->size() << endl;
+//	cout << "lower = " << pr->partitionData[0]->lower << ", upper = " << pr->partitionData[0]->upper << ", aln->size() = " << iqtree->aln->size() << endl;
 	for(int i = 0; i < pr->numberOfPartitions; i++){
 		for(int ptn = pr->partitionData[i]->lower; ptn < pr->partitionData[i]->upper; ptn++){
 			tr->aliaswgt[ptn] = iqtree->aln->at(ptn).frequency;
