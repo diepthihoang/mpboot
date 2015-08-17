@@ -1541,6 +1541,12 @@ struct Params {
 	 */
 	bool optimize_boot_trees;
 
+	/*
+	 * Diep: to not collect any tree during bootstrap, applicable only if used with optimize_boot_trees
+	 * -opt_btree -save_trees_off means not running any saveCurrentTree() but running optimizeBootTrees()
+	 */
+	bool save_trees_off;
+
 #ifdef _OPENMP
     int num_threads;
 #endif

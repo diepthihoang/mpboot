@@ -113,7 +113,8 @@ void Alignment::updateSitePatternAfterOptimized(){
 	countConstSite();
 }
 
-void Alignment::modifyPatternFreq(Alignment & aln, IntVector new_pattern_freqs){
+void Alignment::modifyPatternFreq(Alignment & aln, unsigned short * new_pattern_freqs, int new_nptn){
+	assert(new_nptn == aln.getNPattern());
 	int nsite = aln.getNSite();
     seq_names.insert(seq_names.begin(), aln.seq_names.begin(), aln.seq_names.end());
     num_states = aln.num_states;

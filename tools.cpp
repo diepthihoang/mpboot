@@ -789,6 +789,7 @@ void parseArg(int argc, char *argv[], Params &params) {
     params.hclimb1_nni = false;
     params.no_hclimb1_bb = false;
     params.optimize_boot_trees = false;
+    params.save_trees_off = false;
 #ifdef _OPENMP
     params.num_threads = 0;
 #endif
@@ -2363,6 +2364,10 @@ void parseArg(int argc, char *argv[], Params &params) {
             	params.optimize_boot_trees = true;
             	continue;
             }
+            if(strcmp(argv[cnt], "-save_trees_off") == 0){
+            	params.save_trees_off = true;
+            	continue;
+            }
 			if (strcmp(argv[cnt], "-me") == 0) {
 				cnt++;
 				if (cnt >= argc)
@@ -2640,6 +2645,12 @@ void parseArg(int argc, char *argv[], Params &params) {
 			params.sprDist = 1;
 		}else
 			params.sprDist = 20;
+    }
+
+    if(params.optimize_boot_trees == false && params.save_trees_off == true){
+    	outError("-save_trees_off must work with -opt_btree");
+    }else if(params.optimize_boot_trees == true && params.save_trees_off == true){
+    	params.stop_condition = SC_UNSUCCESS_ITERATION;
     }
 }
 

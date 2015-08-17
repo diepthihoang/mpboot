@@ -567,6 +567,13 @@ public:
     */
    void optimizeBootTrees();
 
+   /**
+    * Diep: to generate the bootstrap tree set
+    * by hill-climbing on corresponding bootstrap aln starting from a random tree in candidate set
+    * Used in case -opt_btree -save_trees_off is specfied
+    */
+   void optimizeBootTreesPure();
+
 protected:
 
     /**

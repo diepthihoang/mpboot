@@ -1599,8 +1599,8 @@ double IQTree::doTreeSearch() {
         /*--------------------------------------------------------------------------
          * PARSIMONY RATCHET-LIKE IDEA
          * -------------------------------------------------------------------------*/
-		long tmp_num_ratchet_trees = treels_logl.size();
-		long tmp_num_ratchet_bootcands = treels.size();
+//		long tmp_num_ratchet_trees = treels_logl.size();
+//		long tmp_num_ratchet_bootcands = treels.size();
 
         if(params->ratchet_iter >= 0){
         	if(params->ratchet_iter == ratchet_iter_count){
@@ -2318,6 +2318,10 @@ void IQTree::pllDestroyUFBootData(){
 
 
 void IQTree::optimizeBootTrees(){
+	if(params->save_trees_off){
+		optimizeBootTreesPure();
+		return;
+	}
 	on_opt_btree = true;
 	int saved_ratchet_iter = params->ratchet_iter;
 	params->ratchet_iter = -1;
@@ -2331,21 +2335,16 @@ void IQTree::optimizeBootTrees(){
 	string tree;
 	int tree_index;
 	Alignment * bootstrap_aln;
-	IntVector pattern_freqs;
-	pattern_freqs.resize(nptn);
 
 	string boot_score_file = params->out_prefix;
 	boot_score_file += ".boot.score";
-	ofstream out(boot_score_file.c_str());
-	out << "sample\tunrefined\trefined" << endl;
+//	ofstream out(boot_score_file.c_str());
+//	out << "sample\tunrefined\trefined" << endl;
 
 	for(int sample = 0; sample < num_boot_rep; sample++){
-		out << sample << "\t" << boot_logl[sample] << "\t";
-		for(int i = 0; i < nptn; i++){
-			pattern_freqs[i] = boot_samples_pars[sample][i];
-		}
+//		out << sample << "\t" << boot_logl[sample] << "\t";
 		bootstrap_aln = new Alignment;
-		bootstrap_aln->modifyPatternFreq(*saved_aln_on_opt_btree, pattern_freqs);
+		bootstrap_aln->modifyPatternFreq(*saved_aln_on_opt_btree, boot_samples_pars[sample], nptn);
 
 		setAlignment(bootstrap_aln);
 
@@ -2473,10 +2472,10 @@ void IQTree::optimizeBootTrees(){
 			boot_logl[sample] = curScore;
 		}
 		delete aln;
-		out << boot_logl[sample] << endl;
+//		out << boot_logl[sample] << endl;
 	}
 
-	out.close();
+//	out.close();
 
 	// Recover the last status of IQTREE
 	params->gbo_replicates = num_boot_rep;
@@ -2500,6 +2499,96 @@ void IQTree::optimizeBootTrees(){
 	save_all_trees = 2;
 	on_opt_btree = false;
 }
+
+
+void IQTree::optimizeBootTreesPure(){
+	on_opt_btree = true;
+	int saved_ratchet_iter = params->ratchet_iter;
+	params->ratchet_iter = -1;
+	int num_boot_rep = params->gbo_replicates;
+	params->gbo_replicates = 0;
+	save_all_trees = 0;
+	string saved_tree = getTreeString();
+	saved_aln_on_opt_btree = aln;
+
+	int nptn = getAlnNPattern();
+	string tree;
+	int tree_index;
+	Alignment * bootstrap_aln;
+
+//	string boot_score_file = params->out_prefix;
+//	boot_score_file += ".boot.score";
+//	ofstream out(boot_score_file.c_str());
+//	out << "sample\tunrefined\trefined" << endl;
+
+	for(int sample = 0; sample < num_boot_rep; sample++){
+//		out << sample << "\t" << boot_logl[sample] << "\t";
+		bootstrap_aln = new Alignment;
+		bootstrap_aln->modifyPatternFreq(*saved_aln_on_opt_btree, boot_samples_pars[sample], nptn);
+
+		setAlignment(bootstrap_aln);
+
+		// Read the bootstrap tree
+		string tree = candidateTrees.getRandCandTree();
+		readTreeString(tree);
+
+		initializeAllPartialLh();
+		clearAllPartialLH();
+
+//			curScore = -computeParsimony();
+//			cout << "before: " << curScore << ", ";
+
+		int count, step;
+		doNNISearch(count, step);
+
+		curScore = -computeParsimony();
+//			cout << "after: " << curScore << endl;
+
+		stringstream ostr;
+		printTree(ostr, WT_TAXON_ID | WT_SORT_TAXA);
+		tree = ostr.str();
+		StringIntMap::iterator mit;
+		mit = treels.find(tree);
+		if (mit != treels.end()) {
+			tree_index = mit->second;
+		} else {
+			treels_logl.push_back(curScore); // TEMPORARILY
+			tree_index = treels_logl.size() - 1;
+			treels[tree] = tree_index;
+		}
+
+		boot_trees[sample] = tree_index;
+		boot_logl[sample] = curScore;
+
+		delete aln;
+//		out << boot_logl[sample] << endl;
+	}
+
+//	out.close();
+
+	// Recover the last status of IQTREE
+	params->gbo_replicates = num_boot_rep;
+	params->ratchet_iter = saved_ratchet_iter;
+	setAlignment(saved_aln_on_opt_btree);
+	readTreeString(saved_tree);
+
+
+	initializeAllPartialLh();
+	clearAllPartialLH();
+	curScore = optimizeAllBranches();
+
+//	cout << "*** RESULT:" << endl;
+//	for(int sample = 0; sample < num_boot_rep; sample++){
+//		for(IntegerSet::iterator it = boot_trees_parsimony[sample].begin();
+//				it != boot_trees_parsimony[sample].end(); ++it){
+//			cout << "id = " << *it << ", score = " << treels_logl[*it] << "; ";
+//		}
+//		cout << endl;
+//	}
+	save_all_trees = 2;
+	on_opt_btree = false;
+}
+
 
 
 void IQTree::doNNIs(int nni2apply, bool changeBran) {
@@ -2769,6 +2858,8 @@ void IQTree::saveCurrentTree(double cur_logl) {
 	/* -------------------------------------
 	 * Diep: Preprocess for MP
 	 * -------------------------------------*/
+	if(params->save_trees_off) return;
+
 	// if params->no_hclimb1_bb && on_ratchet_hclimb1, do nothing
 	if(params->maximum_parsimony && on_ratchet_hclimb1 && params->no_hclimb1_bb) return;
 
