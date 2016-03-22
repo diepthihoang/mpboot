@@ -235,6 +235,44 @@ void printCopyright(ostream &out) {
 #endif
 }
 
+
+void printCopyrightMP(ostream &out) {
+#ifdef IQ_TREE
+ 	out << "UFBoot-MP";
+	#ifdef _OPENMP
+	out << " multicore";
+	#endif
+ 	out << " version ";
+#else
+ 	out << "PDA - Phylogenetic Diversity Analyzer version ";
+#endif
+	out << iqtree_VERSION_MAJOR << "." << iqtree_VERSION_MINOR << "." << iqtree_VERSION_PATCH;
+
+#if defined _WIN32 || defined WIN32
+	out << " for Windows";
+#elif defined __APPLE__ || defined __MACH__
+	out << " for Mac OS X";
+#elif defined __linux__
+	out << " for Linux";
+#elif defined __unix__ || defined __unix
+	out << " for Unix";
+#else
+	out << " for unknown platform"
+#endif
+
+	out	<< " " << 8*sizeof(void*) << "-bit" << " built " << __DATE__;
+#if defined DEBUG
+	out << " - debug mode";
+#endif
+
+#ifdef IQ_TREE
+	out << endl << "Copyright (c) 2015 Diep Thi Hoang, Le Sy Vinh, Tomas Flouri, Alexandros Stamatakis, Arndt von Haeseler and Bui Quang Minh." << endl << endl;
+#else
+	out << endl << "Copyright (c) 2006-2014 Olga Chernomor, Arndt von Haeseler and Bui Quang Minh." << endl << endl;
+#endif
+}
+
+
 void printRunMode(ostream &out, RunMode run_mode) {
 	switch (run_mode) {
 		case DETECTED: out << "Detected"; break;
@@ -1796,7 +1834,7 @@ extern "C" void funcAbort(int signal_number)
       because abort() was called, your program will exit or crash anyway
       (with a dialog box on Windows).
      */
-	cout << endl << "*** IQ-TREE CRASHES WITH SIGNAL ";
+	cout << endl << "*** UFBoot-MP CRASHES WITH SIGNAL ";
 	switch (signal_number) {
 		case SIGABRT: cout << "ABORTED"; break;
 		case SIGFPE:  cout << "ERRONEOUS NUMERIC"; break;
@@ -2155,7 +2193,7 @@ int main(int argc, char *argv[])
 	signal(SIGFPE, &funcAbort);
 	signal(SIGILL, &funcAbort);
 	signal(SIGSEGV, &funcAbort);
-	printCopyright(cout);
+	printCopyrightMP(cout);
 	/*
 	double x=1e-100;
 	double y=1e-101;
@@ -2183,11 +2221,11 @@ int main(int argc, char *argv[])
 
 #ifdef __AVX
 	if (instrset < 7) {
-		outError("Your CPU does not support AVX, please use SSE3 version of IQ-TREE.");
+		outError("Your CPU does not support AVX, please use SSE3 version of UFBoot-MP.");
 	}
 #else
 	if (instrset >= 7) {
-		outWarning("Your CPU supports AVX but you are using SSE3 version of IQ-TREE!");
+		outWarning("Your CPU supports AVX but you are using SSE3 version of UFBoot-MP!");
 		outWarning("Please switch to AVX version that is 40% faster than SSE3.");
 		cout << endl;
 	}

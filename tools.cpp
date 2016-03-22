@@ -647,7 +647,7 @@ void parseArg(int argc, char *argv[], Params &params) {
     params.k_representative = 4;
     params.loglh_epsilon = 0.001;
     params.numSmoothTree = 1;
-    params.nni5 = true;
+    params.nni5 = false; // Diep: Revert for UFBoot-MP release
     params.leastSquareBranch = false;
     params.pars_branch_length = false;
     params.bayes_branch_length = false;
@@ -770,25 +770,25 @@ void parseArg(int argc, char *argv[], Params &params) {
     params.bootlh_partitions = NULL;
     params.site_freq_file = NULL;
 
-    params.maximum_parsimony = false;
+    params.maximum_parsimony = true;// Diep: Revert for UFBoot-MP release
     params.multiple_hits = false;
     params.store_top_boot_trees = 0;
-    params.ratchet_iter = -1;
+    params.ratchet_iter = 1;// Diep: Revert for UFBoot-MP release
     params.ratchet_wgt = 1; // default if just specify -ratchet
     params.ratchet_percent = 50; // default if just specify -ratchet
     params.compute_parsimony = false;
     params.sankoff_cost_file = NULL;
     params.condense_parsimony_equiv_sites = false;
-    params.spr_parsimony = false;
+    params.spr_parsimony = true;// Diep: Revert for UFBoot-MP release
     params.spr_mintrav = 1; // same as PLL
-    params.spr_maxtrav = 20; // same as PLL
+    params.spr_maxtrav = 3; // PLL default is 20
     params.test_site_pars = false;
     params.auto_vectorize = false;
     params.sort_alignment = true;
-    params.cutoff_percent = -1;
+    params.cutoff_percent = 10;// Diep: Default = 10 for UFBoot-MP release; Hidden test value: -1 for UFBoot logl-cutoff
     params.hclimb1_nni = false;
     params.no_hclimb1_bb = false;
-    params.optimize_boot_trees = false;
+    params.optimize_boot_trees = true;// Diep: Revert for UFBoot-MP release
     params.save_trees_off = false;
 #ifdef _OPENMP
     params.num_threads = 0;
@@ -827,14 +827,17 @@ void parseArg(int argc, char *argv[], Params &params) {
 
             if (strcmp(argv[cnt], "-h") == 0 || strcmp(argv[cnt], "--help") == 0) {
 #ifdef IQ_TREE
-                usage_iqtree(argv, false);
+//                usage_iqtree(argv, false);
+				usage_ufbootmp(argv, false);
+
 #else
                 usage(argv, false);
 #endif
                 continue;
             }
 			if (strcmp(argv[cnt], "-ho") == 0 || strcmp(argv[cnt], "-?") == 0) {
-				usage_iqtree(argv, false);
+//				usage_iqtree(argv, false);
+				usage_ufbootmp(argv, false);
 				continue;
 			}
 			if (strcmp(argv[cnt], "-hh") == 0
@@ -2253,12 +2256,19 @@ void parseArg(int argc, char *argv[], Params &params) {
 			}
 
 
-			if(strcmp(argv[cnt], "-mpars") == 0){
-            	params.maximum_parsimony = true;
-            	params.nni5 = false;
-            	params.nni_type = NNI1;
+//			if(strcmp(argv[cnt], "-mpars") == 0){
+//            	params.maximum_parsimony = true;
+//            	params.nni5 = false;
+//            	params.nni_type = NNI1;
+//            	continue;
+//            }
+			if(strcmp(argv[cnt], "-mpars_off") == 0){
+            	params.maximum_parsimony = false;
+            	params.nni5 = true;
+            	params.nni_type = NNI5;
             	continue;
             }
+
             if(strcmp(argv[cnt], "-mulhits") == 0){
             	params.multiple_hits = true;
             	continue;
@@ -2272,6 +2282,10 @@ void parseArg(int argc, char *argv[], Params &params) {
             }
             if(strcmp(argv[cnt], "-ratchet") == 0){
             	if(params.ratchet_iter < 0) params.ratchet_iter = 1;
+            	continue;
+            }
+            if(strcmp(argv[cnt], "-ratchet_off") == 0){
+            	params.ratchet_iter = -1;
             	continue;
             }
             if(strcmp(argv[cnt], "-ratchet_iter") == 0){
@@ -2318,6 +2332,12 @@ void parseArg(int argc, char *argv[], Params &params) {
             	params.maximum_parsimony = true;
             	continue;
             }
+			if(strcmp(argv[cnt], "-nni_pars") == 0){
+            	params.spr_parsimony = false;
+            	params.maximum_parsimony = true;
+            	continue;
+            }
+
 			if(strcmp(argv[cnt], "-spr_mintrav") == 0){
             	cnt++;
                 if (cnt >= argc)
@@ -2325,10 +2345,10 @@ void parseArg(int argc, char *argv[], Params &params) {
             	params.spr_mintrav = convert_int(argv[cnt]);
             	continue;
             }
-			if(strcmp(argv[cnt], "-spr_maxtrav") == 0){
+			if(strcmp(argv[cnt], "-spr_maxtrav") == 0 || strcmp(argv[cnt], "-spr_rad") == 0){
             	cnt++;
                 if (cnt >= argc)
-                    throw "Use -spr_maxtrav <maximal SPR radius>";
+                    throw "Use " + string(argv[cnt]) + " <maximal SPR radius>";
             	params.spr_maxtrav = convert_int(argv[cnt]);
             	params.sprDist = params.spr_maxtrav; // Diep: hopefully this speed the pllMakeParsimonyTreeFast...
             	continue;
@@ -2345,10 +2365,10 @@ void parseArg(int argc, char *argv[], Params &params) {
             	params.sort_alignment = false;
             	continue;
             }
-			if(strcmp(argv[cnt], "-cutoff_percent") == 0){
+			if(strcmp(argv[cnt], "-cand_cutoff") == 0){
             	cnt++;
                 if (cnt >= argc)
-                    throw "Use -cutoff_percent <integer from 0 to 100>";
+                    throw "Use -cand_cutoff <integer #s from 0 to 100 for selecting top #s percentile as bootstrap candidates>";
             	params.cutoff_percent = convert_int(argv[cnt]);
             	continue;
             }
@@ -2362,6 +2382,10 @@ void parseArg(int argc, char *argv[], Params &params) {
             }
             if(strcmp(argv[cnt], "-opt_btree") == 0){
             	params.optimize_boot_trees = true;
+            	continue;
+            }
+            if(strcmp(argv[cnt], "-opt_btree_off") == 0){
+            	params.optimize_boot_trees = false;
             	continue;
             }
             if(strcmp(argv[cnt], "-save_trees_off") == 0){
@@ -2610,7 +2634,9 @@ void parseArg(int argc, char *argv[], Params &params) {
     } // for
     if (!params.user_file && !params.aln_file && !params.ngs_file && !params.ngs_mapped_reads && !params.partition_file)
 #ifdef IQ_TREE
-        usage_iqtree(argv, false);
+//        usage_iqtree(argv, false);
+//		usage_ufbootmp(argv, false);
+		usage(argv, false);
 #else
         usage(argv, false);
 #endif
@@ -2641,8 +2667,9 @@ void parseArg(int argc, char *argv[], Params &params) {
 
     // Diep: NNI is equivalent to SPR radius = 1
     if(params.sprDist == -1){
-		if(params.maximum_parsimony && !params.spr_parsimony){
-			params.sprDist = 1;
+		if(params.maximum_parsimony){
+			if(!params.spr_parsimony) params.sprDist = 1;
+			else params.sprDist = params.spr_maxtrav;
 		}else
 			params.sprDist = 20;
     }
@@ -2655,73 +2682,91 @@ void parseArg(int argc, char *argv[], Params &params) {
 }
 
 extern void printCopyright(ostream &out);
+extern void printCopyrightMP(ostream &out);
 
 void usage(char* argv[], bool full_command) {
-    printCopyright(cout);
-    cout << "Usage: " << argv[0] << " [OPTIONS] <file_name> [<output_file>]" << endl;
-    cout << "GENERAL OPTIONS:" << endl;
-    cout << "  -hh               Print this help dialog" << endl;
-    cout << "  -h                Print help options for phylogenetic inference" << endl;
-    cout << "  <file_name>       User tree in NEWICK format or split network in NEXUS format" << endl;
-    cout << "  <output_file>     Output file to store results, default is '<file_name>.pda'" << endl;
-    cout << "  -k <num_taxa>     Find optimal set of size <num_taxa>" << endl;
-    cout << "  -k <min>:<max>    Find optimal sets of size from <min> to <max>" << endl;
-    cout << "  -k <min>:<max>:<step>" << endl;
-    cout << "                    Find optimal sets of size min, min+step, min+2*step,..." << endl;
-    cout << "  -o <taxon>        Root name to compute rooted PD (default: unrooted)" << endl;
-    cout << "  -if <file>        File containing taxa to be included into optimal sets" << endl;
-    cout << "  -e <file>         File containing branch/split scale and taxa weights" << endl;
-    cout << "  -all              Identify all multiple optimal sets" << endl;
-    cout << "  -lim <max_limit>  The maximum number of optimal sets for each k if -a is specified" << endl;
-    cout << "  -min              Compute minimal sets (default: maximal)" << endl;
-    cout << "  -1out             Print taxa sets and scores to separate files" << endl;
-    cout << "  -oldout           Print output compatible with version 0.3" << endl;
-    cout << "  -v                Verbose mode" << endl;
-    cout << endl;
-    cout << "OPTIONS FOR PHYLOGENETIC DIVERSITY (PD):" << endl;
-    cout << "  -root             Make the tree ROOTED, default is unrooted" << endl;
-    cout << "    NOTE: this option and -o <taxon> cannot be both specified" << endl;
-    cout << "  -g                Run greedy algorithm only (default: auto)" << endl;
-    cout << "  -pr               Run pruning algorithm only (default: auto)" << endl;
-    cout << endl;
-    /*
-    cout << "OPTIONS FOR SPLIT DIVERSITY:" << endl;
-    cout << "  -exhaust          Force to use exhaustive search" << endl;
-    cout << "    NOTE: by default, the program applies dynamic programming algorithm" << endl;
-    cout << "          on circular networks and exhaustive search on general networks" << endl;
-    cout << endl;*/
-    cout << "OPTIONS FOR BUDGET CONSTRAINTS:" << endl;
-    cout << "  -u <file>         File containing total budget and taxa preservation costs" << endl;
-    cout << "  -b <budget>       Total budget to conserve taxa" << endl;
-    cout << "  -b <min>:<max>    Find all sets with budget from <min> to <max>" << endl;
-    cout << "  -b <min>:<max>:<step>" << endl;
-    cout << "                    Find optimal sets with budget min, min+step, min+2*step,..." << endl;
-    cout << endl;
-    cout << "OPTIONS FOR AREA ANALYSIS:" << endl;
-    cout << "  -ts <taxa_file>   Compute/maximize PD/SD of areas (combine with -k to maximize)" << endl;
-    cout << "  -excl             Compute exclusive PD/SD" << endl;
-    cout << "  -endem            Compute endemic PD/SD" << endl;
-    cout << "  -compl <areas>    Compute complementary PD/SD given the listed <areas>" << endl;
-    cout << endl;
+//    printCopyright(cout);
+	printCopyrightMP(cout); // to print UFBoot-MP info
 
-    cout << "OPTIONS FOR VIABILITY CONSTRAINTS:" << endl;
-    cout << "  -eco <food_web>   File containing food web matrix" << endl;
-    cout << "  -k% <n>           Find optimal set of size relative the total number of taxa" << endl;
-    cout << "  -diet <min_diet>  Minimum diet portion (%) to be preserved for each predator" << endl;
-    cout << endl;
-    //if (!full_command) exit(0);
+	cout << "Minimal command-line examples (replace 'ufbootmp ...' with actual path to executable):" << endl << endl;
 
-    cout << "MISCELLANEOUS:" << endl;
-    cout << "  -dd <sample_size> Compute PD distribution of random sets of size k" << endl;
-    /*
-    cout << "  -gbo <sitelh_file> Compute and output the alignment of (normalized)" << endl;
-    cout << "                    expected frequencies given in site_ll_file" << endl;
-	*/
+ 	cout << "1. Reconstruct maximum parsimony tree from a sequence alignment" << endl
+ 		<< "   (example.phy):" << endl
+		<< "     ufbootmp -s example.phy" << endl << endl;
 
-    //	cout << "  -rep <times>        Repeat algorithm a number of times." << endl;
-    //	cout << "  -noout              Print no output file." << endl;
-    cout << endl;
-    //cout << "HIDDEN OPTIONS: see the source code file pda.cpp::parseArg()" << endl;
+	cout << "2. Reconstruct MP tree and assess branch supports with the UFBoot-MP method" << endl
+		<< "   (1000 replicates):" << endl
+		<< "     ufbootmp -s example.phy -bb 1000" << endl << endl;
+
+	cout << "To show all available options: run 'ufbootmp -h'" << endl << endl;
+
+	cout << "Have a look at the tutorial and manual for more information:" << endl
+		<< "     http://www.cibiv.at/software/ufboot-mp" << endl << endl;
+
+//    cout << "Usage: " << argv[0] << " [OPTIONS] <file_name> [<output_file>]" << endl;
+//    cout << "GENERAL OPTIONS:" << endl;
+//    cout << "  -hh               Print this help dialog" << endl;
+//    cout << "  -h                Print help options for phylogenetic inference" << endl;
+//    cout << "  <file_name>       User tree in NEWICK format or split network in NEXUS format" << endl;
+//    cout << "  <output_file>     Output file to store results, default is '<file_name>.pda'" << endl;
+//    cout << "  -k <num_taxa>     Find optimal set of size <num_taxa>" << endl;
+//    cout << "  -k <min>:<max>    Find optimal sets of size from <min> to <max>" << endl;
+//    cout << "  -k <min>:<max>:<step>" << endl;
+//    cout << "                    Find optimal sets of size min, min+step, min+2*step,..." << endl;
+//    cout << "  -o <taxon>        Root name to compute rooted PD (default: unrooted)" << endl;
+//    cout << "  -if <file>        File containing taxa to be included into optimal sets" << endl;
+//    cout << "  -e <file>         File containing branch/split scale and taxa weights" << endl;
+//    cout << "  -all              Identify all multiple optimal sets" << endl;
+//    cout << "  -lim <max_limit>  The maximum number of optimal sets for each k if -a is specified" << endl;
+//    cout << "  -min              Compute minimal sets (default: maximal)" << endl;
+//    cout << "  -1out             Print taxa sets and scores to separate files" << endl;
+//    cout << "  -oldout           Print output compatible with version 0.3" << endl;
+//    cout << "  -v                Verbose mode" << endl;
+//    cout << endl;
+//    cout << "OPTIONS FOR PHYLOGENETIC DIVERSITY (PD):" << endl;
+//    cout << "  -root             Make the tree ROOTED, default is unrooted" << endl;
+//    cout << "    NOTE: this option and -o <taxon> cannot be both specified" << endl;
+//    cout << "  -g                Run greedy algorithm only (default: auto)" << endl;
+//    cout << "  -pr               Run pruning algorithm only (default: auto)" << endl;
+//    cout << endl;
+//    /*
+//    cout << "OPTIONS FOR SPLIT DIVERSITY:" << endl;
+//    cout << "  -exhaust          Force to use exhaustive search" << endl;
+//    cout << "    NOTE: by default, the program applies dynamic programming algorithm" << endl;
+//    cout << "          on circular networks and exhaustive search on general networks" << endl;
+//    cout << endl;*/
+//    cout << "OPTIONS FOR BUDGET CONSTRAINTS:" << endl;
+//    cout << "  -u <file>         File containing total budget and taxa preservation costs" << endl;
+//    cout << "  -b <budget>       Total budget to conserve taxa" << endl;
+//    cout << "  -b <min>:<max>    Find all sets with budget from <min> to <max>" << endl;
+//    cout << "  -b <min>:<max>:<step>" << endl;
+//    cout << "                    Find optimal sets with budget min, min+step, min+2*step,..." << endl;
+//    cout << endl;
+//    cout << "OPTIONS FOR AREA ANALYSIS:" << endl;
+//    cout << "  -ts <taxa_file>   Compute/maximize PD/SD of areas (combine with -k to maximize)" << endl;
+//    cout << "  -excl             Compute exclusive PD/SD" << endl;
+//    cout << "  -endem            Compute endemic PD/SD" << endl;
+//    cout << "  -compl <areas>    Compute complementary PD/SD given the listed <areas>" << endl;
+//    cout << endl;
+//
+//    cout << "OPTIONS FOR VIABILITY CONSTRAINTS:" << endl;
+//    cout << "  -eco <food_web>   File containing food web matrix" << endl;
+//    cout << "  -k% <n>           Find optimal set of size relative the total number of taxa" << endl;
+//    cout << "  -diet <min_diet>  Minimum diet portion (%) to be preserved for each predator" << endl;
+//    cout << endl;
+//    //if (!full_command) exit(0);
+//
+//    cout << "MISCELLANEOUS:" << endl;
+//    cout << "  -dd <sample_size> Compute PD distribution of random sets of size k" << endl;
+//    /*
+//    cout << "  -gbo <sitelh_file> Compute and output the alignment of (normalized)" << endl;
+//    cout << "                    expected frequencies given in site_ll_file" << endl;
+//	*/
+//
+//    //	cout << "  -rep <times>        Repeat algorithm a number of times." << endl;
+//    //	cout << "  -noout              Print no output file." << endl;
+//    cout << endl;
+//    //cout << "HIDDEN OPTIONS: see the source code file pda.cpp::parseArg()" << endl;
 
     exit(0);
 }
@@ -2855,6 +2900,80 @@ void usage_iqtree(char* argv[], bool full_command) {
 //			<< "  -d <outfile>         Calculate the distance matrix inferred from tree" << endl
 //			<< "  -stats <outfile>     Output some statistics about branch lengths" << endl
 //			<< "  -comp <treefile>     Compare tree with each in the input trees" << endl;
+
+
+			cout << endl;
+
+    if (full_command) {
+        //TODO Print other options here (to be added)
+    }
+
+    exit(0);
+}
+
+void usage_ufbootmp(char* argv[], bool full_command) {
+	printCopyrightMP(cout);
+
+    cout << "Usage: " << argv[0] << " -s <alignment> [OPTIONS] [<treefile>] " << endl << endl;
+    cout << "GENERAL OPTIONS:" << endl
+            << "  -?                   Printing this help dialog" << endl
+            << "  -s <alignment>       Input alignment (REQUIRED) in PHYLIP/FASTA/NEXUS format" << endl
+            << "  -st <data_type>      BIN, DNA, AA, CODON, or MORPH (default: auto-detect)" << endl
+            << "  <treefile>           Initial tree for tree reconstruction (default: MP)" << endl
+            << "  -pre <PREFIX>        Using <PREFIX> for output files (default: alignment name)" << endl
+            << "  -seed <number>       Random seed number, normally used for debugging purpose" << endl
+            << "  -v, -vv, -vvv        Verbose mode, printing more messages to screen" << endl
+
+			<< endl << "SPECIFIC TO MAXIMUM PARSIMONY BOOTSTRAP APPROXIMATION:" << endl
+			<< "  -mulhits                  Store multiple equally parsimonious trees per bootstrap replicate" << endl
+			<< "  -ratchet_iter <number>    Number of non-ratchet iterations before each ratchet iteration (default: 1)" << endl
+			<< "  -ratchet_wgt <number>     Weight to add to each site selected for perturbation during ratchet (default: 1)" << endl
+			<< "  -ratchet_percent <number> Percentage of informative sites selected for perturbation during ratchet (default: 50)" << endl
+			<< "  -ratchet_off              Turn of ratchet, i.e. Only use tree perturbation" << endl
+			<< "  -spr_rad <number>         Maximum radius of SPR (default: 3)" << endl
+			<< "  -cand_cutoff <#s>         Use top #s percentile as cutoff for selecting bootstrap candidates (default: 10)" << endl
+			<< "  -opt_btree_off            Turn off refinement step on the final bootstrap tree set" << endl
+			<< "  -nni_pars                 Hill-climb by NNI instead of SPR" << endl
+
+            << endl << "NEW STOCHASTIC TREE SEARCH ALGORITHM:" << endl
+            << "  -numpars <number>    Number of initial parsimony trees (default: 100)" << endl
+            << "  -toppars <number>    Number of best parsimony trees (default: 20)" << endl
+            << "  -numcand <number>    Size of the candidate tree set (defaut: 5)" << endl
+            << "  -pers <perturbation> Perturbation strength for randomized NNI (default: 0.5)" << endl
+            << "  -numstop <number>    Number of unsuccessful iterations to stop (default: 100)" << endl
+            << "  -n <#iterations>     Fix number of iterations to <#iterations> (default: auto)" << endl
+            << "  -iqp                 Use the IQP tree perturbation (default: randomized NNI)" << endl
+            << "  -iqpnni              Switch back to the old IQPNNI tree search algorithm" << endl
+            << endl << "ULTRAFAST BOOTSTRAP:" << endl
+            << "  -bb <#replicates>    Ultrafast bootstrap (>=1000)" << endl
+//            << "  -n <#iterations>     Minimum number of iterations (default: 100)" << endl
+            << "  -nm <#iterations>    Maximum number of iterations (default: 1000)" << endl
+			<< "  -nstep <#iterations> #Iterations for UFBoot stopping rule (default: 100)" << endl
+            << "  -bcor <min_corr>     Minimum correlation coefficient (default: 0.99)" << endl
+			<< "  -beps <epsilon>      RELL epsilon to break tie (default: 0.5)" << endl
+            << endl << "CONSENSUS RECONSTRUCTION:" << endl
+            << "  <tree_file>          Set of input trees for consensus reconstruction" << endl
+            << "  -t <threshold>       Min split support in range [0,1]. 0.5 for majority-rule" << endl
+            << "                       consensus (default: 0, i.e. extended consensus)" << endl
+            << "  -bi <burnin>         Discarding <burnin> trees at beginning of <treefile>" << endl
+            << "  -con                 Computing consensus tree to .contree file" << endl
+            << "  -net                 Computing consensus network to .nex file" << endl
+            << "  -sup <target_tree>   Assigning support values for <target_tree> to .suptree" << endl
+            << endl << "ROBINSON-FOULDS DISTANCE:" << endl
+            << "  -rf_all              Computing all-to-all RF distances of trees in <treefile>" << endl
+            << "  -rf <treefile2>      Computing all RF distances between two sets of trees" << endl
+            << "                       stored in <treefile> and <treefile2>" << endl
+            << "  -rf_adj              Computing RF distances of adjacent trees in <treefile>" << endl
+            << endl;
+
+			cout << "GENERATING RANDOM TREES:" << endl;
+			cout << "  -r <num_taxa>        Create a random tree under Yule-Harding model." << endl;
+			cout << "  -ru <num_taxa>       Create a random tree under Uniform model." << endl;
+			cout << "  -rcat <num_taxa>     Create a random caterpillar tree." << endl;
+			cout << "  -rbal <num_taxa>     Create a random balanced tree." << endl;
+			cout << "  -rcsg <num_taxa>     Create a random circular split network." << endl;
+			cout << "  -rlen <min_len> <mean_len> <max_len>  " << endl;
+			cout << "                       min, mean, and max branch lengths of random trees." << endl;
 
 
 			cout << endl;

@@ -118,7 +118,8 @@ ModelFactory::ModelFactory(Params &params, PhyloTree *tree) {
 		else if (tree->aln->seq_type == SEQ_CODON) model_str = "GY";
 		else if (tree->aln->seq_type == SEQ_MORPH) model_str = "MK";
 		else model_str = "JC";
-		outWarning("Default model may be under-fitting. Use option '-m TEST' to select best-fit model.");
+		if(!params.maximum_parsimony)
+			outWarning("Default model may be under-fitting. Use option '-m TEST' to select best-fit model.");
 	}
 	string::size_type posfreq;
 	StateFreqType freq_type = params.freq_type;

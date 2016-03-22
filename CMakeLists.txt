@@ -31,12 +31,12 @@
 
 cmake_minimum_required(VERSION 2.8)
 
-project(iqtree)
+project(ufbootmp)
 add_definitions(-DIQ_TREE)
 # The version number.
 set (iqtree_VERSION_MAJOR 1)
-set (iqtree_VERSION_MINOR 1)
-set (iqtree_VERSION_PATCH 5)
+set (iqtree_VERSION_MINOR 0)
+set (iqtree_VERSION_PATCH 0)
 
 set(BUILD_SHARED_LIBS OFF)
 
@@ -296,7 +296,7 @@ add_subdirectory(model)
 ##################################################################
 # the main executable
 ##################################################################
-add_executable(iqtree
+add_executable(ufbootmp
 alignment.cpp
 alignmentpairwise.cpp
 circularnetwork.cpp
@@ -383,19 +383,19 @@ if (IQTREE_FLAGS MATCHES "omp")
 	endif()
 endif()
 
-target_link_libraries(iqtree pll ncl whtest zlibstatic sprng vectorclass model ${PLATFORM_LIB} ${THREAD_LIB})	
+target_link_libraries(ufbootmp pll ncl whtest zlibstatic sprng vectorclass model ${PLATFORM_LIB} ${THREAD_LIB})	
 
 ##################################################################
 # setup the executable name 
 ##################################################################
-set_target_properties(iqtree PROPERTIES OUTPUT_NAME "iqtree${EXE_SUFFIX}")
+set_target_properties(ufbootmp PROPERTIES OUTPUT_NAME "ufbootmp${EXE_SUFFIX}")
 
 # strip the release build
 if (CMAKE_BUILD_TYPE STREQUAL "Release" AND (GCC OR CLANG)) # strip is not necessary for MSVC
 	if (WIN32)
-		ADD_CUSTOM_COMMAND(TARGET iqtree POST_BUILD COMMAND strip $<TARGET_FILE:iqtree>)
+		ADD_CUSTOM_COMMAND(TARGET ufbootmp POST_BUILD COMMAND strip $<TARGET_FILE:ufbootmp>)
 	else()
-		ADD_CUSTOM_COMMAND(TARGET iqtree POST_BUILD COMMAND ${CMAKE_STRIP} $<TARGET_FILE:iqtree>)
+		ADD_CUSTOM_COMMAND(TARGET ufbootmp POST_BUILD COMMAND ${CMAKE_STRIP} $<TARGET_FILE:ufbootmp>)
 	endif()
 endif()
 
@@ -407,21 +407,21 @@ endif()
 
 if (WIN32)
 	if (MSVC) 
-		ADD_CUSTOM_COMMAND(TARGET iqtree POST_BUILD COMMAND copy "Release\\iqtree${EXE_SUFFIX}.exe" "Release\\iqtree${EXE_SUFFIX}-click.exe")
+		ADD_CUSTOM_COMMAND(TARGET ufbootmp POST_BUILD COMMAND copy "Release\\ufbootmp${EXE_SUFFIX}.exe" "Release\\ufbootmp${EXE_SUFFIX}-click.exe")
 	else()
-		ADD_CUSTOM_COMMAND(TARGET iqtree POST_BUILD COMMAND copy "iqtree${EXE_SUFFIX}.exe" "iqtree${EXE_SUFFIX}-click.exe")
+		ADD_CUSTOM_COMMAND(TARGET ufbootmp POST_BUILD COMMAND copy "ufbootmp${EXE_SUFFIX}.exe" "ufbootmp${EXE_SUFFIX}-click.exe")
 	endif()	
 endif()
 
 ##############################################################
 # add the install targets
 ##############################################################
-install (TARGETS iqtree DESTINATION bin)
+install (TARGETS ufbootmp DESTINATION bin)
 install (FILES "${PROJECT_SOURCE_DIR}/examples/example.phy" DESTINATION .)
 install (FILES "${PROJECT_SOURCE_DIR}/Documents/iqtree-manual-1.0.pdf" DESTINATION .)
 
 if (WIN32)
-	install (FILES "${BINARY_DIR}/iqtree${EXE_SUFFIX}-click.exe" DESTINATION bin)
+	install (FILES "${BINARY_DIR}/ufbootmp${EXE_SUFFIX}-click.exe" DESTINATION bin)
 	if (EXE_SUFFIX MATCHES "omp" AND MSVC)
 		install(FILES  "${PROJECT_SOURCE_DIR}/lib/pthreadVC2.dll" DESTINATION bin)
 		install(FILES  "${PROJECT_SOURCE_DIR}/lib/libiomp5md.dll" DESTINATION bin)

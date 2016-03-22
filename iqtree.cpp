@@ -257,8 +257,9 @@ void IQTree::setParams(Params &params) {
 			for(int k = 0; k < params.gbo_replicates; k++) boot_trees_parsimony_top[k].clear();
 			boot_threshold.resize(params.gbo_replicates, -INT_MAX);
 		}
-		on_ratchet_hclimb1 = false;
+
 		on_opt_btree = false;
+		on_ratchet_hclimb1 = false;
 
 		if(params.ratchet_iter >= 0){
 			nunit = getAlnNPattern() + VCSIZE_USHORT;
@@ -307,7 +308,8 @@ void IQTree::setParams(Params &params) {
         	cout << "Bootstrap alignments printed to " << bootaln_name << endl;
         }
 
-        cout << "Max candidate trees (tau): " << max_candidate_trees << endl;
+		if(!params.maximum_parsimony)
+	        cout << "Max candidate trees (tau): " << max_candidate_trees << endl;
     }
 
     if (params.root_state) {
@@ -551,6 +553,12 @@ void IQTree::initializePLL(Params &params) {
 
 
 void IQTree::initializeModel(Params &params) {
+	VerboseMode saved_mode;
+	if(params.maximum_parsimony){
+        saved_mode = verbose_mode;
+        verbose_mode = VB_QUIET;
+	}
+
     try {
         if (!getModelFactory()) {
             if (isSuperTree()) {
@@ -579,6 +587,9 @@ void IQTree::initializeModel(Params &params) {
         	outError("non GTR model for DNA is not yet supported by PLL.");
     }
 
+	if(params.maximum_parsimony){
+        verbose_mode = saved_mode;
+	}
 }
 double IQTree::getProbDelete() {
     return (double) k_delete / leafNum;
@@ -1470,7 +1481,7 @@ string IQTree::optimizeModelParameters(bool printInfo) {
 void IQTree::printBestScores(int numBestScore) {
 	vector<double> bestScores = candidateTrees.getBestScores(candidateTrees.popSize);
 	for (vector<double>::iterator it = bestScores.begin(); it != bestScores.end(); it++)
-		cout << (*it) << " ";
+		cout << (params->maximum_parsimony ? -(*it) : (*it)) << " ";
 	cout << endl;
 }
 
@@ -1725,10 +1736,6 @@ double IQTree::doTreeSearch() {
          * PARSIMONY RATCHET-LIKE IDEA
          * -------------------------------------------------------------------------*/
         if(on_ratchet_hclimb1){
-        	if(params->gbo_replicates > 0)
-//	        	cout << "***TEST: number of ratchet trees: " << treels_logl.size() - tmp_num_ratchet_trees
-//    	    		<< ", number of ratchet bootstrap candidates: " << treels.size() - tmp_num_ratchet_bootcands << endl;
-
 			ratchet_iter_count = 0;
 
 			// restore alignment
@@ -1761,10 +1768,11 @@ double IQTree::doTreeSearch() {
         double realtime_remaining = stop_rule.getRemainingTime(curIt, cur_correlation);
         cout.setf(ios::fixed, ios::floatfield);
 
-        cout << ((iqp_assess_quartet == IQP_BOOTSTRAP) ? "Bootstrap " : "Iteration ") << curIt << " / LogL: ";
+        cout << ((iqp_assess_quartet == IQP_BOOTSTRAP) ? "Bootstrap " : "Iteration ") << curIt
+        	<< (params->maximum_parsimony ? " / Score: " : " / LogL: ");
         if (verbose_mode >= VB_MED)
         	cout << perturbScore << " -> ";
-        cout << curScore;
+        cout << (params->maximum_parsimony ? (-curScore) : curScore);
         if (verbose_mode >= VB_MED)
         	cout << " / NNIs: " << nni_count << "," << nni_steps;
         cout << " / Time: " << convert_time(getRealTime() - params->start_real_time);
@@ -1877,12 +1885,17 @@ double IQTree::doTreeSearch() {
             boot_splits.push_back(sg);
             if (params->max_candidate_trees == 0)
                 max_candidate_trees = treels_logl.size() * (curIt + (params->step_iterations / 2)) / curIt;
-			cout << "NOTE: " << treels_logl.size() << " bootstrap candidate trees evaluated (logl-cutoff: " << logl_cutoff << ")" << endl;
+            string cutoff_name = params->maximum_parsimony ? "candidate-score-cutoff" : "logl-cutoff";
+			cout << "NOTE: " << treels_logl.size() << " bootstrap candidate trees evaluated (" << cutoff_name << ": "
+				<< (params->maximum_parsimony ? -logl_cutoff : logl_cutoff)
+				<< ")" << endl;
 
 			// check convergence every full step
 			if (curIt % params->step_iterations == 0) {
 	        	cur_correlation = computeBootstrapCorrelation();
+	        	cout.precision(3);
 	            cout << "NOTE: Bootstrap correlation coefficient of split occurrence frequencies: " << cur_correlation << endl;
+	            cout.precision(0);
 	            if (!stop_rule.meetStopCondition(curIt, cur_correlation)) {
 	                if (params->max_candidate_trees == 0) {
 	                    max_candidate_trees = treels_logl.size() * (curIt + params->step_iterations) / curIt;
@@ -3361,7 +3374,8 @@ void IQTree::summarizeBootstrap(Params &params, MTreeSet &trees) {
     //sg.report(cout);
     cout << "Creating bootstrap support values..." << endl;
     stringstream tree_stream;
-    printTree(tree_stream, WT_TAXON_ID | WT_BR_LEN);
+//    printTree(tree_stream, WT_TAXON_ID | WT_BR_LEN); // for ML
+    printTree(tree_stream, WT_TAXON_ID); // Diep: for MP
     MExtTree mytree;
     mytree.readTree(tree_stream, rooted);
     mytree.assignLeafID();
@@ -3814,16 +3828,19 @@ void IQTree::printResultTree(string suffix) {
     tree_file_name += ".treefile";
     if (suffix.compare("") != 0) {
         string iter_tree_name = tree_file_name + "." + suffix;
-        printTree(iter_tree_name.c_str(), WT_BR_LEN | WT_BR_LEN_FIXED_WIDTH | WT_SORT_TAXA | WT_NEWLINE);
+//        printTree(iter_tree_name.c_str(), WT_BR_LEN | WT_BR_LEN_FIXED_WIDTH | WT_SORT_TAXA | WT_NEWLINE); // for ML
+        printTree(iter_tree_name.c_str(), WT_SORT_TAXA | WT_NEWLINE); // Diep: for MP
     } else {
-        printTree(tree_file_name.c_str(), WT_BR_LEN | WT_BR_LEN_FIXED_WIDTH | WT_SORT_TAXA | WT_NEWLINE);
+//        printTree(tree_file_name.c_str(), WT_BR_LEN | WT_BR_LEN_FIXED_WIDTH | WT_SORT_TAXA | WT_NEWLINE); // for ML
+        printTree(tree_file_name.c_str(), WT_SORT_TAXA | WT_NEWLINE); // Diep: for MP
     }
     //printTree(tree_file_name.c_str(), WT_BR_LEN | WT_BR_LEN_FIXED_WIDTH);
 }
 
 void IQTree::printResultTree(ostream &out) {
     setRootNode(params->root);
-    printTree(out, WT_BR_LEN | WT_BR_LEN_FIXED_WIDTH | WT_SORT_TAXA | WT_NEWLINE);
+//    printTree(out, WT_BR_LEN | WT_BR_LEN_FIXED_WIDTH | WT_SORT_TAXA | WT_NEWLINE); // for ML
+    printTree(out, WT_SORT_TAXA | WT_NEWLINE); // Diep: for MP
 }
 
 /*

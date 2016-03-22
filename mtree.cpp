@@ -1315,6 +1315,9 @@ void MTree::drawTree2(ostream &out, int brtype, double brscale, IntVector &subtr
     IntVector::iterator ii;
     bool zero_length = false;
 
+//	char zero_char = '*'; // for ML
+	char zero_char = '-'; // Diep: for MP
+
     //cout << "DrawTree2!" << endl;
     if (!node) {
         node = root;
@@ -1336,7 +1339,7 @@ void MTree::drawTree2(ostream &out, int brtype, double brscale, IntVector &subtr
         }
         out << ((node==dad->neighbors.front()->node) ? fig_char[2] : ((node==dad->neighbors.back()->node) ? fig_char[4] : fig_char[3]));
         for (i = 0; i < br_len; i++)
-            out << ((zero_length) ? '*' : fig_char[1]);
+            out << ((zero_length) ? zero_char : fig_char[1]);
         out << node->name;
         if (brtype & WT_TAXON_ID)
             out << " (" << node->id << ")";
@@ -1378,7 +1381,7 @@ void MTree::drawTree2(ostream &out, int brtype, double brscale, IntVector &subtr
             if (dad) {
 				out << ((node==dad->neighbors.front()->node) ? fig_char[2] : ((node==dad->neighbors.back()->node) ? fig_char[4] : fig_char[3]));
                 for (i = 0; i < abs(br_len); i++)
-                    out << ((zero_length) ? '*' : fig_char[1]);
+                    out << ((zero_length) ? zero_char : fig_char[1]);
             }
             if (brtype & WT_INT_NODE)
             	out << node->id;
