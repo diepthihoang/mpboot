@@ -1564,7 +1564,7 @@ double IQTree::doTreeSearch() {
 	 *====================================================*/
     for ( ; !stop_rule.meetStopCondition(curIt, cur_correlation); curIt++) {
         searchinfo.curIter = curIt;
-		if(params->cutoff_percent < 0){
+		if(params->cutoff_percent > 100){
 			// old way of updating logl_cutoff
 			// estimate logl_cutoff for bootstrap
 			if (params->avoid_duplicated_trees && max_candidate_trees > 0 && treels_logl.size() > 1000) {

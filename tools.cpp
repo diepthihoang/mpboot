@@ -785,7 +785,7 @@ void parseArg(int argc, char *argv[], Params &params) {
     params.test_site_pars = false;
     params.auto_vectorize = false;
     params.sort_alignment = true;
-    params.cutoff_percent = 10;// Diep: Default = 10 for UFBoot-MP release; Hidden test value: -1 for UFBoot logl-cutoff
+    params.cutoff_percent = 10;// Diep: Default = 10 for UFBoot-MP release; Hidden test value: >100 for UFBoot logl-cutoff
     params.hclimb1_nni = false;
     params.no_hclimb1_bb = false;
     params.optimize_boot_trees = true;// Diep: Revert for UFBoot-MP release
