@@ -2937,7 +2937,7 @@ void IQTree::saveCurrentTree(double cur_logl) {
         if (verbose_mode >= VB_MAX)
             cout << "Update treels_logl[" << tree_index << "] := " << cur_logl << endl;
     } else {
-        if (logl_cutoff != 0.0 && cur_logl <= logl_cutoff + 1e-4)
+        if (logl_cutoff != 0.0 && cur_logl <= logl_cutoff - 1e-4) // Diep: change + to - to avoid cases similar to Goloboff example
             return;
         tree_index = treels_logl.size();
         if (params->store_candidate_trees)
