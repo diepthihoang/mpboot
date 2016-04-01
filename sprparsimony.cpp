@@ -1371,12 +1371,11 @@ static void testInsertParsimony (pllInstance *tr, partitionList *pr, nodeptr p, 
 			pllSaveCurrentTreeSprParsimony(tr, pr, mp); // run UFBoot
 		}
 
-		if(mp < tr->bestParsimony)
-        {
-          tr->bestParsimony = mp;
-          tr->insertNode = q;
-          tr->removeNode = p;
-        }
+		if((mp < tr->bestParsimony) || ((mp == tr->bestParsimony) && (random_double() <= 0.5))){
+			tr->bestParsimony = mp;
+			tr->insertNode = q;
+			tr->removeNode = p;
+		}
 
       if(saveBranches)
         hookup(q, r, z, numBranches);
@@ -1484,7 +1483,11 @@ static int rearrangeParsimony(pllInstance *tr, partitionList *pr, nodeptr p, int
 
   q = p->back;
 
-	evaluateParsimony(tr, pr, p, PLL_FALSE, perSiteScores); // Diep: This is VERY important to make sure SPR is accurate*****
+	unsigned int mp = evaluateParsimony(tr, pr, p, PLL_FALSE, perSiteScores); // Diep: This is VERY important to make sure SPR is accurate*****
+	if(perSiteScores){
+		// If UFBoot is enabled ...
+		pllSaveCurrentTreeSprParsimony(tr, pr, mp); // run UFBoot
+	}
 
   if(tr->constrained)
     {
@@ -1988,7 +1991,7 @@ static void stepwiseAddition(pllInstance *tr, partitionList *pr, nodeptr p, node
 
   mp = evaluateParsimonyIterativeFast(tr, pr, PLL_FALSE);
 
-  if(mp < tr->bestParsimony)
+  if((mp < tr->bestParsimony) || ((mp == tr->bestParsimony) && (random_double() <= 0.5)))
     {
       tr->bestParsimony = mp;
       tr->insertNode = q;
@@ -2134,21 +2137,29 @@ static void _pllMakeParsimonyTreeFast(pllInstance *tr, partitionList *pr, int sp
 
   randomMP = tr->bestParsimony;
 
-  do
-    {
-      startMP = randomMP;
-      nodeRectifierPars(tr);
-      for(i = 1; i <= tr->mxtips + tr->mxtips - 2; i++)
-        {
-          rearrangeParsimony(tr, pr, tr->nodep[i], 1, sprDist, PLL_FALSE, 0);
-          if(tr->bestParsimony < randomMP)
-            {
-              restoreTreeRearrangeParsimony(tr, pr, 0);
-              randomMP = tr->bestParsimony;
-            }
-        }
-    }
-  while(randomMP < startMP);
+	int * hill_climbing_perm = (int *)rax_malloc((size_t)(tr->mxtips + tr->mxtips - 1) * sizeof(int));
+	int j;
+	makePermutationFast(hill_climbing_perm, tr->mxtips + tr->mxtips - 2, tr);
+
+
+	do
+	{
+		startMP = randomMP;
+		nodeRectifierPars(tr);
+		//      for(i = 1; i <= tr->mxtips + tr->mxtips - 2; i++)
+		for(j = 1; j <= tr->mxtips + tr->mxtips - 2; j++)
+		{
+			i = hill_climbing_perm[j];
+			tr->removeNode = tr->insertNode = NULL;
+			rearrangeParsimony(tr, pr, tr->nodep[i], 1, sprDist, PLL_FALSE, 0);
+			if(((tr->bestParsimony < randomMP) || ((tr->bestParsimony == randomMP) && random_double() <= 0.5)) &&
+					tr->removeNode && tr->insertNode)
+			{
+				restoreTreeRearrangeParsimony(tr, pr, 0);
+				randomMP = tr->bestParsimony;
+			}
+		}
+	}while(randomMP < startMP);
 
   rax_free(perm);
 }
@@ -2218,18 +2229,28 @@ int pllOptimizeSprParsimony(pllInstance * tr, partitionList * pr, int mintrav, i
 	evaluateParsimony(tr, pr, tr->start, PLL_TRUE, perSiteScores);
 	*/
 
+	int j, *perm        = (int *)rax_malloc((size_t)(tr->mxtips + tr->mxtips - 1) * sizeof(int));
+	makePermutationFast(perm, tr->mxtips + tr->mxtips - 2, tr);
+
+
 	randomMP = tr->bestParsimony;
 	tr->ntips = tr->mxtips;
 	do{
 		startMP = randomMP;
 		nodeRectifierPars(tr);
-		for(i = 1; i <= tr->mxtips + tr->mxtips - 2; i++){
+//		for(i = 1; i <= tr->mxtips + tr->mxtips - 2; i++){
+		for(j = 1; j <= tr->mxtips + tr->mxtips - 2; j++){
+			i = perm[j];
+			tr->insertNode = NULL;
+			tr->removeNode = NULL;
+
 			rearrangeParsimony(tr, pr, tr->nodep[i], mintrav, maxtrav, PLL_FALSE, perSiteScores);
-			if(tr->bestParsimony < randomMP){
+
+			if(((tr->bestParsimony < randomMP) || ((tr->bestParsimony == randomMP) && random_double() <= 0.5)) &&
+		          	tr->removeNode && tr->insertNode){
 				restoreTreeRearrangeParsimony(tr, pr, perSiteScores);
 				randomMP = tr->bestParsimony;
 			}
-//			cout << "\ttr->bestParsimony = " << tr->bestParsimony << endl;
 		}
 	}while(randomMP < startMP);
 
