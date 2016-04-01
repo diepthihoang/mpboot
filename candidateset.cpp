@@ -126,9 +126,19 @@ bool CandidateSet::update(string tree, double score) {
 			// insert tree into candidate set
 			insert(CandidateSet::value_type(score, candidate));
 			topologies[candidate.topology] = score;
-		} else if (getWorstScore() < score){
+			candidateTreeVec.push_back(tree); // Diep added
+		} else if (getWorstScore() <= score){
 			// remove the worst-scoring tree
 			topologies.erase(begin()->second.topology);
+
+			// Diep added
+			int n = candidateTreeVec.size();
+			for(int i = 0; i < n; i++)
+				if(candidateTreeVec[i] == begin()->second.tree){
+					candidateTreeVec[i] = tree;
+					break;
+				}
+
 			erase(begin());
 			// insert tree into candidate set
 			insert(CandidateSet::value_type(score, candidate));
@@ -189,4 +199,24 @@ bool CandidateSet::treeTopologyExist(string topo) {
 
 bool CandidateSet::treeExist(string tree) {
 	return treeTopologyExist(getTopology(tree));
+}
+
+void CandidateSet::copyToCandidateVec(){
+	assert(!empty());
+	if (empty())
+		return;
+	candidateTreeVec.clear();
+	for (reverse_iterator i = rbegin(); i != rend(); i++)
+		candidateTreeVec.push_back(i->second.tree);
+}
+
+string CandidateSet::getRandCandVecTree(){
+	assert(!empty());
+	if (empty())
+		return "";
+	int n = candidateTreeVec.size();
+	int i = random_int(n);
+	return candidateTreeVec[i];
+	assert(0);
+	return "";
 }

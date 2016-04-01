@@ -154,6 +154,22 @@ public:
      */
     CandidateSet getBestCandidateTrees(int numTrees);
 
+	/*
+	 * Diep added
+	 * Copy all tree strings in current candidate set into vector<string> candidateTreeVec
+	 */
+    void copyToCandidateVec(); // Diep added to avoid bias in support values for big group
+
+    /*
+     * Diep added
+     * Return a random tree stored in vector<string> candidateTreeVec
+     * Somehow this works for MP better than getRandCandTree
+     */
+    string getRandCandVecTree();
+
+private:
+	vector<string> candidateTreeVec; // Diep added to avoid bias in support values for big group
+
 };
 
 #endif /* CANDIDATESET_H_ */
