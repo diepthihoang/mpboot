@@ -654,7 +654,7 @@ void parseArg(int argc, char *argv[], Params &params) {
     params.manuel_analytic_approx = false;
     params.leastSquareNNI = false;
     params.ls_var_type = OLS;
-    params.maxCandidates = 1000; // Diep: MP needs more candidates than ML
+    params.maxCandidates = 100; // Diep: MP might need more candidates than ML
     params.popSize = 5;
     params.p_delete = -1;
     params.min_iterations = -1;

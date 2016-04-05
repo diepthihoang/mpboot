@@ -3209,9 +3209,10 @@ void IQTree::saveCurrentTree(double cur_logl) {
 							treels[tree_str] = tree_index;
 						}
 					}
-					if (rell <= boot_logl[sample] + params->ufboot_epsilon) {
-						boot_counts[sample]++;
-					} else {
+
+
+					// Diep: to correct the count for MP (2016-04-06)
+					if (rell <= boot_logl[sample] - params->ufboot_epsilon){
 						boot_counts[sample] = 1;
 					}
 
@@ -3221,6 +3222,11 @@ void IQTree::saveCurrentTree(double cur_logl) {
 				} /*else if (verbose_mode >= VB_MED && rell > boot_logl[sample] - 0.01) {
 				 cout << "Info: multiple RELL score trees detected" << endl;
 				 }*/
+
+				// Diep: to correct the count for MP (2016-04-06)
+				if (rell == boot_logl[sample]) {
+						boot_counts[sample]++;
+				}
 			}
         }
         if (updated && verbose_mode >= VB_MAX)
