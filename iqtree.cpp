@@ -1615,7 +1615,8 @@ double IQTree::doTreeSearch() {
 
         if(params->ratchet_iter >= 0){
         	if(params->ratchet_iter == ratchet_iter_count){
-				string candidateTree = candidateTrees.getRandCandVecTree(); // Diep: to pick from vector-stored candidates
+//				string candidateTree = candidateTrees.getRandCandVecTree(); // Diep: to pick from vector-stored candidates
+				string candidateTree = candidateTrees.getRandCandTree();
 				readTreeString(candidateTree);
 
 				Alignment* perturb_alignment;
@@ -1659,7 +1660,8 @@ double IQTree::doTreeSearch() {
 				if (params->snni) {
 					int numNNI = floor(searchinfo.curPerStrength * (aln->getNSeq() - 3));
 					//cout << "candidateTrees.size() = " << candidateTrees.size() << endl;
-					string candidateTree = candidateTrees.getRandCandVecTree(); // Diep: to pick from vector-stored candidates
+//					string candidateTree = candidateTrees.getRandCandVecTree(); // Diep: to pick from vector-stored candidates
+					string candidateTree = candidateTrees.getRandCandTree();
 					readTreeString(candidateTree);
 					if (params->iqp) {
 						doIQP();
