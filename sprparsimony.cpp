@@ -2105,6 +2105,8 @@ static void _pllMakeParsimonyTreeFast(pllInstance *tr, partitionList *pr, int sp
 
   f = tr->start;
 
+  bestTreeScoreHits = 1;
+
   while(tr->ntips < tr->mxtips)
     {
       nodeptr q;
