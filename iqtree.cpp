@@ -258,16 +258,6 @@ void IQTree::setParams(Params &params) {
 			boot_threshold.resize(params.gbo_replicates, -INT_MAX);
 		}
 
-		on_opt_btree = false;
-		on_ratchet_hclimb1 = false;
-
-		if(params.ratchet_iter >= 0){
-			nunit = getAlnNPattern() + VCSIZE_USHORT;
-			original_sample = aligned_alloc<BootValTypePars>(nunit);
-			memset(original_sample, 0, nunit * sizeof(BootValTypePars));
-			for (size_t i = 0; i < getAlnNPattern(); i++)
-				original_sample[i] = aln->at(i).frequency;
-		}
 
         VerboseMode saved_mode = verbose_mode;
         verbose_mode = VB_QUIET;
@@ -312,6 +302,18 @@ void IQTree::setParams(Params &params) {
 	        cout << "Max candidate trees (tau): " << max_candidate_trees << endl;
     }
 
+	if(params.maximum_parsimony){
+		on_opt_btree = false;
+		on_ratchet_hclimb1 = false;
+
+		if(params.ratchet_iter >= 0){
+			size_t nunit = getAlnNPattern() + VCSIZE_USHORT;
+			original_sample = aligned_alloc<BootValTypePars>(nunit);
+			memset(original_sample, 0, nunit * sizeof(BootValTypePars));
+			for (size_t i = 0; i < getAlnNPattern(); i++)
+				original_sample[i] = aln->at(i).frequency;
+		}
+	}
     if (params.root_state) {
         if (strlen(params.root_state) != 1)
             outError("Root state must have exactly 1 character");
@@ -1612,7 +1614,6 @@ double IQTree::doTreeSearch() {
          * -------------------------------------------------------------------------*/
 //		long tmp_num_ratchet_trees = treels_logl.size();
 //		long tmp_num_ratchet_bootcands = treels.size();
-
         if(params->ratchet_iter >= 0){
         	if(params->ratchet_iter == ratchet_iter_count){
 //				string candidateTree = candidateTrees.getRandCandVecTree(); // Diep: to pick from vector-stored candidates
