@@ -1519,6 +1519,8 @@ string IQTree::optimizeBranches(int maxTraversal) {
 }
 
 double IQTree::doTreeSearch() {
+	cout << "Time: " << convert_time(getRealTime() - params->start_real_time) << endl; // Diep added
+
 //    double begin_real_time, cur_real_time;
 //    begin_real_time = getRealTime();
     string tree_file_name = params->out_prefix;
@@ -1595,10 +1597,17 @@ double IQTree::doTreeSearch() {
 			if (params->avoid_duplicated_trees && treels_logl.size() > 1000) {
 				DoubleVector logl = treels_logl;
 				nth_element(logl.begin(), logl.begin() + logl.size() * params->cutoff_percent / 100 , logl.end(), std::greater<double>());
+				if(params->minimize_iter1_candidates){
+					if(curIt == 2){
+						int iter1_num_best = min(int(aln->getNSeq()), int(logl.size() * params->cutoff_percent / 100));
+						DoubleVector tmplogl (logl.begin(), logl.begin() + iter1_num_best);
+						logl = tmplogl;
+						treels_logl = tmplogl;
+					}
+				}
 				logl_cutoff = logl[logl.size() * params->cutoff_percent / 100];
 			}
-//			cout << "***TEST: logl_cutoff = " << logl_cutoff
-//				<< ", treels.size() = " << treels.size() << ", treels_logl.size() = " << treels_logl.size() << endl;
+//			cout << "***TEST: logl_cutoff = " << logl_cutoff << endl;
 		}
 
 
@@ -1783,6 +1792,9 @@ double IQTree::doTreeSearch() {
         if (curIt > 10) {
 			cout << " (" << convert_time(realtime_remaining) << " left)";
         }
+//        if(params->maximum_parsimony && params->gbo_replicates)
+//			cout << "; C = {" << treels_logl.size() << " trees}" << ".";
+
         cout << endl;
 
         if (params->write_intermediate_trees && save_all_trees != 2) {
@@ -1793,6 +1805,9 @@ double IQTree::doTreeSearch() {
     	 * Update if better tree is found
     	 *---------------------------------------*/
 
+    	 // Diep: Team agrees on not using == for checking stopping condition
+    	 // i.e. the following commented code
+    	 /*
 //        if (curScore > bestScore) { // Minh&Tung for ML
 		if (curScore > bestScore || (curScore == bestScore && params->maximum_parsimony)) { // Diep added condition for MP
             stringstream cur_tree_topo_ss;
@@ -1831,9 +1846,9 @@ double IQTree::doTreeSearch() {
 			}
 			printResultTree();
         }
+		*/
 
-		/*
-		// Diep: This is old code for updating best tree >> to be removed
+		// Diep: This is old code for updating best tree
 		if (curScore > bestScore) {
              stringstream cur_tree_topo_ss;
              setRootNode(params->root);
@@ -1860,7 +1875,7 @@ double IQTree::doTreeSearch() {
              }
              printResultTree();
         }
-		*/
+
         // check whether the tree can be put into the reference set
         if (params->snni) {
         	candidateTrees.update(imd_tree, curScore);
@@ -1995,7 +2010,9 @@ string IQTree::doNNISearch(int& nniCount, int& nniSteps) {
 			treeString = getTreeString();
 		}else{
 			string treeString1 = getTreeString();
-			pllOptimizeSprParsimony(pllInst, pllPartitions, params->spr_mintrav, params->spr_maxtrav, this);
+			int max_spr_rad = params->spr_maxtrav;
+			if(on_opt_btree && params->opt_btree_nni) params->spr_maxtrav = 1;
+			pllOptimizeSprParsimony(pllInst, pllPartitions, params->spr_mintrav, max_spr_rad, this);
 			pllTreeToNewick(pllInst->tree_string, pllInst, pllPartitions, pllInst->start->back, PLL_TRUE,
 					PLL_TRUE, 0, 0, 0, PLL_SUMMARIZE_LH, 0, 0);
 			treeString = string(pllInst->tree_string);
@@ -3020,6 +3037,9 @@ void IQTree::saveCurrentTree(double cur_logl) {
         treels_ptnlh.push_back(pattern_lh);
 #endif
     } else {
+
+    	if(params->minimize_iter1_candidates && curIt == 1) return;
+
         // online bootstrap
         int ptn;
         int updated = 0;

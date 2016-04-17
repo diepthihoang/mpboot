@@ -654,7 +654,7 @@ void parseArg(int argc, char *argv[], Params &params) {
     params.manuel_analytic_approx = false;
     params.leastSquareNNI = false;
     params.ls_var_type = OLS;
-    params.maxCandidates = 200; // Diep: MP might need more candidates than ML
+    params.maxCandidates = 100; // Less RAS === less runtime
     params.popSize = 50;
     params.p_delete = -1;
     params.min_iterations = -1;
@@ -790,6 +790,8 @@ void parseArg(int argc, char *argv[], Params &params) {
     params.no_hclimb1_bb = false;
     params.optimize_boot_trees = true;// Diep: Revert for UFBoot-MP release
     params.save_trees_off = false;
+    params.minimize_iter1_candidates = false; // Diep: to go for speed
+    params.opt_btree_nni = false;
 #ifdef _OPENMP
     params.num_threads = 0;
 #endif
@@ -2390,6 +2392,14 @@ void parseArg(int argc, char *argv[], Params &params) {
             }
             if(strcmp(argv[cnt], "-save_trees_off") == 0){
             	params.save_trees_off = true;
+            	continue;
+            }
+            if(strcmp(argv[cnt], "-min_iter1_cand") == 0){
+            	params.minimize_iter1_candidates = true;
+            	continue;
+            }
+            if(strcmp(argv[cnt], "-opt_btree_nni") == 0){
+            	params.opt_btree_nni = true;
             	continue;
             }
 			if (strcmp(argv[cnt], "-me") == 0) {

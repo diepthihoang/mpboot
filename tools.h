@@ -1547,6 +1547,20 @@ struct Params {
 	 */
 	bool save_trees_off;
 
+	/*
+	 * Diep: pickily collecting candidate trees
+	 * Iteration 1 is treated special:
+	 * 		- no bootstrap tree update, i.e. no storing trees into treels
+	 * 		- use 100 best trees found in the iteration to calculate logl_cutoff
+	 */
+	bool minimize_iter1_candidates;
+
+	/*
+	 * Diep
+	 * To use NNI (i.e. SPR 1) for refinement step
+	 */
+	bool opt_btree_nni;
+
 #ifdef _OPENMP
     int num_threads;
 #endif

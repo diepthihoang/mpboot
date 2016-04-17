@@ -2150,7 +2150,7 @@ static void _pllMakeParsimonyTreeFast(pllInstance *tr, partitionList *pr, int sp
 
 	int * hill_climbing_perm = (int *)rax_malloc((size_t)(tr->mxtips + tr->mxtips - 1) * sizeof(int));
 	int j;
-	makePermutationFast(hill_climbing_perm, tr->mxtips + tr->mxtips - 2, tr);
+//	makePermutationFast(hill_climbing_perm, tr->mxtips + tr->mxtips - 2, tr);
 
 	unsigned int bestIterationScoreHits = 1;
 
@@ -2158,10 +2158,10 @@ static void _pllMakeParsimonyTreeFast(pllInstance *tr, partitionList *pr, int sp
 	{
 		startMP = randomMP;
 		nodeRectifierPars(tr);
-		//      for(i = 1; i <= tr->mxtips + tr->mxtips - 2; i++)
-		for(j = 1; j <= tr->mxtips + tr->mxtips - 2; j++)
+		for(i = 1; i <= tr->mxtips + tr->mxtips - 2; i++)
+//		for(j = 1; j <= tr->mxtips + tr->mxtips - 2; j++)
 		{
-			i = hill_climbing_perm[j];
+//			i = hill_climbing_perm[j];
 			tr->removeNode = tr->insertNode = NULL;
 			bestTreeScoreHits = 1;
 			rearrangeParsimony(tr, pr, tr->nodep[i], 1, sprDist, PLL_FALSE, 0);
@@ -2246,7 +2246,7 @@ int pllOptimizeSprParsimony(pllInstance * tr, partitionList * pr, int mintrav, i
 	*/
 
 	int j, *perm        = (int *)rax_malloc((size_t)(tr->mxtips + tr->mxtips - 1) * sizeof(int));
-	makePermutationFast(perm, tr->mxtips + tr->mxtips - 2, tr);
+//	makePermutationFast(perm, tr->mxtips + tr->mxtips - 2, tr);
 
 	unsigned int bestIterationScoreHits = 1;
 	randomMP = tr->bestParsimony;
@@ -2254,9 +2254,9 @@ int pllOptimizeSprParsimony(pllInstance * tr, partitionList * pr, int mintrav, i
 	do{
 		startMP = randomMP;
 		nodeRectifierPars(tr);
-//		for(i = 1; i <= tr->mxtips + tr->mxtips - 2; i++){
-		for(j = 1; j <= tr->mxtips + tr->mxtips - 2; j++){
-			i = perm[j];
+		for(i = 1; i <= tr->mxtips + tr->mxtips - 2; i++){
+//		for(j = 1; j <= tr->mxtips + tr->mxtips - 2; j++){
+//			i = perm[j];
 			tr->insertNode = NULL;
 			tr->removeNode = NULL;
 			bestTreeScoreHits = 1;
