@@ -734,14 +734,20 @@ public:
 
 	typedef pair<int,int> IntPair;
 	typedef vector<IntPair> IntPairVector;
-	vector<IntPairVector> boot_trees_parsimony_top;
+	vector<IntPairVector> boot_trees_parsimony_top; // 1000 vectors of int pair (tree index, tree logl)
 	vector<int> boot_threshold;
+
+	vector<IntVector> boot_trees_parsimony_top_iter; // 1000 vectors of int (iter)
+									// each iter here corresponding to one int pair in boot_trees_parsimony_top
 
 	bool on_ratchet_hclimb1;
 	Alignment * saved_aln_on_ratchet_iter;
 	Alignment * saved_aln_on_opt_btree;
 	BootValTypePars * original_sample;
 	bool on_opt_btree;
+	vector<int> boot_tree_orig_logl;
+
+	bool iter_best;
 
     /** corresponding RELL log-likelihood */
     DoubleVector boot_logl;

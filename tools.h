@@ -1556,6 +1556,46 @@ struct Params {
 	bool minimize_iter1_candidates;
 
 	/*
+	 * Diep: to compute logl_cutoff by MINH's new method
+	 * logl_cutoff = min {score of bootstrap trees on original alignment}
+	 */
+	bool cutoff_from_btrees;
+
+	/*
+	 * Diep: to only use best tree of each iteration for saveCurrentTree()
+	 * Vinh's request to test with NNI
+	 */
+	bool ibest_as_cand;
+
+
+	/*
+	 * Vinh's idea: estimate RELL by just first 10% columns in the alignment
+	 */
+	bool do_first_rell;
+
+	/*
+	 * Diep
+	 * To use SPR for refinement step
+	 */
+	int opt_btree_spr;
+
+	/*
+	 * Diep
+	 * To pick top k trees for each boot aln to input to refinement
+	 * k trees must come from k distinct iteration
+	 */
+	int distinct_iter_top_boot; // top k boot trees picked from distinct iterations
+
+	/*
+	 * Diep:
+	 * if -distinct_iter_top_boot -top_boot_concensus
+	 * then in the refinement step, for each boot aln
+	 * + compute concensus of all top boots
+	 * + hill-climb in this one tree only
+	 */
+	bool top_boot_concensus;
+
+	/*
 	 * Diep
 	 * To use NNI (i.e. SPR 1) for refinement step
 	 */

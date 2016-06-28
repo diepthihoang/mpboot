@@ -2507,6 +2507,7 @@ string computeConsensusTreeNoFileIO(StringIntMap& input_trees, IntVector & weigh
 //	IntVector weight;
 //	weight.resize(input_trees.size(), 1);
 
+	params->split_weight_summary = SW_COUNT;
 	boot_trees.init(input_trees, rooted, weight);
 	boot_trees.convertSplits(sg, cutoff, SW_COUNT, weight_threshold);
 	scale /= boot_trees.sumTreeWeights();

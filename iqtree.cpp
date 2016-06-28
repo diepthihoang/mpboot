@@ -122,6 +122,7 @@ void IQTree::setParams(Params &params) {
 		if(params.unsuccess_iteration < 0) // if not specifying -stop_cond
 			params.unsuccess_iteration = ((aln->getNSeq() - 1) / 100 + 1) * 100;
 	}
+
 	/*
 	// Diep's assignment for max_iterations >> causing 100 iteration BUG
     if (params.gbo_replicates && params.maximum_parsimony)
@@ -243,6 +244,7 @@ void IQTree::setParams(Params &params) {
 
         boot_trees.resize(params.gbo_replicates, -1);
         boot_counts.resize(params.gbo_replicates, 0);
+        if(params.cutoff_from_btrees) boot_tree_orig_logl.resize(params.gbo_replicates, 0); // Diep
 
         if(params.maximum_parsimony && params.multiple_hits){
 	//        boot_best_hits.resize(params.gbo_replicates, 0);
@@ -256,6 +258,15 @@ void IQTree::setParams(Params &params) {
 			boot_trees_parsimony_top.resize(params.gbo_replicates);
 			for(int k = 0; k < params.gbo_replicates; k++) boot_trees_parsimony_top[k].clear();
 			boot_threshold.resize(params.gbo_replicates, -INT_MAX);
+		}
+
+		if(params.maximum_parsimony && (params.distinct_iter_top_boot >= 1)){
+			boot_trees_parsimony_top.resize(params.gbo_replicates);
+			for(int k = 0; k < params.gbo_replicates; k++) boot_trees_parsimony_top[k].clear();
+			boot_threshold.resize(params.gbo_replicates, -INT_MAX);
+			boot_trees_parsimony_top_iter.resize(params.gbo_replicates);
+			for(int k = 0; k < params.gbo_replicates; k++)
+				boot_trees_parsimony_top_iter[k].clear();
 		}
 
 
@@ -305,6 +316,7 @@ void IQTree::setParams(Params &params) {
 	if(params.maximum_parsimony){
 		on_opt_btree = false;
 		on_ratchet_hclimb1 = false;
+		iter_best = false;
 
 		if(params.ratchet_iter >= 0){
 			size_t nunit = getAlnNPattern() + VCSIZE_USHORT;
@@ -1592,20 +1604,26 @@ double IQTree::doTreeSearch() {
 				}
 			}
 		}else {
-			// new way of updating logl_cutoff
-			// works for MP, possibly works for ML as well
-			if (params->avoid_duplicated_trees && treels_logl.size() > 1000) {
-				DoubleVector logl = treels_logl;
-				nth_element(logl.begin(), logl.begin() + logl.size() * params->cutoff_percent / 100 , logl.end(), std::greater<double>());
-				if(params->minimize_iter1_candidates){
-					if(curIt == 2){
-						int iter1_num_best = min(int(aln->getNSeq()), int(logl.size() * params->cutoff_percent / 100));
-						DoubleVector tmplogl (logl.begin(), logl.begin() + iter1_num_best);
-						logl = tmplogl;
-						treels_logl = tmplogl;
+			if(params->cutoff_from_btrees){
+				// Minh's new way of computing logl_cutoff
+				// logl_cutoff = min(boot_tree_orig_loglore)
+				logl_cutoff = *min_element(boot_tree_orig_logl.begin(), boot_tree_orig_logl.end());
+			}else{
+				// new way of updating logl_cutoff: proposed by Vinh (i.e. top 10%)
+				// works for MP, possibly works for ML as well
+				if (params->avoid_duplicated_trees && treels_logl.size() > 1000) {
+					DoubleVector logl = treels_logl;
+					nth_element(logl.begin(), logl.begin() + logl.size() * params->cutoff_percent / 100 , logl.end(), std::greater<double>());
+					if(params->minimize_iter1_candidates){
+						if(curIt == 2){
+							int iter1_num_best = min(int(aln->getNSeq()), int(logl.size() * params->cutoff_percent / 100));
+							DoubleVector tmplogl (logl.begin(), logl.begin() + iter1_num_best);
+							logl = tmplogl;
+							treels_logl = tmplogl;
+						}
 					}
+					logl_cutoff = logl[logl.size() * params->cutoff_percent / 100];
 				}
-				logl_cutoff = logl[logl.size() * params->cutoff_percent / 100];
 			}
 //			cout << "***TEST: logl_cutoff = " << logl_cutoff << endl;
 		}
@@ -1772,6 +1790,16 @@ double IQTree::doTreeSearch() {
 			curScore = optimizeAllBranches();
 
 			cout << "RATCHET ";
+		}
+
+		/*
+		 * Diep: if running with option -ibest_as_cand
+		 * consider updating bootstrap trees
+		 */
+		if(params->ibest_as_cand){
+			iter_best = true;
+			saveCurrentTree(curScore);
+			iter_best = false;
 		}
 
     	/*----------------------------------------
@@ -2364,18 +2392,34 @@ void IQTree::optimizeBootTrees(){
 	string saved_tree = getTreeString();
 	saved_aln_on_opt_btree = aln;
 
+	if(params->opt_btree_spr > 0){
+		params->spr_parsimony = true;
+		params->maximum_parsimony = true;
+		params->spr_maxtrav = params->opt_btree_spr;
+	}
+
 	int nptn = getAlnNPattern();
 	string tree;
 	int tree_index;
 	Alignment * bootstrap_aln;
 
-	string boot_score_file = params->out_prefix;
-	boot_score_file += ".boot.score";
-//	ofstream out(boot_score_file.c_str());
-//	out << "sample\tunrefined\trefined" << endl;
+//	string btree_before_file = params->out_prefix;
+//	btree_before_file += ".btree.before";
+//	ofstream outb(btree_before_file.c_str());
+//	string btree_after_file = params->out_prefix;
+//	btree_after_file += ".btree.after";
+//	ofstream outa(btree_after_file.c_str());
+	string binfo_file = params->out_prefix;
+	binfo_file += ".binfo";
+//	ofstream out(binfo_file.c_str());
 
+	string btree_file = params->out_prefix;
+	btree_file += ".sampletree";
+
+
+	int nmultifurcate = 0;
 	for(int sample = 0; sample < num_boot_rep; sample++){
-//		out << sample << "\t" << boot_logl[sample] << "\t";
+//		out << sample << "\t" << boot_update_iter[sample] << "\t" << boot_trees[sample] << endl;
 		bootstrap_aln = new Alignment;
 		bootstrap_aln->modifyPatternFreq(*saved_aln_on_opt_btree, boot_samples_pars[sample], nptn);
 
@@ -2451,7 +2495,208 @@ void IQTree::optimizeBootTrees(){
 			boot_trees_parsimony[sample] = result;
 			boot_logl[sample] = best_boot_score;
 
-		}else{ // process one tree in boot_trees[sample]
+		}
+
+		if(params->distinct_iter_top_boot >= 1 && (!params->multiple_hits)){
+			// process a few trees in boot_trees_parsimony_top[sample]
+			string all_btree_str;
+			string best_btree_str;
+			int best_boot_score = -INT_MAX;
+			int id = 0;
+//			out << "sample#" << sample << ", boot_count = " << boot_counts[sample]
+//				<<", boot_threshold = " << boot_threshold[sample] << endl;
+
+			bool do_concensus;
+			bool do_find_best;
+
+			if(params->top_boot_concensus){
+				do_concensus = true;
+				do_find_best = false;
+			}else{
+				do_concensus = false;
+				do_find_best = true;
+			}
+
+			if(do_concensus){
+//				out << "do_concensus" << endl;
+				do_find_best = false;
+				StringIntMap sample_treels;
+				IntVector sample_tree_weight;
+				sample_tree_weight.resize(boot_trees_parsimony_top[sample].size(), 0);
+				id = 0;
+				ofstream btout(btree_file.c_str());
+				for(IntPairVector::iterator it = boot_trees_parsimony_top[sample].begin();
+						it != boot_trees_parsimony_top[sample].end(); ++it, ++id){
+					StringIntMap::iterator mit;
+					for(mit = treels.begin(); mit != treels.end(); ++mit){
+						if(mit->second == it->first){
+							tree = mit->first;
+							break;
+						}
+					}
+					sample_treels[tree] = id;
+//					out << tree << endl;
+					btout << tree << endl;
+					sample_tree_weight[id] = 1;
+				}
+				btout.close();
+				string sample_cons;
+//				params->split_weight_summary = SW_COUNT;
+//				sample_cons = computeConsensusTreeNoFileIO(sample_treels,
+//					sample_tree_weight, params->tree_max_count,
+//					params->split_threshold,params->split_weight_threshold,params);
+				string contree_file = btree_file + ".contree";
+
+				computeConsensusTree(btree_file.c_str(),0,params->tree_max_count,
+					params->split_threshold,params->split_weight_threshold,
+					contree_file.c_str(), params->out_prefix, params->tree_weight_file, params);
+
+
+				ifstream fin(contree_file.c_str());
+				fin >> sample_cons;
+				fin.close();
+
+//				out << "concensus: " << sample_cons << endl;
+				// Read the concensus tree
+				stringstream str(sample_cons);
+				freeNode();
+				readTree(str, rooted);
+				NodeVector taxai;
+				getTaxa(taxai);
+				for (NodeVector::iterator taxit = taxai.begin(); taxit != taxai.end(); taxit++){
+					(*taxit)->id = atoi((*taxit)->name.c_str());
+				}
+
+				NodeVector taxa;
+				// change the taxa name from ID to real name
+				getOrderedTaxa(taxa);
+				for (int j = 0; j < taxa.size(); j++)
+					taxa[j]->name = saved_aln_on_opt_btree->getSeqName(taxa[j]->id);
+
+				initializeAllPartialLh();
+				clearAllPartialLH();
+
+				bool is_bifurcating = isBifurcating();
+
+				if(is_bifurcating){
+					curScore = -computeParsimony();
+//					cout << "before: " << curScore << ", ";
+//					out << curScore << "\t";
+
+					int count, step;
+					doNNISearch(count, step);
+
+					curScore = -computeParsimony();
+//					cout << "after: " << curScore << endl;
+
+//					out << curScore << endl;
+
+					stringstream ostr;
+					printTree(ostr, WT_TAXON_ID | WT_SORT_TAXA);
+					tree = ostr.str();
+					StringIntMap::iterator mit = treels.find(tree);
+					if (mit != treels.end()) {
+						tree_index = mit->second;
+					} else {
+						treels_logl.push_back(curScore); // TEMPORARILY
+						tree_index = treels_logl.size() - 1;
+						treels[tree] = tree_index;
+					}
+
+					boot_logl[sample] = curScore;
+					boot_trees[sample] = tree_index;
+				}else{
+					do_find_best = true;
+					nmultifurcate++;
+				}
+			}
+
+			if(do_find_best){
+//				out << "do_find_best" << endl;
+				id = 0;
+				for(IntPairVector::iterator it = boot_trees_parsimony_top[sample].begin();
+						it != boot_trees_parsimony_top[sample].end(); ++it, ++id){
+					StringIntMap::iterator mit;
+					for(mit = treels.begin(); mit != treels.end(); ++mit){
+						if(mit->second == it->first){
+							tree = mit->first;
+							break;
+						}
+					}
+
+//					out << it->first << "\t" << boot_trees_parsimony_top_iter[sample][id]
+//						<< "\t" << it->second << "\t";
+					// Read the bootstrap tree
+					stringstream str(tree);
+					freeNode();
+					readTree(str, rooted);
+					NodeVector taxai;
+					getTaxa(taxai);
+					for (NodeVector::iterator taxit = taxai.begin(); taxit != taxai.end(); taxit++){
+						(*taxit)->id = atoi((*taxit)->name.c_str());
+					}
+
+					NodeVector taxa;
+					// change the taxa name from ID to real name
+					getOrderedTaxa(taxa);
+					for (int j = 0; j < taxa.size(); j++)
+						taxa[j]->name = saved_aln_on_opt_btree->getSeqName(taxa[j]->id);
+
+					initializeAllPartialLh();
+					clearAllPartialLH();
+
+					curScore = -computeParsimony();
+	////				cout << "before: " << curScore << ", ";
+//					out << curScore << "\t";
+
+					int count, step;
+					doNNISearch(count, step);
+
+					curScore = -computeParsimony();
+	//				cout << "after: " << curScore << endl;
+
+//					out << curScore << endl;
+
+					stringstream ostr;
+					printTree(ostr, WT_TAXON_ID | WT_SORT_TAXA);
+					tree = ostr.str();
+					all_btree_str += tree + "\n"; // tmp, for debug
+
+					mit = treels.find(tree);
+					if (mit != treels.end()) {
+						tree_index = mit->second;
+					} else {
+						treels_logl.push_back(curScore); // TEMPORARILY
+						tree_index = treels_logl.size() - 1;
+						treels[tree] = tree_index;
+					}
+
+					if(curScore >= best_boot_score){
+						best_boot_score = curScore;
+						best_btree_str = tree;
+						boot_logl[sample] = curScore;
+						boot_trees[sample] = tree_index;
+					}
+				}
+			}
+
+//			// tmp, for debug
+//			MTree btree;
+//    		bool is_rooted = false;
+//    		istringstream iss_best(best_btree_str);
+//    		istringstream iss_all(all_btree_str);
+//    		btree.readTree(iss_best, is_rooted);
+//    		IntVector dist;
+//    		btree.computeRFDist(iss_all, dist);
+//    		out << "d(best,...) = ";
+//    		for(int c = 0; c < dist.size(); c++){
+//				out << dist[c] << ", ";
+//    		}
+//    		out << endl;
+		}
+
+
+		if((!params->multiple_hits) && (params->distinct_iter_top_boot < 1)){ // process one tree in boot_trees[sample]
 			StringIntMap::iterator mit;
 			for(mit = treels.begin(); mit != treels.end(); ++mit){
 				if(mit->second == boot_trees[sample]){
@@ -2459,7 +2704,8 @@ void IQTree::optimizeBootTrees(){
 					break;
 				}
 			}
-
+//			out << "sample#" << sample << ", boot_count = " << boot_counts[sample] << endl;
+//			out << mit->second << "\t" << boot_logl[sample] << "\t";
 			// Read the bootstrap tree
 			stringstream str(tree);
 			freeNode();
@@ -2480,14 +2726,26 @@ void IQTree::optimizeBootTrees(){
 			initializeAllPartialLh();
 			clearAllPartialLH();
 
+//			// tmp, to-be-removed #############################################
+//			stringstream ostr1;
+//			printTree(ostr1, WT_SORT_TAXA);
+//			tree = ostr1.str();
+//			outb << tree << endl;
+
 //			curScore = -computeParsimony();
-//			cout << "before: " << curScore << ", ";
+//			out << curScore << "\t";
 
 			int count, step;
 			doNNISearch(count, step);
 
 			curScore = -computeParsimony();
-//			cout << "after: " << curScore << endl;
+//			out << curScore << endl;
+
+//			// tmp, to-be-removed #############################################
+//			ostr1.str("");
+//			printTree(ostr1, WT_SORT_TAXA);
+//			tree = ostr1.str();
+//			outa << tree << endl;
 
 			stringstream ostr;
 			printTree(ostr, WT_TAXON_ID | WT_SORT_TAXA);
@@ -2505,9 +2763,14 @@ void IQTree::optimizeBootTrees(){
 			boot_logl[sample] = curScore;
 		}
 		delete aln;
-//		out << boot_logl[sample] << endl;
+
+//		out << -boot_logl[sample] << endl; // to examine score after refinement
 	}
 
+
+//	cout << "# of multifurcating = " << nmultifurcate << endl;
+//	outb.close();
+//	outa.close();
 //	out.close();
 
 	// Recover the last status of IQTREE
@@ -2529,6 +2792,26 @@ void IQTree::optimizeBootTrees(){
 //		}
 //		cout << endl;
 //	}
+
+
+//	// print boot aln best score
+//	if(params->gbo_replicates && params->maximum_parsimony){
+//		string boot_best_file = params->out_prefix;
+//		boot_best_file += ".boot.best";
+//		ofstream out(boot_best_file.c_str());
+//		for(int i = 0; i < params->gbo_replicates; i++){
+//			out << "aln # " << i << ": " << boot_logl[i] << endl;
+//		}
+//		out.close();
+//	}
+
+
+//	if(params->opt_btree_spr > 0){
+//		params->spr_parsimony = true;
+//		params->maximum_parsimony = true;
+//		params->spr_maxtrav = params->opt_btree_spr;
+//	}
+
 	save_all_trees = 2;
 	on_opt_btree = false;
 }
@@ -2893,6 +3176,8 @@ void IQTree::saveCurrentTree(double cur_logl) {
 	 * -------------------------------------*/
 	if(params->save_trees_off) return;
 
+	if(params->ibest_as_cand && (!iter_best)) return;
+
 	// if params->no_hclimb1_bb && on_ratchet_hclimb1, do nothing
 	if(params->maximum_parsimony && on_ratchet_hclimb1 && params->no_hclimb1_bb) return;
 
@@ -3012,7 +3297,9 @@ void IQTree::saveCurrentTree(double cur_logl) {
 				for(int s = 0; s < reps_segments; s++){
 					cout << "segment#" << s + 1 << " ends at " << segment_upper[s] << endl;
 				}
-				pllComputeRellRemainBound(nptn);
+
+				if(params->do_first_rell) pllComputeRellRemainBound(nptn / 2);
+				else pllComputeRellRemainBound(nptn);
 				cout << getCPUTime() - starts << " seconds." << endl;
 			}
 		}
@@ -3060,9 +3347,12 @@ void IQTree::saveCurrentTree(double cur_logl) {
 				}else{
 					int ptn = 0, segment_id = 0, res = 0;
 					VectorClassUShort vc_rell = 0;
+					int max_nptn = nptn / 2;
 					for(; segment_id < reps_segments; segment_id++){
-						for (; ptn < segment_upper[segment_id]; ptn+=VCSIZE_USHORT)
+						for (; ptn < segment_upper[segment_id]; ptn+=VCSIZE_USHORT){
+							if(params->do_first_rell && ptn >= max_nptn) break;
 							vc_rell = VectorClassUShort().load_a(&_pattern_pars[ptn]) * VectorClassUShort().load_a(&boot_sample[ptn]) + vc_rell;
+						}
 						res += horizontal_add(vc_rell);
 						vc_rell = 0;
 
@@ -3154,6 +3444,12 @@ void IQTree::saveCurrentTree(double cur_logl) {
 						boot_logl[sample] = rell;
 					}
 
+					// Diep: for new logl_cutoff computation
+					if(params->cutoff_from_btrees){
+						if(cur_logl > boot_tree_orig_logl[sample])
+							boot_tree_orig_logl[sample] = cur_logl;
+					}
+
 					// Diep: fix since July 9, 2015
 					// Change boot_trees_parsimony[sample] type from IntVector to IntegerSet
 					// We can keep using the IntVec and check whether tree_index == treels_logl.size() - 1
@@ -3211,7 +3507,109 @@ void IQTree::saveCurrentTree(double cur_logl) {
 				} // Implementing -mulhits -topboot 10 option END
 			}
 
-			if(!params->multiple_hits){
+			// -distinct_iter_top_boot
+			if(params->distinct_iter_top_boot >= 1 && !params->multiple_hits){
+				if (rell >= boot_threshold[sample]) {
+					boot_counts[sample]++;
+				}
+
+				if (rell > boot_threshold[sample]
+						|| (rell == boot_threshold[sample]
+								&& random_double() <= (params->distinct_iter_top_boot * 1.0 / (boot_counts[sample])))) {
+//				if (rell >= boot_threshold[sample]){
+					// Diep: to correct the count for MP (2016-04-06)
+					if (rell > boot_logl[sample]){
+						boot_counts[sample] = 1;
+					}
+					if (tree_str == "") {
+						if(params->spr_parsimony && !(params->ratchet_iter >= 0 && on_ratchet_hclimb1 && params->hclimb1_nni)){
+							pllTreeToNewick(pllInst->tree_string, pllInst, pllPartitions, pllInst->start->back, PLL_TRUE, PLL_TRUE, 0, 0, 0, PLL_SUMMARIZE_LH, 0, 0);
+							string imd_tree = string(pllInst->tree_string);
+							readTreeString(imd_tree);
+						}
+						printTree(ostr, WT_TAXON_ID | WT_SORT_TAXA);
+						tree_str = ostr.str();
+
+						it = treels.find(tree_str);
+						if (it != treels.end()) {
+							tree_index = it->second;
+						} else {
+							tree_index = treels_logl.size() - 1; // old statement is wrong: treels.size();
+							treels[tree_str] = tree_index;
+						}
+					}
+					// Diep: for new logl_cutoff computation
+					if(params->cutoff_from_btrees)
+						boot_tree_orig_logl[sample] = cur_logl;
+
+					boot_trees[sample] = tree_index; // this will be lastly updated in refinement step
+					boot_logl[sample] = max(boot_logl[sample], rell);
+
+					int t = min((int)params->distinct_iter_top_boot, (int)boot_trees_parsimony_top_iter[sample].size());
+					int c;
+
+					// if tree exists, do nothing
+					bool tree_exists = false;
+					for(c = 0; t > 0 && c < t; c++){
+						if(boot_trees_parsimony_top[sample][c].first == tree_index){
+							tree_exists = true;
+							break;
+						}
+					}
+					if(tree_exists) continue;
+
+					// iteration representative exists, REPLACE the representative
+					for(c = 0; t > 0 && c < t; c++){
+						if(boot_trees_parsimony_top_iter[sample][c] == curIt){
+							if(rell > boot_trees_parsimony_top[sample][c].second){
+								boot_trees_parsimony_top[sample][c].second = rell;
+								boot_trees_parsimony_top[sample][c].first = tree_index;
+							}
+							break;
+						}
+					}
+
+					// if top list is not full and iteration representative does not exist, ADD
+					if(c == t & t < params->distinct_iter_top_boot){
+						boot_trees_parsimony_top_iter[sample].push_back(curIt);
+						boot_trees_parsimony_top[sample].push_back(std::make_pair(tree_index, rell));
+					}
+
+					// if top list is full, REPLACE the WORST
+					if(c == t & t == params->distinct_iter_top_boot){
+						int worst_id = 0;
+						int worst_score = boot_trees_parsimony_top[sample][worst_id].second;
+						for(int d = 1; d < t; d++){
+							if(boot_trees_parsimony_top[sample][d].second < worst_score){
+								worst_score = boot_trees_parsimony_top[sample][d].second;
+								worst_id = d;
+							}
+						}
+						// replace
+						boot_trees_parsimony_top[sample][worst_id].first = tree_index;
+						boot_trees_parsimony_top[sample][worst_id].second = rell;
+						boot_trees_parsimony_top_iter[sample][worst_id] = curIt;
+					}
+
+					// setting boot_threshold[sample] to be the worst in boot_trees_parsimony_top[sample]
+					boot_threshold[sample] = boot_trees_parsimony_top[sample][0].second;
+					for(int d = 1; d < boot_trees_parsimony_top[sample].size(); d++){
+						if(boot_trees_parsimony_top[sample][d].second < boot_threshold[sample]){
+							boot_threshold[sample] = boot_trees_parsimony_top[sample][d].second;
+						}
+					}
+
+					updated++;
+
+				} /*else if (verbose_mode >= VB_MED && rell > boot_logl[sample] - 0.01) {
+				 cout << "Info: multiple RELL score trees detected" << endl;
+				 }*/
+
+
+			}
+
+			// DEFAULT
+			if((params->distinct_iter_top_boot < 1) && (!params->multiple_hits)){
 				if (rell > boot_logl[sample] + params->ufboot_epsilon
 						|| (rell > boot_logl[sample] - params->ufboot_epsilon
 								&& random_double() <= 1.0 / (boot_counts[sample] + 1))) {
@@ -3235,13 +3633,18 @@ void IQTree::saveCurrentTree(double cur_logl) {
 
 
 					// Diep: to correct the count for MP (2016-04-06)
-					if (rell <= boot_logl[sample] - params->ufboot_epsilon){
+					if (rell > boot_logl[sample]){
 						boot_counts[sample] = 1;
 					}
+
+					// Diep: for new logl_cutoff computation
+					if(params->cutoff_from_btrees)
+						boot_tree_orig_logl[sample] = cur_logl;
 
 					boot_logl[sample] = max(boot_logl[sample], rell);
 					boot_trees[sample] = tree_index;
 					updated++;
+
 				} /*else if (verbose_mode >= VB_MED && rell > boot_logl[sample] - 0.01) {
 				 cout << "Info: multiple RELL score trees detected" << endl;
 				 }*/

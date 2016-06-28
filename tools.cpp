@@ -791,7 +791,14 @@ void parseArg(int argc, char *argv[], Params &params) {
     params.optimize_boot_trees = true;// Diep: Revert for UFBoot-MP release
     params.save_trees_off = false;
     params.minimize_iter1_candidates = false; // Diep: to go for speed
+    params.cutoff_from_btrees = false;
+    params.ibest_as_cand = false;
     params.opt_btree_nni = false;
+    params.opt_btree_spr = 0;
+    params.distinct_iter_top_boot = 0; // Diep: if not specify -rep_iter_boot <int>
+    params.top_boot_concensus = false;
+    params.do_first_rell = false;
+
 #ifdef _OPENMP
     params.num_threads = 0;
 #endif
@@ -2094,7 +2101,8 @@ void parseArg(int argc, char *argv[], Params &params) {
 				if (params.gbo_replicates < 1000)
 					throw "#replicates must be >= 1000";
 				params.consensus_type = CT_CONSENSUS_TREE;
-				params.stop_condition = SC_BOOTSTRAP_CORRELATION;
+//				params.stop_condition = SC_BOOTSTRAP_CORRELATION;
+				params.stop_condition = SC_UNSUCCESS_ITERATION; // Diep: because MP already has refinement
 				//params.nni5Branches = true;
 				continue;
 			}
@@ -2398,8 +2406,38 @@ void parseArg(int argc, char *argv[], Params &params) {
             	params.minimize_iter1_candidates = true;
             	continue;
             }
+            if(strcmp(argv[cnt], "-cutoff_from_btrees") == 0){
+            	params.cutoff_from_btrees = true;
+            	continue;
+            }
+            if(strcmp(argv[cnt], "-ibest_as_cand") == 0){
+            	params.ibest_as_cand = true;
+            	continue;
+            }
             if(strcmp(argv[cnt], "-opt_btree_nni") == 0){
             	params.opt_btree_nni = true;
+            	continue;
+            }
+            if(strcmp(argv[cnt], "-do_first_rell") == 0){
+            	params.do_first_rell = true;
+            	continue;
+            }
+            if(strcmp(argv[cnt], "-opt_btree_spr") == 0){
+            	cnt++;
+                if (cnt >= argc)
+                    throw "Use -opt_btree_spr <spr_radius>";
+            	params.opt_btree_spr = convert_int(argv[cnt]);
+            	continue;
+            }
+            if(strcmp(argv[cnt], "-distinct_iter_top_boot") == 0){
+            	cnt++;
+                if (cnt >= argc)
+                    throw "Use -distinct_iter_top_boot <# of boot trees (before refinement step) for each boot aln>";
+            	params.distinct_iter_top_boot = convert_int(argv[cnt]);
+            	continue;
+            }
+            if(strcmp(argv[cnt], "-top_boot_concensus") == 0){
+            	params.top_boot_concensus = true;
             	continue;
             }
 			if (strcmp(argv[cnt], "-me") == 0) {
