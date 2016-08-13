@@ -2494,8 +2494,10 @@ void IQTree::optimizeBootTrees(){
 			boot_trees_parsimony[sample].clear();
 			boot_trees_parsimony[sample] = result;
 			boot_logl[sample] = best_boot_score;
-
+//			out << boot_trees_parsimony[sample].size() << " ;" << endl;
 		}
+
+
 
 		if(params->distinct_iter_top_boot >= 1 && (!params->multiple_hits)){
 			// process a few trees in boot_trees_parsimony_top[sample]

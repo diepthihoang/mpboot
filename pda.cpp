@@ -55,6 +55,7 @@
 #include "matree.h"
 #include "ngs.h"
 #include "parsmultistate.h"
+#include "test.h"
 #include "gss.h"
 #include "maalignment.h" //added by MA
 #include "ncbitree.h"
@@ -2327,7 +2328,10 @@ int main(int argc, char *argv[])
 //		cout << "Starting the test for computing concensus NOT from file:" << endl;
 //		testCompConsensus("test.fa.boottrees.treefile", "test.out", &params); // (const char * infile, const char * outfile, Params *params);
 		doParsMultiState(params);
-	} else if (params.compute_parsimony) {
+	} else if(params.test_mode){
+		test(params);
+	}
+	else if (params.compute_parsimony) {
 		computeUserTreeParsimomy(params);
 	}
 	else if (params.rf_dist_mode != 0) {

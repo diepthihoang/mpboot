@@ -355,6 +355,7 @@ checkpoint.cpp
 parstree.cpp
 sprparsimony.cpp
 sankoffcostmatrix.cpp
+test.cpp
 )
 
 ##################################################################

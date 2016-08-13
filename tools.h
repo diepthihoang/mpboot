@@ -1601,6 +1601,12 @@ struct Params {
 	 */
 	bool opt_btree_nni;
 
+	/*
+	 * Diep:
+	 * To call test function
+	 */
+	bool test_mode;
+
 #ifdef _OPENMP
     int num_threads;
 #endif

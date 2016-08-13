@@ -48,6 +48,16 @@ int ParsTree::computeParsimony(){
 //	assert(root && root->isLeaf());
 //    cout << "nstates = " << aln->num_states << endl;
 //	clearAllPartialLH();
+    assert(root->isLeaf());
+    PhyloNeighbor *nei = ((PhyloNeighbor*) root->neighbors[0]);
+    current_it = nei;
+    assert(current_it);
+    current_it_back = (PhyloNeighbor*) nei->node->findNeighbor(root);
+    assert(current_it_back);
+
+    int nptn = aln->size();
+    if(_pattern_pars == NULL) _pattern_pars = aligned_alloc<BootValTypePars>(nptn + VCSIZE_USHORT);
+
     return computeParsimonyBranch((PhyloNeighbor*) root->neighbors[0], (PhyloNode*) root);
 }
 

@@ -798,6 +798,7 @@ void parseArg(int argc, char *argv[], Params &params) {
     params.distinct_iter_top_boot = 0; // Diep: if not specify -rep_iter_boot <int>
     params.top_boot_concensus = false;
     params.do_first_rell = false;
+    params.test_mode = false;
 
 #ifdef _OPENMP
     params.num_threads = 0;
@@ -2420,6 +2421,10 @@ void parseArg(int argc, char *argv[], Params &params) {
             }
             if(strcmp(argv[cnt], "-do_first_rell") == 0){
             	params.do_first_rell = true;
+            	continue;
+            }
+            if(strcmp(argv[cnt], "-test_mode") == 0){
+            	params.test_mode = true;
             	continue;
             }
             if(strcmp(argv[cnt], "-opt_btree_spr") == 0){
