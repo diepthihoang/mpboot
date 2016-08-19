@@ -1353,7 +1353,7 @@ static void testInsertParsimony (pllInstance *tr, partitionList *pr, nodeptr p, 
   if(doIt)
     {
       double
-        z[PLL_NUM_BRANCHES];
+        *z = (double *)rax_malloc(numBranches*sizeof(double)); // Diep: copy from the latest pllrepo (fastDNAparsimony.c)
 
       if(saveBranches)
         {
@@ -1389,6 +1389,7 @@ static void testInsertParsimony (pllInstance *tr, partitionList *pr, nodeptr p, 
         hookupDefault(q, r);
 
       p->next->next->back = p->next->back = (nodeptr) NULL;
+      rax_free(z); // Diep: copy from the latest pllrepo (fastDNAparsimony.c)
     }
 
   return;

@@ -795,7 +795,7 @@ void parseArg(int argc, char *argv[], Params &params) {
     params.ibest_as_cand = false;
     params.opt_btree_nni = false;
     params.opt_btree_spr = 0;
-    params.distinct_iter_top_boot = 0; // Diep: if not specify -rep_iter_boot <int>
+    params.distinct_iter_top_boot = 0; // Diep: if not specify -distinct_iter_top_boot <int>
     params.top_boot_concensus = false;
     params.do_first_rell = false;
     params.test_mode = false;
@@ -2424,6 +2424,8 @@ void parseArg(int argc, char *argv[], Params &params) {
             	continue;
             }
             if(strcmp(argv[cnt], "-test_mode") == 0){
+            	if(argc != 7)
+            		throw "These options are to compute weighted parsimony score.\nUse -s [alignment_file] -test_mode [tree_file] -cost fitch/[cost_file]";
             	params.test_mode = true;
             	continue;
             }
