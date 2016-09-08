@@ -24,6 +24,15 @@ void testWeightedParsimony(Params &params){
 
 	// compute score by Sankoff algorithm
 	cout << "Score = " << ptree->computeParsimony() << endl;
+	cout << "Pattern score = ";
+	ptree->printPatternScore();
+	cout << endl;
+
+	cout << "mst score     = ";
+	for(int i = 0; i < ptree->aln->getNPattern(); i++)
+//	for(int i = 0; i < 6; i++)
+		cout << ptree->findMstScore(i) << ", ";
+	cout << endl;
 
 	delete ptree;
 }

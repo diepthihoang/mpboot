@@ -105,6 +105,8 @@ public:
 
     void initParsData(Params* pars_params);
 
+	void printPatternScore();
+	UINT findMstScore(int ptn); // find minimum spanning tree score of a given pattern
 
     /**************************************************************************
      * Data
