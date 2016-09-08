@@ -172,7 +172,7 @@ void ParsTree::initLeafSiteParsForAmbiguousState(char state, UINT * site_partial
         outError("Alignment contains invalid state. Please check your data!");
     }
 
-    for(i = 0; i < nstates; i++) site_partial_pars[i] = UINT_MAX;
+//    for(i = 0; i < nstates; i++) site_partial_pars[i] = UINT_MAX;
 
     switch (nstates) {
         case 2:
@@ -397,7 +397,7 @@ UINT ParsTree::findMstScore(int ptn) {
 	Pattern pat = aln->getPattern(ptn);
 	for(int j = 0; j < pat.size(); j++){
 		if(pat[j] < aln->num_states) site_states[pat[j]] = 0;
-		else initLeafSiteParsForAmbiguousState(pat[j], site_states);
+//		else initLeafSiteParsForAmbiguousState(pat[j], site_states)
 	}
 
 	int state_count = 0;
