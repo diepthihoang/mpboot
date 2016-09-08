@@ -923,6 +923,228 @@ static void newviewParsimonyIterativeFast(pllInstance *tr, partitionList * pr, i
     }
 }
 
+/* Sankoff weighted parsimony */
+static void newviewSankoffParsimonyIterativeFast(pllInstance *tr, partitionList * pr, int perSiteScores)
+{
+  int
+    model,
+    *ti = tr->ti,
+    count = ti[0],
+    index;
+
+  for(index = 4; index < count; index += 4)
+    {
+      unsigned int
+        totalScore = 0;
+
+      size_t
+        pNumber = (size_t)ti[index],
+        qNumber = (size_t)ti[index + 1],
+        rNumber = (size_t)ti[index + 2];
+
+      for(model = 0; model < pr->numberOfPartitions; model++)
+        {
+          size_t
+            k,
+            states = pr->partitionData[model]->states,
+            width = pr->partitionData[model]->parsimonyLength;
+
+          unsigned int
+            i;
+
+          switch(states)
+            {
+            case 2:
+              {
+                parsimonyNumber
+                  *left[2],
+                  *right[2],
+                  *cur[2];
+
+                parsimonyNumber
+                   o_A,
+                   o_C,
+                   t_A,
+                   t_C,
+                   t_N;
+
+                for(k = 0; k < 2; k++)
+                  {
+                    left[k]  = &(pr->partitionData[model]->parsVect[(width * 2 * qNumber) + width * k]);
+                    right[k] = &(pr->partitionData[model]->parsVect[(width * 2 * rNumber) + width * k]);
+                    cur[k]  = &(pr->partitionData[model]->parsVect[(width * 2 * pNumber) + width * k]);
+                  }
+
+                for(i = 0; i < width; i++)
+                  {
+                    t_A = left[0][i] & right[0][i];
+                    t_C = left[1][i] & right[1][i];
+
+                    o_A = left[0][i] | right[0][i];
+                    o_C = left[1][i] | right[1][i];
+
+                    t_N = ~(t_A | t_C);
+
+                    cur[0][i] = t_A | (t_N & o_A);
+                    cur[1][i] = t_C | (t_N & o_C);
+
+                    totalScore += ((unsigned int) __builtin_popcount(t_N));
+                  }
+              }
+              break;
+            case 4:
+              {
+                parsimonyNumber
+                  *left[4],
+                  *right[4],
+                  *cur[4];
+
+                for(k = 0; k < 4; k++)
+                  {
+                    left[k]  = &(pr->partitionData[model]->parsVect[(width * 4 * qNumber) + width * k]);
+                    right[k] = &(pr->partitionData[model]->parsVect[(width * 4 * rNumber) + width * k]);
+                    cur[k]  = &(pr->partitionData[model]->parsVect[(width * 4 * pNumber) + width * k]);
+                  }
+
+                parsimonyNumber
+                   o_A,
+                   o_C,
+                   o_G,
+                   o_T,
+                   t_A,
+                   t_C,
+                   t_G,
+                   t_T,
+                   t_N;
+
+                /*
+                                  cur
+                             /         \
+                            /           \
+                           /             \
+                        left             right
+                   score_left(A,C,G,T)   score_right(A,C,G,T)
+                       
+                        score_cur(z) = min_x,y { cost(z->x)+score_left(x) + cost(z->y)+score_right(y)}
+                                     = left_contribution + right_contribution
+                                      
+                        left_contribution  =  min_x{ cost(z->x)+score_left(x)}
+                        right_contribution =  min_x{ cost(z->x)+score_right(x)} 
+                        
+                */
+                
+                parsimonyNumber *cost = tr->costMatrix; // this is the cost matrix
+                // cost[x*4+y] ---> cost of change from x to y
+                
+                for(i = 0; i < width; i++)
+                  {
+                    for (z = 0; z < 4; z++) {
+                        parsimonyNumber left_contrib = 100000;
+                        parsimonyNumber right_contrib = 100000;
+                        for (x = 0; x < 4; x++)
+                        {
+                          parsimonyNumber value = cost[z*4+x] + left[x][i];
+                          if (value < left_contrib) 
+                            left_contrib = value;
+
+                          value = cost[z*4+x] + right[x][i];
+                          if (value < right_contrib) 
+                            right_contrib = value;
+                        }
+                        cur[z][i] = left_contrib + right_contrib;
+                    }
+                    
+                    totalScore += min(cur[0][i], cur[1][i], cur[2][i], cur[3][i]);
+                  }
+              }
+              break;
+            case 20:
+              {
+                parsimonyNumber
+                  *left[20],
+                  *right[20],
+                  *cur[20];
+
+                parsimonyNumber
+                  o_A[20],
+                  t_A[20],
+                  t_N;
+
+                for(k = 0; k < 20; k++)
+                  {
+                    left[k]  = &(pr->partitionData[model]->parsVect[(width * 20 * qNumber) + width * k]);
+                    right[k] = &(pr->partitionData[model]->parsVect[(width * 20 * rNumber) + width * k]);
+                    cur[k]  = &(pr->partitionData[model]->parsVect[(width * 20 * pNumber) + width * k]);
+                  }
+
+                for(i = 0; i < width; i++)
+                  {
+                    size_t k;
+
+                    t_N = 0;
+
+                    for(k = 0; k < 20; k++)
+                      {
+                        t_A[k] = left[k][i] & right[k][i];
+                        o_A[k] = left[k][i] | right[k][i];
+                        t_N = t_N | t_A[k];
+                      }
+
+                    t_N = ~t_N;
+
+                    for(k = 0; k < 20; k++)
+                      cur[k][i] = t_A[k] | (t_N & o_A[k]);
+
+                    totalScore += ((unsigned int) __builtin_popcount(t_N));
+                  }
+              }
+              break;
+            default:
+              {
+                parsimonyNumber
+                  *left[32],
+                  *right[32],
+                  *cur[32];
+
+                parsimonyNumber
+                  o_A[32],
+                  t_A[32],
+                  t_N;
+
+                assert(states <= 32);
+
+                for(k = 0; k < states; k++)
+                  {
+                    left[k]  = &(pr->partitionData[model]->parsVect[(width * states * qNumber) + width * k]);
+                    right[k] = &(pr->partitionData[model]->parsVect[(width * states * rNumber) + width * k]);
+                    cur[k]  = &(pr->partitionData[model]->parsVect[(width * states * pNumber) + width * k]);
+                  }
+
+                for(i = 0; i < width; i++)
+                  {
+                    t_N = 0;
+
+                    for(k = 0; k < states; k++)
+                      {
+                        t_A[k] = left[k][i] & right[k][i];
+                        o_A[k] = left[k][i] | right[k][i];
+                        t_N = t_N | t_A[k];
+                      }
+
+                    t_N = ~t_N;
+
+                    for(k = 0; k < states; k++)
+                      cur[k][i] = t_A[k] | (t_N & o_A[k]);
+
+                    totalScore += ((unsigned int) __builtin_popcount(t_N));
+                  }
+              }
+            }
+        }
+
+      tr->parsimonyScore[pNumber] = totalScore + tr->parsimonyScore[rNumber] + tr->parsimonyScore[qNumber];
+    }
+}
 
 static unsigned int evaluateParsimonyIterativeFast(pllInstance *tr, partitionList * pr, int perSiteScores)
 {
@@ -1086,6 +1308,188 @@ static unsigned int evaluateParsimonyIterativeFast(pllInstance *tr, partitionLis
 
   return sum;
 }
+
+
+static unsigned int evaluateSankoffParsimonyIterativeFast(pllInstance *tr, partitionList * pr, int perSiteScores)
+{
+  size_t
+    pNumber = (size_t)tr->ti[1],
+    qNumber = (size_t)tr->ti[2];
+
+  int
+    model;
+
+  unsigned int
+    bestScore = tr->bestParsimony,
+    sum;
+
+  if(tr->ti[0] > 4)
+    newviewParsimonyIterativeFast(tr, pr, perSiteScores);
+
+  sum = tr->parsimonyScore[pNumber] + tr->parsimonyScore[qNumber];
+
+  for(model = 0; model < pr->numberOfPartitions; model++)
+    {
+      size_t
+        k,
+        states = pr->partitionData[model]->states,
+        width  = pr->partitionData[model]->parsimonyLength,
+        i;
+
+       switch(states)
+         {
+         case 2:
+           {
+             parsimonyNumber
+               t_A,
+               t_C,
+               t_N,
+               *left[2],
+               *right[2];
+
+             for(k = 0; k < 2; k++)
+               {
+                 left[k]  = &(pr->partitionData[model]->parsVect[(width * 2 * qNumber) + width * k]);
+                 right[k] = &(pr->partitionData[model]->parsVect[(width * 2 * pNumber) + width * k]);
+               }
+
+             for(i = 0; i < width; i++)
+               {
+                 t_A = left[0][i] & right[0][i];
+                 t_C = left[1][i] & right[1][i];
+
+                  t_N = ~(t_A | t_C);
+
+                  sum += ((unsigned int) __builtin_popcount(t_N));
+
+//                 if(sum >= bestScore)
+//                   return sum;
+               }
+           }
+           break;
+         case 4:
+           {
+             parsimonyNumber
+               t_A,
+               t_C,
+               t_G,
+               t_T,
+               t_N,
+               *left[4],
+               *right[4];
+
+             for(k = 0; k < 4; k++)
+               {
+                 left[k]  = &(pr->partitionData[model]->parsVect[(width * 4 * qNumber) + width * k]);
+                 right[k] = &(pr->partitionData[model]->parsVect[(width * 4 * pNumber) + width * k]);
+               }
+
+
+            /*
+            
+                    for each branch (left --- right), compute the score
+                    
+                    
+                     left ----------------- right
+                score_left(A,C,G,T)   score_right(A,C,G,T)
+                
+                
+                score = min_x,y  { score_left(x) + cost(x-->y) + score_right(y)  }
+                
+                    
+            */
+
+             for(i = 0; i < width; i++)
+               {
+               
+                best_score = 1000000;
+                for (x = 0; x < 4; x++)
+                    for (y = 0; y < 4; y++) {
+                        parsimonyNumber value = left[x][i] + cost[x*4+y] + right[y][i];
+                        if (value < best_score) 
+                          best_score = value;
+                    }
+               
+                  sum += best_score;
+
+//                 if(sum >= bestScore)
+//                   return sum;
+               }
+           }
+           break;
+         case 20:
+           {
+             parsimonyNumber
+               t_A,
+               t_N,
+               *left[20],
+               *right[20];
+
+              for(k = 0; k < 20; k++)
+                {
+                  left[k]  = &(pr->partitionData[model]->parsVect[(width * 20 * qNumber) + width * k]);
+                  right[k] = &(pr->partitionData[model]->parsVect[(width * 20 * pNumber) + width * k]);
+                }
+
+              for(i = 0; i < width; i++)
+                {
+                  t_N = 0;
+
+                  for(k = 0; k < 20; k++)
+                    {
+                      t_A = left[k][i] & right[k][i];
+                      t_N = t_N | t_A;
+                    }
+
+                  t_N = ~t_N;
+
+                  sum += ((unsigned int) __builtin_popcount(t_N));
+
+//                  if(sum >= bestScore)
+//                    return sum;
+                }
+           }
+           break;
+         default:
+           {
+             parsimonyNumber
+               t_A,
+               t_N,
+               *left[32],
+               *right[32];
+
+             assert(states <= 32);
+
+             for(k = 0; k < states; k++)
+               {
+                 left[k]  = &(pr->partitionData[model]->parsVect[(width * states * qNumber) + width * k]);
+                 right[k] = &(pr->partitionData[model]->parsVect[(width * states * pNumber) + width * k]);
+               }
+
+             for(i = 0; i < width; i++)
+               {
+                 t_N = 0;
+
+                 for(k = 0; k < states; k++)
+                   {
+                     t_A = left[k][i] & right[k][i];
+                     t_N = t_N | t_A;
+                   }
+
+                  t_N = ~t_N;
+
+                  sum += ((unsigned int) __builtin_popcount(t_N));
+
+//                 if(sum >= bestScore)
+//                   return sum;
+               }
+           }
+         }
+    }
+
+  return sum;
+}
+
 
 #endif
 
