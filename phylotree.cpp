@@ -92,7 +92,7 @@ void PhyloTree::init() {
 
 PhyloTree::PhyloTree(Alignment *aln) : MTree() {
     init();
-    this->aln = aln;
+    this->aln = aln;  // Diep: This requires a call to setAlignment(aln); after the tree is inputted !!!!!!!!!!!!!!!!!!
 }
 
 void PhyloTree::discardSaturatedSite(bool val) {

@@ -2284,6 +2284,7 @@ int pllSaveCurrentTreeSprParsimony(pllInstance * tr, partitionList * pr, int cur
 	return (int)(cur_search_pars);
 }
 
+// TODO: modify for Sankoff $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 void pllComputePatternParsimony(pllInstance * tr, partitionList * pr, double *ptn_npars, double *cur_npars){
 	int ptn = 0;
 	int site = 0;
