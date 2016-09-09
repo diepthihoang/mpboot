@@ -19,7 +19,7 @@ ParsTree::ParsTree(Alignment *alignment): IQTree(alignment){
 
 ParsTree::~ParsTree() {
     if(cost_matrix){
-        delete cost_matrix;
+        delete [] cost_matrix;
         cost_matrix = NULL;
     }
 
@@ -30,14 +30,43 @@ ParsTree::~ParsTree() {
 
 void ParsTree::loadCostMatrixFile(char * file_name){
     if(cost_matrix){
-        delete cost_matrix;
+        delete [] cost_matrix;
         cost_matrix = NULL;
     }
-    if(strcmp(file_name, "fitch") == 0)
-//    if(file_name == NULL)
-    	cost_matrix = new SankoffCostMatrix(aln->num_states);
-    else
-    	cost_matrix = new SankoffCostMatrix(file_name);
+//    if(strcmp(file_name, "fitch") == 0)
+////    if(file_name == NULL)
+//    	cost_matrix = new SankoffCostMatrix(aln->num_states);
+//    else
+//    	cost_matrix = new SankoffCostMatrix(file_name);
+
+    if(strcmp(file_name, "fitch") == 0){ // uniform cost
+    	cost_nstates = aln->num_states;
+    	cost_matrix = new int[cost_nstates * cost_nstates];
+		for(int i = 0; i < cost_nstates; i++)
+			for(int j = 0; j < cost_nstates; j++){
+				if(j == i) cost_matrix[i * cost_nstates + j] = 0;
+				else cost_matrix[i * cost_nstates + j] = 1;
+			}
+    } else{ // Sankoff cost
+		ifstream fin(file_name);
+		if(!fin.is_open()){
+			outError("Reading cost matrix file cannot perform. Please check your input file!");
+		}
+		fin >> cost_nstates;
+
+		// allocate memory for cost_matrix
+    	cost_matrix = new int[cost_nstates * cost_nstates];
+
+		// read numbers from file
+		for(int i = 0; i < cost_nstates; i++){
+			for(int j = 0; j < cost_nstates; j++)
+				fin >> cost_matrix[i * cost_nstates + j];
+		}
+
+		fin.close();
+
+    }
+
 }
 
 /**
@@ -78,7 +107,7 @@ void ParsTree::computePartialParsimony(PhyloNeighbor *dad_branch, PhyloNode *dad
     Node *node = dad_branch->node;
     //assert(node->degree() <= 3);
     int ptn;
-    if(aln->num_states != cost_matrix->nstates){
+    if(aln->num_states != cost_nstates){
         cout << "Your cost matrix is not compatible with the alignment"
             << " in terms of number of states. Please check!" << endl;
         exit(1);
@@ -134,10 +163,10 @@ void ParsTree::computePartialParsimony(PhyloNeighbor *dad_branch, PhyloNode *dad
 
                 for(i = 0; i < nstates; i++){
                     // min(j->i) from child_branch
-                    min_child_ptn_pars = computeCostFromChild(partial_pars_child[ptn_start_index], cost_matrix->columns[i][0]);
+                    min_child_ptn_pars = computeCostFromChild(partial_pars_child[ptn_start_index], cost_matrix[0 * cost_nstates + i]);
                     for(j = 1; j < nstates; j++)
-                        if(computeCostFromChild(partial_pars_child[ptn_start_index + j], cost_matrix->columns[i][j]) < min_child_ptn_pars)
-                            min_child_ptn_pars = computeCostFromChild(partial_pars_child[ptn_start_index + j], cost_matrix->columns[i][j]);
+                        if(computeCostFromChild(partial_pars_child[ptn_start_index + j], cost_matrix[j * cost_nstates + i]) < min_child_ptn_pars)
+                            min_child_ptn_pars = computeCostFromChild(partial_pars_child[ptn_start_index + j], cost_matrix[j * cost_nstates + i]);
                     partial_pars[ptn_start_index + i] = computeCostFromChild(partial_pars[ptn_start_index + i], min_child_ptn_pars);
                 }
             }
@@ -302,15 +331,15 @@ int ParsTree::computeParsimonyBranch(PhyloNeighbor *dad_branch, PhyloNode *dad, 
         ptn_start_index = ptn * nstates;
         for(i = 0; i < nstates; i++){
             // min(j->i) from node_branch
-            min_node_ptn_pars = computeCostFromChild(node_branch->partial_pars[ptn_start_index], cost_matrix->columns[i][0]);
+            min_node_ptn_pars = computeCostFromChild(node_branch->partial_pars[ptn_start_index], cost_matrix[0 * cost_nstates + i]);
             for(j = 1; j < nstates; j++)
-                if(computeCostFromChild(node_branch->partial_pars[ptn_start_index + j], cost_matrix->columns[i][j]) < min_node_ptn_pars)
-                    min_node_ptn_pars = computeCostFromChild(node_branch->partial_pars[ptn_start_index + j], cost_matrix->columns[i][j]);
+                if(computeCostFromChild(node_branch->partial_pars[ptn_start_index + j], cost_matrix[j * cost_nstates + i]) < min_node_ptn_pars)
+                    min_node_ptn_pars = computeCostFromChild(node_branch->partial_pars[ptn_start_index + j], cost_matrix[j * cost_nstates + i]);
             // min(j->i) from dad_branch
-            min_dad_ptn_pars = computeCostFromChild(dad_branch->partial_pars[ptn_start_index], cost_matrix->columns[i][0]);
+            min_dad_ptn_pars = computeCostFromChild(dad_branch->partial_pars[ptn_start_index], cost_matrix[0 * cost_nstates + i]);
             for(j = 1; j < nstates; j++)
-                if(computeCostFromChild(dad_branch->partial_pars[ptn_start_index + j], cost_matrix->columns[i][j]) < min_dad_ptn_pars)
-                    min_dad_ptn_pars = computeCostFromChild(dad_branch->partial_pars[ptn_start_index + j], cost_matrix->columns[i][j]);
+                if(computeCostFromChild(dad_branch->partial_pars[ptn_start_index + j], cost_matrix[j * cost_nstates + i]) < min_dad_ptn_pars)
+                    min_dad_ptn_pars = computeCostFromChild(dad_branch->partial_pars[ptn_start_index + j], cost_matrix[j * cost_nstates + i]);
             ptn_partial_pars[i] = computeCostFromChild(min_node_ptn_pars, min_dad_ptn_pars);
         }
         min_ptn_pars = ptn_partial_pars[0];
@@ -446,8 +475,8 @@ UINT ParsTree::findMstScore(int ptn) {
 		// update adjacent list
 		for(int c = 0; c < aln->num_states; c++)
 			if((site_states[c] == 0) && (added[c] == false)){
-				if(labelled_value[c] > cost_matrix->columns[c][add_node])
-					labelled_value[c] = cost_matrix->columns[c][add_node];
+				if(labelled_value[c] > cost_matrix[add_node * cost_nstates + c])
+					labelled_value[c] = cost_matrix[add_node * cost_nstates + c];
 			}
 	}while(count < aln->num_states);
 

@@ -9,7 +9,6 @@
 #define PARSTREE_H_
 
 #include "iqtree.h"
-#include "sankoffcostmatrix.h"
 
 class ParsTree: public IQTree {
 public:
@@ -111,7 +110,9 @@ public:
     /**************************************************************************
      * Data
      *************************************************************************/
-    SankoffCostMatrix* cost_matrix;
+//    SankoffCostMatrix* cost_matrix;
+    int * cost_matrix; // Sep 2016: store cost matrix in 1D array
+    int cost_nstates; // Sep 2016: # of states provided by cost matrix
     UINT tree_pars;
 };
 
