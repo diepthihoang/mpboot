@@ -35,6 +35,8 @@ Params *globalParam;
 Alignment *globalAlignment;
 extern StringIntMap pllTreeCounter;
 
+int * pllCostMatrix = NULL; // Diep: For weighted version
+int pllCostNstates = -1; // Diep: For weighted version
 
 IQTree::IQTree() : PhyloTree() {
     init();
@@ -67,7 +69,8 @@ void IQTree::init() {
     pllAlignment = NULL;
     pllPartitions = NULL;
     //boot_splits = new SplitGraph;
-    pll2iqtree_pattern_index = NULL;
+    pll2iqtree_pattern_index = NULL; // Diep
+    cost_matrix = NULL; // Diep
     fastNNI = true;
     reps_segments = -1;
     segment_upper = NULL;
@@ -563,6 +566,12 @@ void IQTree::initializePLL(Params &params) {
     if (!pllLoadAlignment(pllInst, pllAlignment, pllPartitions)) {
         outError("Incompatible tree/alignment combination");
     }
+
+    // Diep: Add initialization for Sankoff if needed
+	if(params.maximum_parsimony && params.sankoff_cost_file){
+		pllCostMatrix = iqtree->cost_matrix;
+		pllCostNstates = iqtree->cost_nstates;
+	}
 }
 
 

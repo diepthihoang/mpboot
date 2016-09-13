@@ -1117,7 +1117,10 @@ void computeInitialTree(Params &params, IQTree &iqtree, string &dist_file, int &
 		iqtree.pllInst->randomNumberSeed = params.ran_seed;
 
 		if(params.maximum_parsimony){
-			_pllComputeRandomizedStepwiseAdditionParsimonyTree(iqtree.pllInst, iqtree.pllPartitions, params.sprDist);
+//			if(params.sankoff_cost_file)
+//				_pllComputeRandomizedStepwiseAdditionParsimonyTree(iqtree.pllInst, iqtree.pllPartitions, params.sprDist, dynamic_cast<ParsTree *>(tree)->cost_matrix);
+//			else
+				_pllComputeRandomizedStepwiseAdditionParsimonyTree(iqtree.pllInst, iqtree.pllPartitions, params.sprDist);
 		}
 		else
 			pllComputeRandomizedStepwiseAdditionParsimonyTree(iqtree.pllInst, iqtree.pllPartitions, params.sprDist);
@@ -1228,7 +1231,10 @@ int initCandidateTreeSet(Params &params, IQTree &iqtree, int numInitTrees) {
 			iqtree.pllInst->randomNumberSeed = params.ran_seed + treeNr * 12345;
 
 			if(params.maximum_parsimony){
-				_pllComputeRandomizedStepwiseAdditionParsimonyTree(iqtree.pllInst, iqtree.pllPartitions, params.sprDist);
+	//			if(params.sankoff_cost_file)
+	//				_pllComputeRandomizedStepwiseAdditionParsimonyTree(iqtree.pllInst, iqtree.pllPartitions, params.sprDist, dynamic_cast<ParsTree *>(tree)->cost_matrix);
+	//			else
+					_pllComputeRandomizedStepwiseAdditionParsimonyTree(iqtree.pllInst, iqtree.pllPartitions, params.sprDist);
 			}
 			else
 				pllComputeRandomizedStepwiseAdditionParsimonyTree(iqtree.pllInst, iqtree.pllPartitions, params.sprDist);

@@ -116,6 +116,9 @@ extern Params *globalParam;
 IQTree * iqtree = NULL;
 unsigned long bestTreeScoreHits; // to count hits to bestParsimony
 
+extern int * pllCostMatrix = NULL; // Diep: For weighted version
+extern int pllCostNstates = -1; // Diep: For weighted version
+
 ///************************************************ pop count stuff ***********************************************/
 //
 // unsigned int bitcount_32_bit(unsigned int i)
