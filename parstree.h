@@ -82,12 +82,17 @@ public:
     /**
      * allocate memory enough for one partial_pars vector of one neighbor
      */
-    UINT* newPartialPars();
+    virtual UINT* newPartialPars();
 
     /**
      * calculate the size of one partial_pars vector of one neighbor
      */
     size_t getParsBlockSize();
+
+	/**
+	 * to overwrite the one in PhyloTree
+	 */
+    virtual UINT * newBitsBlock();
 
     /*
      * For a leaf character corresponding to an ambiguous state

@@ -30,13 +30,14 @@
 #include "sprparsimony.h"
 #include "vectorclass/vectorclass.h"
 #include "vectorclass/vectormath_common.h"
+#include "parstree.h"
 
 Params *globalParam;
 Alignment *globalAlignment;
 extern StringIntMap pllTreeCounter;
 
-int * pllCostMatrix = NULL; // Diep: For weighted version
-int pllCostNstates = -1; // Diep: For weighted version
+int * pllCostMatrix; // Diep: For weighted version
+int pllCostNstates; // Diep: For weighted version
 
 IQTree::IQTree() : PhyloTree() {
     init();
@@ -569,8 +570,11 @@ void IQTree::initializePLL(Params &params) {
 
     // Diep: Add initialization for Sankoff if needed
 	if(params.maximum_parsimony && params.sankoff_cost_file){
-		pllCostMatrix = iqtree->cost_matrix;
-		pllCostNstates = iqtree->cost_nstates;
+		pllCostMatrix = cost_matrix;
+		pllCostNstates = cost_nstates;
+	}else{
+		pllCostMatrix = NULL;
+		pllCostNstates = -1;
 	}
 }
 
@@ -3723,11 +3727,19 @@ void IQTree::pllComputeRellRemainBound(int nunit){
 	int * min_unit_pars = new int[nunit];
 
 	for(int i = 0; i < nunit; i++){
-		int pll_min = pllCalcMinParsScorePattern(pllInst, pllPartitions->partitionData[0]->dataType, i);
-		int cur_min;
-		if(params->sort_alignment) cur_min = aln->at(i).ras_pars_score;
-		else cur_min = _pattern_pars[i];
-		min_unit_pars[i] = (pll_min < cur_min) ? pll_min : cur_min;
+		if(cost_matrix == NULL){
+			// unweighted case
+			int pll_min = pllCalcMinParsScorePattern(pllInst, pllPartitions->partitionData[0]->dataType, i);
+			int cur_min;
+			if(params->sort_alignment) cur_min = aln->at(i).ras_pars_score;
+			else cur_min = _pattern_pars[i];
+			min_unit_pars[i] = (pll_min < cur_min) ? pll_min : cur_min;
+//			if(i == 253) cout << "pll_min = " << pll_min << ", cur_min = " << cur_min << endl;
+		}else{
+			// weighted case
+			min_unit_pars[i] = dynamic_cast<ParsTree *>(this)->findMstScore(i);
+		}
+//		cout << "i = " << i << ", min = " << min_unit_pars[i] << endl;
 	}
 
 	for(int b = 0; b < params->gbo_replicates; b++){

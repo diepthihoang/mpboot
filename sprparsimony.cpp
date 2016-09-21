@@ -5,6 +5,7 @@
  *      Author: diep
  */
 #include "sprparsimony.h"
+#include "parstree.h"
 
 /**
  * PLL (version 1.0.0) a software library for phylogenetic inference
@@ -116,8 +117,11 @@ extern Params *globalParam;
 IQTree * iqtree = NULL;
 unsigned long bestTreeScoreHits; // to count hits to bestParsimony
 
-extern int * pllCostMatrix = NULL; // Diep: For weighted version
-extern int pllCostNstates = -1; // Diep: For weighted version
+extern int * pllCostMatrix; // Diep: For weighted version
+extern int pllCostNstates; // Diep: For weighted version
+
+
+// note: pllCostMatrix[i*pllCostNstates+j] = cost from i to j
 
 ///************************************************ pop count stuff ***********************************************/
 //
@@ -268,7 +272,7 @@ static void getxnodeLocal (nodeptr p)
 
 static void computeTraversalInfoParsimony(nodeptr p, int *ti, int *counter, int maxTips, pllBoolean full, int perSiteScores)
 {
-	if(perSiteScores){
+	if(perSiteScores && pllCostMatrix == NULL){
 		resetPerSiteNodeScores(iqtree->pllPartitions, p->number);
 	}
 	nodeptr
@@ -301,8 +305,300 @@ static void computeTraversalInfoParsimony(nodeptr p, int *ti, int *counter, int 
 
 #if (defined(__SSE3) || defined(__AVX))
 
+
+/**
+ * Diep: Sankoff weighted parsimony
+ * Temporarily use the unvectorized version in the vectorized place
+ */
+static void newviewSankoffParsimonyIterativeFast(pllInstance *tr, partitionList * pr, int perSiteScores)
+{
+//	cout << "newviewSankoffParsimonyIterativeFast...";
+  int
+    model,
+    *ti = tr->ti,
+    count = ti[0],
+    index;
+
+  for(index = 4; index < count; index += 4)
+    {
+      unsigned int
+        totalScore = 0;
+
+      size_t
+        pNumber = (size_t)ti[index],
+        qNumber = (size_t)ti[index + 1],
+        rNumber = (size_t)ti[index + 2];
+		// Diep: rNumber and qNumber are children of pNumber
+		tr->parsimonyScore[pNumber] = 0;
+      for(model = 0; model < pr->numberOfPartitions; model++)
+        {
+          size_t
+            k,
+            states = pr->partitionData[model]->states,
+            width = pr->partitionData[model]->parsimonyLength;
+
+          unsigned int
+            i;
+
+            if(states != 2 && states != 4 && states != 20) states = 32;
+
+				parsimonyNumber
+					*left[states],
+					*right[states],
+					*cur[states];
+
+				for(k = 0; k < states; k++)
+				{
+					left[k]  = &(pr->partitionData[model]->parsVect[(width * states * qNumber) + width * k]);
+					right[k] = &(pr->partitionData[model]->parsVect[(width * states * rNumber) + width * k]);
+					cur[k]  = &(pr->partitionData[model]->parsVect[(width * states * pNumber) + width * k]);
+				}
+
+                /*
+                                  cur
+                             /         \
+                            /           \
+                           /             \
+                        left             right
+                   score_left(A,C,G,T)   score_right(A,C,G,T)
+
+                        score_cur(z) = min_x,y { cost(z->x)+score_left(x) + cost(z->y)+score_right(y)}
+                                     = left_contribution + right_contribution
+
+                        left_contribution  =  min_x{ cost(z->x)+score_left(x)}
+                        right_contribution =  min_x{ cost(z->x)+score_right(x)}
+
+                */
+//                cout << "pNumber: " << pNumber << ", qNumber: " << qNumber << ", rNumber: " << rNumber << endl;
+				int x, z;
+				for(i = 0; i < width; i++)
+				{
+					// cout << "i = " << i << endl;
+					parsimonyNumber cur_contrib = UINT_MAX;
+					for (z = 0; z < states; z++) {
+						parsimonyNumber left_contrib = UINT_MAX;
+						parsimonyNumber right_contrib = UINT_MAX;
+						for (x = 0; x < states; x++)
+						{
+							// if(z == 0) cout << "left[" << x << "][i] = " << left[x][i]
+							// 	<< ", right[" << x << "][i] = " << right[x][i] << endl;
+							parsimonyNumber value = pllCostMatrix[x*states+z] + left[x][i];
+							if (value < left_contrib)
+							left_contrib = value;
+
+							value = pllCostMatrix[x*states+z] + right[x][i];
+							if (value < right_contrib)
+							right_contrib = value;
+						}
+						cur[z][i] = left_contrib + right_contrib;
+						if(cur[z][i] < cur_contrib) cur_contrib = cur[z][i];
+					}
+
+					// totalScore += min(cur[0][i], cur[1][i], cur[2][i], cur[3][i]);
+
+					tr->parsimonyScore[pNumber] += cur_contrib;
+					// cout << "newview: " << cur_contrib << endl;
+
+				}
+              }
+
+//          switch(states)
+//            {
+//            case 2:
+//              {
+//                parsimonyNumber
+//                  *left[2],
+//                  *right[2],
+//                  *cur[2];
+//
+//                parsimonyNumber
+//                   o_A,
+//                   o_C,
+//                   t_A,
+//                   t_C,
+//                   t_N;
+//
+//                for(k = 0; k < 2; k++)
+//                  {
+//                    left[k]  = &(pr->partitionData[model]->parsVect[(width * 2 * qNumber) + width * k]);
+//                    right[k] = &(pr->partitionData[model]->parsVect[(width * 2 * rNumber) + width * k]);
+//                    cur[k]  = &(pr->partitionData[model]->parsVect[(width * 2 * pNumber) + width * k]);
+//                  }
+//
+//                for(i = 0; i < width; i++)
+//                  {
+//                    t_A = left[0][i] & right[0][i];
+//                    t_C = left[1][i] & right[1][i];
+//
+//                    o_A = left[0][i] | right[0][i];
+//                    o_C = left[1][i] | right[1][i];
+//
+//                    t_N = ~(t_A | t_C);
+//
+//                    cur[0][i] = t_A | (t_N & o_A);
+//                    cur[1][i] = t_C | (t_N & o_C);
+//
+//                    totalScore += ((unsigned int) __builtin_popcount(t_N));
+//                  }
+//              }
+//              break;
+//            case 4:
+//              {
+//				parsimonyNumber
+//					*left[4],
+//					*right[4],
+//					*cur[4];
+//
+//				for(k = 0; k < 4; k++)
+//				{
+//					left[k]  = &(pr->partitionData[model]->parsVect[(width * 4 * qNumber) + width * k]);
+//					right[k] = &(pr->partitionData[model]->parsVect[(width * 4 * rNumber) + width * k]);
+//					cur[k]  = &(pr->partitionData[model]->parsVect[(width * 4 * pNumber) + width * k]);
+//				}
+//
+//                /*
+//                                  cur
+//                             /         \
+//                            /           \
+//                           /             \
+//                        left             right
+//                   score_left(A,C,G,T)   score_right(A,C,G,T)
+//
+//                        score_cur(z) = min_x,y { cost(z->x)+score_left(x) + cost(z->y)+score_right(y)}
+//                                     = left_contribution + right_contribution
+//
+//                        left_contribution  =  min_x{ cost(z->x)+score_left(x)}
+//                        right_contribution =  min_x{ cost(z->x)+score_right(x)}
+//
+//                */
+////                cout << "pNumber: " << pNumber << ", qNumber: " << qNumber << ", rNumber: " << rNumber << endl;
+//				int x, z;
+//				for(i = 0; i < width; i++)
+//				{
+//					// cout << "i = " << i << endl;
+//					parsimonyNumber cur_contrib = UINT_MAX;
+//					for (z = 0; z < 4; z++) {
+//						parsimonyNumber left_contrib = UINT_MAX;
+//						parsimonyNumber right_contrib = UINT_MAX;
+//						for (x = 0; x < 4; x++)
+//						{
+//							// if(z == 0) cout << "left[" << x << "][i] = " << left[x][i]
+//							// 	<< ", right[" << x << "][i] = " << right[x][i] << endl;
+//							parsimonyNumber value = pllCostMatrix[x*4+z] + left[x][i];
+//							if (value < left_contrib)
+//							left_contrib = value;
+//
+//							value = pllCostMatrix[z*4+x] + right[x][i];
+//							if (value < right_contrib)
+//							right_contrib = value;
+//						}
+//						cur[z][i] = left_contrib + right_contrib;
+//						if(cur[z][i] < cur_contrib) cur_contrib = cur[z][i];
+//					}
+//
+//					// totalScore += min(cur[0][i], cur[1][i], cur[2][i], cur[3][i]);
+//
+//					tr->parsimonyScore[pNumber] += cur_contrib;
+//					// cout << "newview: " << cur_contrib << endl;
+//
+//				}
+//              }
+//              break;
+//            case 20:
+//              {
+//                parsimonyNumber
+//                  *left[20],
+//                  *right[20],
+//                  *cur[20];
+//
+//                parsimonyNumber
+//                  o_A[20],
+//                  t_A[20],
+//                  t_N;
+//
+//                for(k = 0; k < 20; k++)
+//                  {
+//                    left[k]  = &(pr->partitionData[model]->parsVect[(width * 20 * qNumber) + width * k]);
+//                    right[k] = &(pr->partitionData[model]->parsVect[(width * 20 * rNumber) + width * k]);
+//                    cur[k]  = &(pr->partitionData[model]->parsVect[(width * 20 * pNumber) + width * k]);
+//                  }
+//
+//                for(i = 0; i < width; i++)
+//                  {
+//                    size_t k;
+//
+//                    t_N = 0;
+//
+//                    for(k = 0; k < 20; k++)
+//                      {
+//                        t_A[k] = left[k][i] & right[k][i];
+//                        o_A[k] = left[k][i] | right[k][i];
+//                        t_N = t_N | t_A[k];
+//                      }
+//
+//                    t_N = ~t_N;
+//
+//                    for(k = 0; k < 20; k++)
+//                      cur[k][i] = t_A[k] | (t_N & o_A[k]);
+//
+//                    totalScore += ((unsigned int) __builtin_popcount(t_N));
+//                  }
+//              }
+//              break;
+//            default:
+//              {
+//                parsimonyNumber
+//                  *left[32],
+//                  *right[32],
+//                  *cur[32];
+//
+//                parsimonyNumber
+//                  o_A[32],
+//                  t_A[32],
+//                  t_N;
+//
+//                assert(states <= 32);
+//
+//                for(k = 0; k < states; k++)
+//                  {
+//                    left[k]  = &(pr->partitionData[model]->parsVect[(width * states * qNumber) + width * k]);
+//                    right[k] = &(pr->partitionData[model]->parsVect[(width * states * rNumber) + width * k]);
+//                    cur[k]  = &(pr->partitionData[model]->parsVect[(width * states * pNumber) + width * k]);
+//                  }
+//
+//                for(i = 0; i < width; i++)
+//                  {
+//                    t_N = 0;
+//
+//                    for(k = 0; k < states; k++)
+//                      {
+//                        t_A[k] = left[k][i] & right[k][i];
+//                        o_A[k] = left[k][i] | right[k][i];
+//                        t_N = t_N | t_A[k];
+//                      }
+//
+//                    t_N = ~t_N;
+//
+//                    for(k = 0; k < states; k++)
+//                      cur[k][i] = t_A[k] | (t_N & o_A[k]);
+//
+//                    totalScore += ((unsigned int) __builtin_popcount(t_N));
+//                  }
+//              }
+//            }
+//        }
+
+//      tr->parsimonyScore[pNumber] = totalScore + tr->parsimonyScore[rNumber] + tr->parsimonyScore[qNumber];
+
+    }
+//	cout << "... DONE" << endl;
+}
+
+
 static void newviewParsimonyIterativeFast(pllInstance *tr, partitionList *pr, int perSiteScores)
 {
+	if(pllCostMatrix) return newviewSankoffParsimonyIterativeFast(tr, pr, perSiteScores);
+
   INT_TYPE
     allOne = SET_ALL_BITS_ONE;
 
@@ -540,10 +836,247 @@ static void newviewParsimonyIterativeFast(pllInstance *tr, partitionList *pr, in
     }
 }
 
+static unsigned int evaluateSankoffParsimonyIterativeFast(pllInstance *tr, partitionList * pr, int perSiteScores)
+{
+//	cout << "evaluateSankoffParsimonyIterativeFast ...";
+  size_t
+    pNumber = (size_t)tr->ti[1],
+    qNumber = (size_t)tr->ti[2];
+
+  int
+    model;
+
+  unsigned int
+    bestScore = tr->bestParsimony,
+    sum;
+
+  if(tr->ti[0] > 4)
+    newviewParsimonyIterativeFast(tr, pr, perSiteScores);
+
+//  sum = tr->parsimonyScore[pNumber] + tr->parsimonyScore[qNumber];
+	sum = 0;
+
+	for(model = 0; model < pr->numberOfPartitions; model++)
+	{
+		size_t
+			k,
+			states = pr->partitionData[model]->states,
+			width  = pr->partitionData[model]->parsimonyLength,
+			i;
+
+		if(states != 2 && states != 4 && states != 20) states = 32;
+
+		parsimonyNumber
+			*left[states],
+			*right[states];
+
+		for(k = 0; k < states; k++)
+		{
+			left[k]  = &(pr->partitionData[model]->parsVect[(width * states * qNumber) + width * k]);
+			right[k] = &(pr->partitionData[model]->parsVect[(width * states * pNumber) + width * k]);
+		}
+
+
+		/*
+
+				for each branch (left --- right), compute the score
+
+
+				 left ----------------- right
+			score_left(A,C,G,T)   score_right(A,C,G,T)
+
+
+			score = min_x,y  { score_left(x) + cost(x-->y) + score_right(y)  }
+
+
+		*/
+		int x, y;
+
+		for(i = 0; i < width; i++){
+			parsimonyNumber best_score = UINT_MAX;
+			for (x = 0; x < states; x++)
+				for (y = 0; y < states; y++) {
+					parsimonyNumber value = left[x][i] + pllCostMatrix[x*states+y] + right[y][i];
+					if (value < best_score) best_score = value;
+				}
+
+				// add weight here because weighted computation is based on pattern
+				// sum += best_score * (size_t)tr->aliaswgt[i]; // wrong (because aliaswgt is for all patterns, not just informative pattern)
+				if(perSiteScores) pr->partitionData[model]->informativePtnScore[i] = best_score;
+
+				sum += best_score * pr->partitionData[model]->informativePtnWgt[i];
+
+				// cout << "evaluate: " << i << ": " << best_score << endl;
+
+				// if(sum >= bestScore)
+				// 		return sum;
+		}
+	}
+
+//       switch(states)
+//         {
+//         case 2:
+//           {
+//             parsimonyNumber
+//               t_A,
+//               t_C,
+//               t_N,
+//               *left[2],
+//               *right[2];
+//
+//             for(k = 0; k < 2; k++)
+//               {
+//                 left[k]  = &(pr->partitionData[model]->parsVect[(width * 2 * qNumber) + width * k]);
+//                 right[k] = &(pr->partitionData[model]->parsVect[(width * 2 * pNumber) + width * k]);
+//               }
+//
+//             for(i = 0; i < width; i++)
+//               {
+//                 t_A = left[0][i] & right[0][i];
+//                 t_C = left[1][i] & right[1][i];
+//
+//                  t_N = ~(t_A | t_C);
+//
+//                  sum += ((unsigned int) __builtin_popcount(t_N));
+//
+////                 if(sum >= bestScore)
+////                   return sum;
+//               }
+//           }
+//           break;
+//         case 4:
+//           {
+//             parsimonyNumber
+//               *left[4],
+//               *right[4];
+//
+//             for(k = 0; k < 4; k++)
+//               {
+//                 left[k]  = &(pr->partitionData[model]->parsVect[(width * 4 * qNumber) + width * k]);
+//                 right[k] = &(pr->partitionData[model]->parsVect[(width * 4 * pNumber) + width * k]);
+//               }
+//
+//
+//            /*
+//
+//                    for each branch (left --- right), compute the score
+//
+//
+//                     left ----------------- right
+//                score_left(A,C,G,T)   score_right(A,C,G,T)
+//
+//
+//                score = min_x,y  { score_left(x) + cost(x-->y) + score_right(y)  }
+//
+//
+//            */
+//            int x, y;
+//
+//             for(i = 0; i < width; i++)
+//               {
+//
+//                parsimonyNumber best_score = UINT_MAX;
+//                for (x = 0; x < 4; x++)
+//                    for (y = 0; y < 4; y++) {
+//                        parsimonyNumber value = left[x][i] + pllCostMatrix[x*4+y] + right[y][i];
+//                        if (value < best_score)
+//                          best_score = value;
+//                    }
+//
+//					// add weight here because weighted computation is based on pattern
+////                  sum += best_score * (size_t)tr->aliaswgt[i]; // wrong (because aliaswgt is for all patterns, not just informative pattern)
+//					if(perSiteScores)
+//						pr->partitionData[model]->informativePtnScore[i] = best_score;
+//					sum += best_score * pr->partitionData[model]->informativePtnWgt[i];
+//
+////                  cout << "evaluate: " << i << ": " << best_score << endl;
+//
+////                 if(sum >= bestScore)
+////                   return sum;
+//               }
+//           }
+//           break;
+//         case 20:
+//           {
+//             parsimonyNumber
+//               t_A,
+//               t_N,
+//               *left[20],
+//               *right[20];
+//
+//              for(k = 0; k < 20; k++)
+//                {
+//                  left[k]  = &(pr->partitionData[model]->parsVect[(width * 20 * qNumber) + width * k]);
+//                  right[k] = &(pr->partitionData[model]->parsVect[(width * 20 * pNumber) + width * k]);
+//                }
+//
+//              for(i = 0; i < width; i++)
+//                {
+//                  t_N = 0;
+//
+//                  for(k = 0; k < 20; k++)
+//                    {
+//                      t_A = left[k][i] & right[k][i];
+//                      t_N = t_N | t_A;
+//                    }
+//
+//                  t_N = ~t_N;
+//
+//                  sum += ((unsigned int) __builtin_popcount(t_N));
+//
+////                  if(sum >= bestScore)
+////                    return sum;
+//                }
+//           }
+//           break;
+//         default:
+//           {
+//             parsimonyNumber
+//               t_A,
+//               t_N,
+//               *left[32],
+//               *right[32];
+//
+//             assert(states <= 32);
+//
+//             for(k = 0; k < states; k++)
+//               {
+//                 left[k]  = &(pr->partitionData[model]->parsVect[(width * states * qNumber) + width * k]);
+//                 right[k] = &(pr->partitionData[model]->parsVect[(width * states * pNumber) + width * k]);
+//               }
+//
+//             for(i = 0; i < width; i++)
+//               {
+//                 t_N = 0;
+//
+//                 for(k = 0; k < states; k++)
+//                   {
+//                     t_A = left[k][i] & right[k][i];
+//                     t_N = t_N | t_A;
+//                   }
+//
+//                  t_N = ~t_N;
+//
+//                  sum += ((unsigned int) __builtin_popcount(t_N));
+//
+////                 if(sum >= bestScore)
+////                   return sum;
+//               }
+//           }
+//         }
+//    }
+
+//	cout << "... DONE" << endl;
+
+  return sum;
+}
+
 
 
 static unsigned int evaluateParsimonyIterativeFast(pllInstance *tr, partitionList *pr, int perSiteScores)
 {
+	if(pllCostMatrix) return evaluateSankoffParsimonyIterativeFast(tr, pr, perSiteScores);
+
   INT_TYPE
     allOne = SET_ALL_BITS_ONE;
 
@@ -2066,6 +2599,9 @@ static pllBoolean isInformative2(pllInstance *tr, int site)
 
 /*
  * Diep: copy new version from Tomas's code for site pars
+ * Here, informative site == variant site
+ * IMPORTANT: 	If this function changes the definition for 'informative site' as in the below comment
+ * 				the function of compressSankoffDNA needs revising
  */
 /* check whether site contains at least 2 different letters, i.e.
    whether it will generate a score */
@@ -2140,9 +2676,11 @@ int pllCalcMinParsScorePattern(pllInstance *tr, int dataType, int site)
 	for(j = 0; j < 256; j++)
 		check[j] = 0;
 
+//	if(site == 253) cout << "pll site: " << endl;
 	for(j = 1; j <= tr->mxtips; j++)
 	{
 		nucleotide = tr->yVector[j][site];
+//		if(site == 253) cout << (int) nucleotide << endl;
 		check[nucleotide] = 1;
 		assert(bitVector[nucleotide] > 0);
 	}
@@ -2243,10 +2781,166 @@ static void determineUninformativeSites(pllInstance *tr, partitionList *pr, int 
   /* printf("Uninformative Patterns: %d\n", number); */
 }
 
+static void compressSankoffDNA(pllInstance *tr, partitionList *pr, int *informative, int perSiteScores)
+{
+//	cout << "Begin compressSankoffDNA()" << endl;
+  size_t
+    totalNodes,
+    i,
+    model;
+
+  totalNodes = 2 * (size_t)tr->mxtips;
+
+  for(model = 0; model < (size_t) pr->numberOfPartitions; model++)
+    {
+      size_t
+        k,
+        states = (size_t)pr->partitionData[model]->states,
+        compressedEntries,
+        compressedEntriesPadded,
+        entries = 0,
+        lower = pr->partitionData[model]->lower,
+        upper = pr->partitionData[model]->upper;
+
+      parsimonyNumber
+        **compressedTips = (parsimonyNumber **)rax_malloc(states * sizeof(parsimonyNumber*)),
+        *compressedValues = (parsimonyNumber *)rax_malloc(states * sizeof(parsimonyNumber));
+
+      for(i = lower; i < upper; i++)
+        if(informative[i])
+          entries ++; // Diep: here,entries counts # informative pattern
+
+      compressedEntries = entries;
+
+#if (defined(__SSE3) || defined(__AVX))
+      if(compressedEntries % INTS_PER_VECTOR != 0)
+        compressedEntriesPadded = compressedEntries + (INTS_PER_VECTOR - (compressedEntries % INTS_PER_VECTOR));
+      else
+        compressedEntriesPadded = compressedEntries;
+#else
+      compressedEntriesPadded = compressedEntries;
+#endif
+
+	// TODO: correct the below
+	compressedEntriesPadded = compressedEntries;
+	// parsVect stores cost for each node by state at each pattern
+	// for a certain node of DNA: ptn1_A, ptn2_A, ptn3_A,..., ptn1_C, ptn2_C, ptn3_C,...,ptn1_G, ptn2_G, ptn3_G,...,ptn1_T, ptn2_T, ptn3_T,...,
+	// (not 100% sure) this is also the perSitePartialPars
+      rax_posix_memalign ((void **) &(pr->partitionData[model]->parsVect), PLL_BYTE_ALIGNMENT, (size_t)compressedEntriesPadded * states * totalNodes * sizeof(parsimonyNumber));
+      rax_posix_memalign ((void **) &(pr->partitionData[model]->informativePtnWgt), PLL_BYTE_ALIGNMENT, (size_t)compressedEntriesPadded * sizeof(unsigned int));
+
+      if(perSiteScores){
+			rax_posix_memalign ((void **) &(pr->partitionData[model]->informativePtnScore), PLL_BYTE_ALIGNMENT, (size_t)compressedEntriesPadded * sizeof(parsimonyNumber));
+      }
+
+      for(i = 0; i < compressedEntriesPadded * states * totalNodes; i++)
+        pr->partitionData[model]->parsVect[i] = 0; // Diep: TODO: be careful!
+
+//		// Diep: TODO: temporarily leave bootstrap out
+//      if (perSiteScores)
+//       {
+//         /* for per site parsimony score at each node */
+//         rax_posix_memalign ((void **) &(pr->partitionData[model]->perSitePartialPars), PLL_BYTE_ALIGNMENT, totalNodes * (size_t)compressedEntriesPadded * PLL_PCF * sizeof (parsimonyNumber));
+//         for (i = 0; i < totalNodes * (size_t)compressedEntriesPadded * PLL_PCF; ++i)
+//        	 pr->partitionData[model]->perSitePartialPars[i] = 0;
+//       }
+
+		// Diep: For each leaf
+      for(i = 0; i < (size_t)tr->mxtips; i++)
+        {
+          size_t
+            w = 0,
+            compressedIndex = 0,
+            compressedCounter = 0,
+            index = 0,
+            informativeIndex = 0;
+
+          for(k = 0; k < states; k++)
+            {
+              compressedTips[k] = &(pr->partitionData[model]->parsVect[(compressedEntriesPadded * states * (i + 1)) + (compressedEntriesPadded * k)]);
+              compressedValues[k] = INT_MAX; // Diep
+            }
+
+		// for each informative pattern
+          for(index = lower; index < (size_t)upper; index++)
+            {
+
+              if(informative[index])
+                {
+//                	cout << "index = " << index << endl;
+                  const unsigned int
+                    *bitValue = getBitVector(pr->partitionData[model]->dataType); // Diep: bitValue is for dataType
+
+                  parsimonyNumber
+                    value = bitValue[tr->yVector[i + 1][index]];
+
+				  for(k = 0; k < states; k++)
+					{
+					  if(value & mask32[k]) compressedValues[k] = 0; // Diep: if the state is present, corresponding value is set to zero
+					  else compressedValues[k] = INT_MAX;
+					  compressedTips[k][informativeIndex] = compressedValues[k]; // Diep
+//					  cout << "compressedValues[k]: " << compressedValues[k] << endl;
+					}
+					pr->partitionData[model]->informativePtnWgt[informativeIndex] = tr->aliaswgt[index];
+					informativeIndex++;
+
+
+//                  for(w = 0; w < (size_t)tr->aliaswgt[index]; w++)
+//                    {
+//                      for(k = 0; k < states; k++)
+//                        {
+//                          if(value & mask32[k])
+//                            compressedValues[k] |= mask32[compressedCounter];
+//                        }
+//
+//                      compressedCounter++;
+//
+//                      if(compressedCounter == PLL_PCF)
+//                        {
+//                          for(k = 0; k < states; k++)
+//                            {
+//                              compressedTips[k][compressedIndex] = compressedValues[k];
+//                              compressedValues[k] = 0;
+//                            }
+//
+//                          compressedCounter = 0;
+//                          compressedIndex++;
+//                        }
+//                    }
+                }
+            }
+
+          for(;index < compressedEntriesPadded; index++)
+            {
+
+                 for(k = 0; k < states; k++)
+					{
+					  compressedTips[k][index] = INT_MAX; // Diep
+					}
+            }
+        }
+
+//      pr->partitionData[model]->parsimonyLength = compressedEntriesPadded;
+      pr->partitionData[model]->parsimonyLength = compressedEntries; // for unvectorized version
+//	cout << "compressedEntries = " << compressedEntries << endl;
+      rax_free(compressedTips);
+      rax_free(compressedValues);
+    }
+
+
+
+  rax_posix_memalign ((void **) &(tr->parsimonyScore), PLL_BYTE_ALIGNMENT, sizeof(unsigned int) * totalNodes);
+
+  for(i = 0; i < totalNodes; i++)
+    tr->parsimonyScore[i] = 0;
+}
+
 
 static void compressDNA(pllInstance *tr, partitionList *pr, int *informative, int perSiteScores)
 {
-//	printf("compress with fastDNAparsimony.c\n");
+	if(pllCostMatrix != NULL) return compressSankoffDNA(tr, pr, informative, perSiteScores);
+
+
   size_t
     totalNodes,
     i,
@@ -2381,6 +3075,7 @@ static void compressDNA(pllInstance *tr, partitionList *pr, int *informative, in
 }
 
 
+
 static void stepwiseAddition(pllInstance *tr, partitionList *pr, nodeptr p, nodeptr q)
 {
   nodeptr
@@ -2441,6 +3136,13 @@ void _allocateParsimonyDataStructures(pllInstance *tr, partitionList *pr, int pe
 	  int * informative = (int *)rax_malloc(sizeof(int) * (size_t)tr->originalCrunchedLength);
 	  determineUninformativeSites(tr, pr, informative);
 
+	  if(pllCostMatrix){
+		for(int i = 0; i < pr->numberOfPartitions; i++){
+			pr->partitionData[i]->informativePtnWgt = NULL;
+			pr->partitionData[i]->informativePtnScore = NULL;
+		}
+	  }
+
 	  compressDNA(tr, pr, informative, perSiteScores);
 
 	  for(i = tr->mxtips + 1; i <= tr->mxtips + tr->mxtips - 1; i++)
@@ -2483,6 +3185,11 @@ void _pllFreeParsimonyDataStructures(pllInstance *tr, partitionList *pr)
 	  rax_free(tr->ti);
 	  tr->ti = NULL;
   }
+  if(pllCostMatrix)
+		for(int i = 0; i < pr->numberOfPartitions; i++){
+			if(pr->partitionData[i]->informativePtnWgt != NULL) rax_free(pr->partitionData[i]->informativePtnWgt);
+			if(pr->partitionData[i]->informativePtnScore != NULL) rax_free(pr->partitionData[i]->informativePtnScore);
+		}
 }
 
 
@@ -2535,6 +3242,7 @@ static void _pllMakeParsimonyTreeFast(pllInstance *tr, partitionList *pr, int sp
         }
 
       stepwiseAddition(tr, pr, q, f->back);
+//      cout << "tr->ntips = " << tr->ntips << endl;
 
       {
         nodeptr
@@ -2553,6 +3261,7 @@ static void _pllMakeParsimonyTreeFast(pllInstance *tr, partitionList *pr, int sp
     }
 
   nodeRectifierPars(tr);
+//  cout << "DONE stepwise addition" << endl;
 
   randomMP = tr->bestParsimony;
 
@@ -2604,8 +3313,11 @@ static void _pllMakeParsimonyTreeFast(pllInstance *tr, partitionList *pr, int sp
 void _pllComputeRandomizedStepwiseAdditionParsimonyTree(pllInstance * tr, partitionList * partitions, int sprDist)
 {
 	_allocateParsimonyDataStructures(tr, partitions, PLL_FALSE);
+//	cout << "DONE allocate..." << endl;
 	_pllMakeParsimonyTreeFast(tr, partitions, sprDist);
+//	cout << "DONE make...." << endl;
 	_pllFreeParsimonyDataStructures(tr, partitions);
+//	cout << "Done free..." << endl;
 }
 
 /**
@@ -2691,7 +3403,7 @@ int pllSaveCurrentTreeSprParsimony(pllInstance * tr, partitionList * pr, int cur
 	return (int)(cur_search_pars);
 }
 
-// TODO: modify for Sankoff $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
 void pllComputePatternParsimony(pllInstance * tr, partitionList * pr, double *ptn_npars, double *cur_npars){
 	int ptn = 0;
 	int site = 0;
@@ -2710,7 +3422,23 @@ void pllComputePatternParsimony(pllInstance * tr, partitionList * pr, double *pt
 	if(cur_npars) *cur_npars = -sum;
 }
 
+void pllComputeSankoffPatternParsimony(pllInstance * tr, partitionList * pr, unsigned short *ptn_pars, int *cur_pars){
+	int ptn = 0;
+	int sum = 0;
+
+	for(int i = 0; i < pr->numberOfPartitions; i++){
+		for(ptn = 0; ptn < pr->partitionData[i]->parsimonyLength; ptn++){
+			ptn_pars[ptn] = pr->partitionData[i]->informativePtnScore[ptn];
+			sum += ptn_pars[ptn] * pr->partitionData[i]->informativePtnWgt[ptn];
+		}
+	}
+
+	if(cur_pars) *cur_pars = sum;
+}
+
 void pllComputePatternParsimony(pllInstance * tr, partitionList * pr, unsigned short *ptn_pars, int *cur_pars){
+	if(pllCostMatrix) return pllComputeSankoffPatternParsimony(tr, pr, ptn_pars, cur_pars);
+
 	int ptn = 0;
 	int site = 0;
 	int sum = 0;
@@ -2927,10 +3655,64 @@ void testSiteParsimony(Params &params) {
 
 void computeUserTreeParsimomy(Params &params) {
     Alignment alignment(params.aln_file, params.sequence_type, params.intype);
-    IQTree tree;
-    tree.readTree(params.user_file, params.is_rooted);
-	tree.setAlignment(&alignment);
-	cout << "Parsimony score is: " << tree.computeParsimony() << endl;
+
+    IQTree * ptree;
+
+    if(params.sankoff_cost_file){
+    	ptree = new ParsTree(&alignment);
+    	dynamic_cast<ParsTree *>(ptree)->initParsData(&params);
+    }else
+    	ptree = new IQTree(&alignment);
+
+    ptree->readTree(params.user_file, params.is_rooted);
+	ptree->setAlignment(&alignment);
+//	optimizeAlignment(ptree, params); // for sorting aln. This line triggers "UFBoot-MP CRASHES WITH SIGNAL ABORTED"
+
+	cout << "Parsimony score (by IQTree kernel) is: ";
+	cout << ptree->computeParsimony() << endl;
+
+	cout << "###################################################################" << endl << endl;
+
+	if(params.sankoff_cost_file){
+		ptree->initializePLL(params);
+		string tree_string = ptree->getTreeString();
+		pllNewickTree *pll_tree = pllNewickParseString(tree_string.c_str());
+		assert(pll_tree != NULL);
+		pllTreeInitTopologyNewick(ptree->pllInst, pll_tree, PLL_FALSE);
+		iqtree = ptree;
+
+		_allocateParsimonyDataStructures(ptree->pllInst, ptree->pllPartitions, false);
+
+		unsigned int pll_score = evaluateParsimony(ptree->pllInst, ptree->pllPartitions, ptree->pllInst->start, PLL_TRUE, false);
+		cout << "Parsimony score (by PLL kernel) is: " << pll_score << endl;
+
+
+//		// compare pattern order
+//		// => temp problem: order is not sync because in this test func, IQTree aln is not sorted
+//		if(informativePtnWgt){
+//			int diffCount = 0;
+//			for(int i = 0; i < iqtree->aln->getNPattern(); i++){
+//				if(iqtree->aln->at(i).frequency != informativePtnWgt[i]) diffCount++;
+//			}
+//			cout << "diffCount = " << diffCount << endl;
+//		}
+
+		_pllFreeParsimonyDataStructures(ptree->pllInst, ptree->pllPartitions);
+	}else{
+		ptree->initializePLL(params);
+		string tree_string = ptree->getTreeString();
+		pllNewickTree *pll_tree = pllNewickParseString(tree_string.c_str());
+		assert(pll_tree != NULL);
+		pllTreeInitTopologyNewick(ptree->pllInst, pll_tree, PLL_FALSE);
+		iqtree = ptree;
+		_allocateParsimonyDataStructures(ptree->pllInst, ptree->pllPartitions, false);
+		unsigned int pll_score = evaluateParsimony(ptree->pllInst, ptree->pllPartitions, ptree->pllInst->start, PLL_TRUE, false);
+		cout << "Parsimony score (by PLL kernel) is: " << pll_score << endl;
+
+
+		_pllFreeParsimonyDataStructures(ptree->pllInst, ptree->pllPartitions);
+	}
+	delete ptree;
 }
 
 /****************************************** UTILS ***************************/
@@ -3025,6 +3807,7 @@ pllSortedAlignmentRemoveDups (pllAlignmentData * alignmentData, partitionList * 
      pl->partitionData[p]->lower = lower;
      pl->partitionData[p]->upper = k;
      pl->partitionData[p]->width = k - lower;
+
    }
 
   /* deallocate storage for transposed alignment (sites) */

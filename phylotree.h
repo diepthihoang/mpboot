@@ -1474,7 +1474,7 @@ protected:
             allocate new memory for a bit block vector
             @return the allocated memory
      */
-    UINT *newBitsBlock();
+    virtual UINT *newBitsBlock();
 
     /**
             @return size of the bits entry (for storing num_states bits)

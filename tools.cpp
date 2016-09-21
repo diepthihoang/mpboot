@@ -655,7 +655,7 @@ void parseArg(int argc, char *argv[], Params &params) {
     params.leastSquareNNI = false;
     params.ls_var_type = OLS;
     params.maxCandidates = 100; // Less RAS === less runtime
-    params.popSize = 50;
+    params.popSize = 5; // Diep: reset for weighted
     params.p_delete = -1;
     params.min_iterations = -1;
     params.max_iterations = 1;

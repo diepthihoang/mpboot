@@ -1117,10 +1117,7 @@ void computeInitialTree(Params &params, IQTree &iqtree, string &dist_file, int &
 		iqtree.pllInst->randomNumberSeed = params.ran_seed;
 
 		if(params.maximum_parsimony){
-//			if(params.sankoff_cost_file)
-//				_pllComputeRandomizedStepwiseAdditionParsimonyTree(iqtree.pllInst, iqtree.pllPartitions, params.sprDist, dynamic_cast<ParsTree *>(tree)->cost_matrix);
-//			else
-				_pllComputeRandomizedStepwiseAdditionParsimonyTree(iqtree.pllInst, iqtree.pllPartitions, params.sprDist);
+			_pllComputeRandomizedStepwiseAdditionParsimonyTree(iqtree.pllInst, iqtree.pllPartitions, params.sprDist);
 		}
 		else
 			pllComputeRandomizedStepwiseAdditionParsimonyTree(iqtree.pllInst, iqtree.pllPartitions, params.sprDist);
@@ -1231,10 +1228,7 @@ int initCandidateTreeSet(Params &params, IQTree &iqtree, int numInitTrees) {
 			iqtree.pllInst->randomNumberSeed = params.ran_seed + treeNr * 12345;
 
 			if(params.maximum_parsimony){
-	//			if(params.sankoff_cost_file)
-	//				_pllComputeRandomizedStepwiseAdditionParsimonyTree(iqtree.pllInst, iqtree.pllPartitions, params.sprDist, dynamic_cast<ParsTree *>(tree)->cost_matrix);
-	//			else
-					_pllComputeRandomizedStepwiseAdditionParsimonyTree(iqtree.pllInst, iqtree.pllPartitions, params.sprDist);
+				_pllComputeRandomizedStepwiseAdditionParsimonyTree(iqtree.pllInst, iqtree.pllPartitions, params.sprDist);
 			}
 			else
 				pllComputeRandomizedStepwiseAdditionParsimonyTree(iqtree.pllInst, iqtree.pllPartitions, params.sprDist);
@@ -1638,6 +1632,8 @@ void runTreeReconstruction(Params &params, string &original_model, IQTree &iqtre
     /***************** Initialization for PLL and sNNI ******************/
     if (params.start_tree == STT_PLL_PARSIMONY || params.pll) {
         /* Initialized all data structure for PLL*/
+//        cout << "WHAT'S GOING ON HERE?" << endl;
+//        verbose_mode = VB_MAX;
     	iqtree.initializePLL(params);
     }
 
@@ -2108,10 +2104,17 @@ void runPhyloAnalysis(Params &params) {
 		}
 		tree = new IQTree(alignment);
 
+
+	}
+
 //		if(params.maximum_parsimony && params.sort_alignment){
-		if(params.maximum_parsimony){
-			optimizeAlignment(tree, params);// Diep: this is to rearrange columns for better speed in REPS
-		}
+	if(params.maximum_parsimony && params.gbo_replicates){
+		optimizeAlignment(tree, params);// Diep: this is to rearrange columns for better speed in REPS
+//		Pattern pat = tree->aln->getPattern(253);
+//		cout << "Conflict pattern:" << endl;
+//		for(int j = 0; j < pat.size(); j++) cout << (int) pat[j] << endl;
+//		cout << endl;
+//		exit(0);
 	}
 
 	string original_model = params.model_name;
@@ -2608,8 +2611,10 @@ void optimizeAlignment(IQTree * & tree, Params & params){
 //	tree->fixNegativeBranch(true);
 	int pars_before = tree->computeParsimony();
 	BootValTypePars * tmpPatternPars = tree->getPatternPars();
-	for(int i = 0; i < tree->getAlnNPattern(); i++)
+	for(int i = 0; i < tree->getAlnNPattern(); i++){
 		(tree->aln)->at(i).ras_pars_score = tmpPatternPars[i];
+//		cout << "i = " << i << ", score = " << tmpPatternPars[i] << endl;
+	}
 
 	if(params.sort_alignment){
 		cout << "Reordering patterns in alignment by decreasing order of pattern parsimony...";

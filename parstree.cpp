@@ -198,6 +198,7 @@ void ParsTree::initLeafSiteParsForAmbiguousState(char state, UINT * site_partial
     }
 
     if (state == STATE_INVALID){
+    	cout << "nstates = " << nstates << "; state = " << (int) state << endl;
         outError("Alignment contains invalid state. Please check your data!");
     }
 
@@ -205,6 +206,7 @@ void ParsTree::initLeafSiteParsForAmbiguousState(char state, UINT * site_partial
 
     switch (nstates) {
         case 2:
+        	cout << "nstates = " << nstates << "; state = " << (int) state << endl;
         	outError("Alignment contains invalid state. Please check your data!");
         	break;
         case 4: // DNA
@@ -253,7 +255,14 @@ void ParsTree::initLeafSiteParsForAmbiguousState(char state, UINT * site_partial
 					site_partial_pars[aln->convertState('G')] = 0;
 					site_partial_pars[aln->convertState('C')] = 0;
 					return; // A or G or C
+				case 18:
+					site_partial_pars[aln->convertState('A')] = 0;
+					site_partial_pars[aln->convertState('C')] = 0;
+					site_partial_pars[aln->convertState('G')] = 0;
+					site_partial_pars[aln->convertState('T')] = 0;
+					return; // UNKNOWN for DNA
 				default:
+					cout << "nstates = " << nstates << "; state = " << (int) state << endl;
 					outError("Alignment contains invalid state. Please check your data!");
 					return;
 			}
@@ -269,12 +278,18 @@ void ParsTree::initLeafSiteParsForAmbiguousState(char state, UINT * site_partial
         		site_partial_pars[aln->convertState('E')] = 0;
         		return; // Glutamine (Q) or Glutamic acid (E)
         	}
+        	else if (state == 22){
+				for(i = 0; i < nstates; i++) site_partial_pars[i] = 0;
+        		return; // UNKNOWN for Protein
+        	}
         	else{
+        		cout << "nstates = " << nstates << "; state = " << (int) state << endl;
         		outError("Alignment contains invalid state. Please check your data!");
         		return;
         	}
         default:
         	// unknown
+        	cout << "nstates = " << nstates << "; state = " << (int) state << endl;
         	outError("Alignment contains invalid state. Please check your data!");
         	return;
     }
@@ -307,6 +322,10 @@ int ParsTree::computeParsimonyBranch(PhyloNeighbor *dad_branch, PhyloNode *dad, 
         node_branch = tmp_nei;
 //        cout << "swapped\n";
     }
+
+    int nptn = aln->size();
+    if(!_pattern_pars) _pattern_pars = aligned_alloc<BootValTypePars>(nptn+VCSIZE_USHORT);
+    memset(_pattern_pars, 0, sizeof(BootValTypePars) * (nptn+VCSIZE_USHORT));
 
     if ((dad_branch->partial_lh_computed & 2) == 0)
         computePartialParsimony(dad_branch, dad);
@@ -372,6 +391,11 @@ size_t ParsTree::getParsBlockSize(){
     // TODO minus const ptn
     return aln->size() * aln->num_states + 1;
 }
+
+UINT* ParsTree::newBitsBlock(){
+	return new UINT[getParsBlockSize()];
+}
+
 
 void ParsTree::initializeAllPartialPars(int &index, PhyloNode *node, PhyloNode *dad) {
     size_t pars_block_size = getParsBlockSize();
