@@ -447,7 +447,7 @@ UINT ParsTree::findMstScore(int ptn) {
 	UINT * site_states = new UINT[aln->num_states];
 	// site_states[i] = 0 => state i is present, nonzero means it's absent
 	for(int i = 0; i < aln->num_states; i++) site_states[i] = UINT_MAX;
-	Pattern pat = aln->getPattern(ptn);
+	Pattern pat = aln->at(ptn);
 	for(int j = 0; j < pat.size(); j++){
 		if(pat[j] < aln->num_states) site_states[pat[j]] = 0;
 //		else initLeafSiteParsForAmbiguousState(pat[j], site_states)

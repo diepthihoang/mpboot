@@ -2110,11 +2110,6 @@ void runPhyloAnalysis(Params &params) {
 //		if(params.maximum_parsimony && params.sort_alignment){
 	if(params.maximum_parsimony && params.gbo_replicates){
 		optimizeAlignment(tree, params);// Diep: this is to rearrange columns for better speed in REPS
-//		Pattern pat = tree->aln->getPattern(253);
-//		cout << "Conflict pattern:" << endl;
-//		for(int j = 0; j < pat.size(); j++) cout << (int) pat[j] << endl;
-//		cout << endl;
-//		exit(0);
 	}
 
 	string original_model = params.model_name;
@@ -2601,7 +2596,36 @@ void computeConsensusNetwork(const char *input_trees, int burnin, int max_count,
 
 }
 
+/**
+ * Diep:
+ * This function is to check whether tree->aln has duplicate patterns in it
+ * @return TRUE if there exists duplicate pattern, FALSE otherwise
+ */
+bool checkDuplicatePattern(IQTree * & tree){
+	int nptn = tree->aln->getNPattern();
+	bool found = false;
+	for(int i = 0; i < nptn; i++){
+		Pattern pati = tree->aln->at(i);
+		for(int j = i + 1; j < nptn; j++){
+			Pattern patj = tree->aln->at(j);
+			int nchars = pati.size();
+			int k;
+			for(k = 0; k < nchars; k++){
+				if(patj[k] != pati[k]) break;
+			}
+			if(k == nchars){
+				cout << "FOUND: pattern#" << i << " == pattern#" << j << endl;
+				found = true;
+			}
+		}
+	}
+	return found;
+}
+
 void optimizeAlignment(IQTree * & tree, Params & params){
+//	if(checkDuplicatePattern(tree))
+//		cout << "FIRST CHECK: Alignment patterns are not created properly!" << endl;
+
 	double start = getCPUTime();
 //	tree->initTopologyByPLLRandomAdition(params); // this pll version needs further sync to work with the rest
 	tree->computeParsimonyTree(params.out_prefix, tree->aln); // this iqtree version plays nicely with the rest
@@ -2613,7 +2637,6 @@ void optimizeAlignment(IQTree * & tree, Params & params){
 	BootValTypePars * tmpPatternPars = tree->getPatternPars();
 	for(int i = 0; i < tree->getAlnNPattern(); i++){
 		(tree->aln)->at(i).ras_pars_score = tmpPatternPars[i];
-//		cout << "i = " << i << ", score = " << tmpPatternPars[i] << endl;
 	}
 
 	if(params.sort_alignment){
@@ -2631,6 +2654,17 @@ void optimizeAlignment(IQTree * & tree, Params & params){
 	}else{
 		tree->aln->updateSitePatternAfterOptimized();
 	}
+
+//	if(checkDuplicatePattern(tree))
+//		cout << "SECOND CHECK: Sorted alignment patterns are duplicate!" << endl;
+//	exit(0);
+
+//	for(int i = 0; i < tree->getAlnNPattern(); i++){
+//		if(i == 253 || i == 254)
+//			cout << "i = " << i << ", score = " << (tree->aln)->at(i).ras_pars_score << endl;
+//	}
+//	exit(0);
+
 //	string tree_after = tree->getTreeString();
 //	cout << "TREE BEFORE: " << tree_before << endl;
 //	cout << "TREE AFTER: " << tree_after << endl;
