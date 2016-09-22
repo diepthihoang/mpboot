@@ -376,9 +376,9 @@ void newviewSankoffParsimonyIterativeFastSIMD(pllInstance *tr, partitionList * p
                 VectorClass *costPtn = (VectorClass*)vectorCostMatrix;
                 VectorClass value;
                 for (z = 0; z < states; z++) {
-                    VectorClass left_contrib = UINT_MAX;
-                    VectorClass right_contrib = UINT_MAX;
-                    for (x = 0; x < states; x++) {
+                    VectorClass left_contrib = leftPtn[0] + costPtn[0];
+                    VectorClass right_contrib = rightPtn[0] + costPtn[0];
+                    for (x = 1; x < states; x++) {
                         value = leftPtn[x] + costPtn[x];
                         left_contrib = min(left_contrib, value);
                         value = rightPtn[x] + costPtn[x];
