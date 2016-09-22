@@ -385,10 +385,9 @@ void newviewSankoffParsimonyIterativeFastSIMD(pllInstance *tr, partitionList * p
                         right_contrib = min(right_contrib, value);
                     }
                     curPtn[z] = left_contrib + right_contrib;
-
                     costPtn += states;
+                    cur_contrib = min(cur_contrib, curPtn[z]);
                 }
-                cur_contrib = min(cur_contrib, curPtn[z]);
 
                 //tr->parsimonyScore[pNumber] += cur_contrib * pr->partitionData[model]->informativePtnWgt[i];
                 // because stepwise addition only check if this is > 0

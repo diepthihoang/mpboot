@@ -1972,7 +1972,7 @@ double IQTree::doTreeSearch() {
 	if(params->gbo_replicates && params->maximum_parsimony){
 		if(params->optimize_boot_trees){
 			double otime = getCPUTime();
-			cout << "Optimizing bootstrap trees ..."; cout.flush();
+			cout << "Optimizing bootstrap trees ..." << endl;
 			optimizeBootTrees();
 			cout << "CPU Time used:  " << getCPUTime() - otime << " sec." << endl;
 		}
@@ -2435,6 +2435,8 @@ void IQTree::optimizeBootTrees(){
 
 	int nmultifurcate = 0;
 	for(int sample = 0; sample < num_boot_rep; sample++){
+        if ((sample+1) % 100 == 0)
+            cout << sample+1 << " replicates done" << endl;
 //		out << sample << "\t" << boot_update_iter[sample] << "\t" << boot_trees[sample] << endl;
 		bootstrap_aln = new Alignment;
 		bootstrap_aln->modifyPatternFreq(*saved_aln_on_opt_btree, boot_samples_pars[sample], nptn);
