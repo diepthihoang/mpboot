@@ -201,6 +201,23 @@ if (IQTREE_FLAGS MATCHES "fma") # AVX+FMA instruction set
 	endif()
 	SET(EXE_SUFFIX "${EXE_SUFFIX}-fma")
 
+elseif (IQTREE_FLAGS MATCHES "avx2") # AVX instruction set
+ 	message("Vectorization : AVX2")
+	add_definitions(-D__SSE3 -D__AVX) # define both SSE3 and AVX directive
+	if (VCC) 
+		set(COMBINED_FLAGS "${COMBINED_FLAGS} /arch:AVX2")
+	elseif (CLANG)
+		set(COMBINED_FLAGS "${COMBINED_FLAGS} -mavx2 -mfma")
+	elseif (GCC)
+		set(COMBINED_FLAGS "${COMBINED_FLAGS} -mavx2 -fabi-version=0 -mfma")
+	elseif (ICC) 
+		if (WIN32)
+			 set(COMBINED_FLAGS "${COMBINED_FLAGS} /arch:AVX2 /Qfma")
+		else()
+			 set(COMBINED_FLAGS "${COMBINED_FLAGS} -mavx2 -mfma")
+		endif()
+	endif()
+	SET(EXE_SUFFIX "${EXE_SUFFIX}-avx2")
 elseif (IQTREE_FLAGS MATCHES "avx") # AVX instruction set
  	message("Vectorization : AVX")
 	add_definitions(-D__SSE3 -D__AVX) # define both SSE3 and AVX directive
@@ -218,6 +235,21 @@ elseif (IQTREE_FLAGS MATCHES "avx") # AVX instruction set
 		endif()
 	endif()
 	SET(EXE_SUFFIX "${EXE_SUFFIX}-avx")
+elseif (IQTREE_FLAGS MATCHES "sse4") #SSE intruction set
+	message("Vectorization : SSE4.1")
+	add_definitions(-D__SSE3)
+	
+	if (VCC)
+		set(COMBINED_FLAGS "${COMBINED_FLAGS} /arch:SSE4.1 -D__SSE4.1__")
+	elseif (GCC OR CLANG)
+		set(COMBINED_FLAGS "${COMBINED_FLAGS} -msse4.1")
+	elseif (ICC)
+		if (WIN32)
+			set(COMBINED_FLAGS "${COMBINED_FLAGS} /arch:SSE4.1")
+		else()
+			set(COMBINED_FLAGS "${COMBINED_FLAGS} -msse4.1")
+		endif()
+	endif()
 elseif (IQTREE_FLAGS MATCHES "sse") #SSE intruction set
 	message("Vectorization : SSE3")
 	add_definitions(-D__SSE3)

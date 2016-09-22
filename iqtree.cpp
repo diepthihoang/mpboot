@@ -508,6 +508,8 @@ void IQTree::createPLLPartition(Params &params, ostream &pllPartitionFileHandle)
     }
 }
 
+extern void initializeCostMatrix();
+
 void IQTree::initializePLL(Params &params) {
     pllAttr.rateHetModel = PLL_GAMMA;
     pllAttr.fastScaling = PLL_FALSE;
@@ -572,6 +574,7 @@ void IQTree::initializePLL(Params &params) {
 	if(params.maximum_parsimony && params.sankoff_cost_file){
 		pllCostMatrix = cost_matrix;
 		pllCostNstates = cost_nstates;
+        initializeCostMatrix();
 	}else{
 		pllCostMatrix = NULL;
 		pllCostNstates = -1;

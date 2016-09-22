@@ -19,7 +19,7 @@ ParsTree::ParsTree(Alignment *alignment): IQTree(alignment){
 
 ParsTree::~ParsTree() {
     if(cost_matrix){
-        delete [] cost_matrix;
+        aligned_free(cost_matrix);
         cost_matrix = NULL;
     }
 
@@ -30,7 +30,7 @@ ParsTree::~ParsTree() {
 
 void ParsTree::loadCostMatrixFile(char * file_name){
     if(cost_matrix){
-        delete [] cost_matrix;
+        aligned_free(cost_matrix);
         cost_matrix = NULL;
     }
 //    if(strcmp(file_name, "fitch") == 0)
@@ -41,7 +41,7 @@ void ParsTree::loadCostMatrixFile(char * file_name){
 
     if(strcmp(file_name, "fitch") == 0){ // uniform cost
     	cost_nstates = aln->num_states;
-    	cost_matrix = new unsigned int[cost_nstates * cost_nstates];
+    	cost_matrix = aligned_alloc<unsigned int>(cost_nstates * cost_nstates);
 		for(int i = 0; i < cost_nstates; i++)
 			for(int j = 0; j < cost_nstates; j++){
 				if(j == i) cost_matrix[i * cost_nstates + j] = 0;
@@ -55,7 +55,7 @@ void ParsTree::loadCostMatrixFile(char * file_name){
 		fin >> cost_nstates;
 
 		// allocate memory for cost_matrix
-    	cost_matrix = new unsigned int[cost_nstates * cost_nstates];
+    	cost_matrix = aligned_alloc<unsigned int>(cost_nstates * cost_nstates);
 
 		// read numbers from file
 		for(int i = 0; i < cost_nstates; i++){

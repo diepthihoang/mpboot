@@ -40,6 +40,7 @@
 
 #include <immintrin.h>
 
+#define VECTOR_SIZE 16
 #define INTS_PER_VECTOR 16
 #define LONG_INTS_PER_VECTOR 8
 //#define LONG_INTS_PER_VECTOR (64/sizeof(long))
@@ -58,7 +59,9 @@
 #include <xmmintrin.h>
 #include <immintrin.h>
 #include <pmmintrin.h>
+#include "vectorclass/vectorclass.h"
 
+#define VECTOR_SIZE 8
 #define ULINT_SIZE 64
 #define INTS_PER_VECTOR 8
 #define LONG_INTS_PER_VECTOR 4
@@ -77,15 +80,17 @@
 
 #include <xmmintrin.h>
 #include <pmmintrin.h>
+#include "vectorclass/vectorclass.h"
 
+#define VECTOR_SIZE 4
 #define INTS_PER_VECTOR 4
 #ifdef __i386__
-#define ULINT_SIZE 32
-#define LONG_INTS_PER_VECTOR 4
+#   define ULINT_SIZE 32
+#   define LONG_INTS_PER_VECTOR 4
 //#define LONG_INTS_PER_VECTOR (16/sizeof(long))
 #else
-#define ULINT_SIZE 64
-#define LONG_INTS_PER_VECTOR 2
+#   define ULINT_SIZE 64
+#   define LONG_INTS_PER_VECTOR 2
 //#define LONG_INTS_PER_VECTOR (16/sizeof(long))
 #endif
 #define INT_TYPE __m128i
@@ -98,6 +103,9 @@
 #define VECTOR_STORE  _mm_store_si128
 #define VECTOR_AND_NOT _mm_andnot_si128
 
+#else
+    // no vectorization
+#define VECTOR_SIZE 1
 #endif
 
 #include "pllrepo/src/pll.h"
@@ -117,9 +125,23 @@ extern Params *globalParam;
 IQTree * iqtree = NULL;
 unsigned long bestTreeScoreHits; // to count hits to bestParsimony
 
-extern unsigned int * pllCostMatrix; // Diep: For weighted version
+extern parsimonyNumber * pllCostMatrix; // Diep: For weighted version
 extern int pllCostNstates; // Diep: For weighted version
+parsimonyNumber *vectorCostMatrix; // BQM: vectorized cost matrix
 
+void initializeCostMatrix() {
+#if (defined(__SSE3) || defined(__AVX))
+    assert(pllCostMatrix);
+    rax_posix_memalign ((void **) &(vectorCostMatrix), PLL_BYTE_ALIGNMENT, sizeof(parsimonyNumber)*pllCostNstates*pllCostNstates*VECTOR_SIZE);
+    // duplicate the cost entries for vector operations
+    for (int i = 0; i < pllCostNstates; i++)
+        for (int j = 0; j < pllCostNstates; j++)
+            for (int k = 0; k < VECTOR_SIZE; k++)
+                vectorCostMatrix[(i*pllCostNstates+j)*VECTOR_SIZE+k] = pllCostMatrix[i*pllCostNstates+j];
+#else
+    vectorCostMatrix = NULL;
+#endif
+}
 
 // note: pllCostMatrix[i*pllCostNstates+j] = cost from i to j
 
@@ -314,178 +336,102 @@ static void computeTraversalInfoParsimony(nodeptr p, int *ti, int *counter, int 
 
 /**
  * Diep: Sankoff weighted parsimony
- * Temporarily use the unvectorized version in the vectorized place
+ * BQM: highly optimized vectorized version
  */
-static void newviewSankoffParsimonyIterativeFast(pllInstance *tr, partitionList * pr, int perSiteScores)
+template<class VectorClass, const size_t states>
+void newviewSankoffParsimonyIterativeFastSIMD(pllInstance *tr, partitionList * pr, int perSiteScores)
 {
-//	cout << "newviewSankoffParsimonyIterativeFast...";
-  int
-    model,
-    *ti = tr->ti,
-    count = ti[0],
-    index;
 
-  for(index = 4; index < count; index += 4)
-    {
-      unsigned int
-        totalScore = 0;
+    assert(VectorClass::size() == VECTOR_SIZE);
 
-      size_t
-        pNumber = (size_t)ti[index],
-        qNumber = (size_t)ti[index + 1],
-        rNumber = (size_t)ti[index + 2];
-		// Diep: rNumber and qNumber are children of pNumber
-		tr->parsimonyScore[pNumber] = 0;
-      for(model = 0; model < pr->numberOfPartitions; model++)
+    int model, *ti = tr->ti, count = ti[0], index;
+
+    for(index = 4; index < count; index += 4) {
+        size_t pNumber = (size_t)ti[index];
+        size_t qNumber = (size_t)ti[index + 1];
+        size_t rNumber = (size_t)ti[index + 2];
+        // Diep: rNumber and qNumber are children of pNumber
+        tr->parsimonyScore[pNumber] = 0;
+        for(model = 0; model < pr->numberOfPartitions; model++)
         {
-          size_t
-            k,
-            states = pr->partitionData[model]->states,
-            patterns = pr->partitionData[model]->parsimonyLength;
+            size_t patterns = pr->partitionData[model]->parsimonyLength;
+            assert(patterns % VECTOR_SIZE == 0);
+            size_t i;
 
-          unsigned int
-            i;
+            parsimonyNumber *left  = &(pr->partitionData[model]->parsVect[(patterns * states * qNumber)]);
+            parsimonyNumber *right = &(pr->partitionData[model]->parsVect[(patterns * states * rNumber)]);
+            parsimonyNumber *cur   = &(pr->partitionData[model]->parsVect[(patterns * states * pNumber)]);
 
-            if(states != 2 && states != 4 && states != 20) states = 32;
+            size_t x, z;
 
-				parsimonyNumber
-					*left,
-					*right,
-					*cur;
+            VectorClass total_score = 0;
 
-                /*
-                    memory manage for storing "partial" parsimony score
-                    index     0     1     2     3    4    5    6   7 ...
-                    site      0     0     0     0    1    1    1   1 ...
-                    state     A     C     G     T    A    C    G   T ...
-                */
-
-                left  = &(pr->partitionData[model]->parsVect[(patterns * states * qNumber)]);
-                right = &(pr->partitionData[model]->parsVect[(patterns * states * rNumber)]);
-                cur  = &(pr->partitionData[model]->parsVect[(patterns * states * pNumber)]);
-
-                /*
-				for(k = 0; k < states; k++)
-				{
-
-                    // this is very inefficent
-
-                    //    site   0   1   2 .... N  0 1 2 ... N  ...
-                    //    state  A   A   A .... A  C C C ... C  ...
-
-					left[k]  = &(pr->partitionData[model]->parsVect[(width * states * qNumber) + width * k]);
-					right[k] = &(pr->partitionData[model]->parsVect[(width * states * rNumber) + width * k]);
-					cur[k]  = &(pr->partitionData[model]->parsVect[(width * states * pNumber) + width * k]);
-				}
-                */
-
-                /*
-                                  cur
-                             /         \
-                            /           \
-                           /             \
-                        left             right
-                   score_left(A,C,G,T)   score_right(A,C,G,T)
-
-                        score_cur(z) = min_x,y { cost(z->x)+score_left(x) + cost(z->y)+score_right(y)}
-                                     = left_contribution + right_contribution
-
-                        left_contribution  =  min_x{ cost(z->x)+score_left(x)}
-                        right_contribution =  min_x{ cost(z->x)+score_right(x)}
-
-                */
-//                cout << "pNumber: " << pNumber << ", qNumber: " << qNumber << ", rNumber: " << rNumber << endl;
-				int x, z;
-
-                switch (states) {
-                case 4:
-                    for(i = 0; i < patterns; i++)
-                    {
-                        // cout << "i = " << i << endl;
-                        parsimonyNumber cur_contrib = UINT_MAX;
-                        size_t i_states = i*4;
-                        parsimonyNumber *leftPtn = &left[i_states];
-                        parsimonyNumber *rightPtn = &right[i_states];
-                        parsimonyNumber *curPtn = &cur[i_states];
-                        parsimonyNumber *costRow = pllCostMatrix;
-
-                        for (z = 0; z < 4; z++) {
-                            parsimonyNumber left_contrib = UINT_MAX;
-                            parsimonyNumber right_contrib = UINT_MAX;
-                            for (x = 0; x < 4; x++)
-                            {
-                                // if(z == 0) cout << "left[" << x << "][i] = " << left[x][i]
-                                // 	<< ", right[" << x << "][i] = " << right[x][i] << endl;
-                                parsimonyNumber value = costRow[x] + leftPtn[x];
-                                if (value < left_contrib)
-                                    left_contrib = value;
-
-                                value = costRow[x] + rightPtn[x];
-                                if (value < right_contrib)
-                                    right_contrib = value;
-                            }
-                            curPtn[z] = left_contrib + right_contrib;
-                            if(curPtn[z] < cur_contrib) cur_contrib = curPtn[z];
-                            costRow += 4;
-                        }
-
-                        // totalScore += min(cur[0][i], cur[1][i], cur[2][i], cur[3][i]);
-
-                        tr->parsimonyScore[pNumber] += cur_contrib * pr->partitionData[model]->informativePtnWgt[i];;
-                        // cout << "newview: " << cur_contrib << endl;
-
+            for(i = 0; i < patterns; i+=VECTOR_SIZE)
+            {
+                VectorClass cur_contrib = UINT_MAX;
+                size_t i_states = i*states;
+                VectorClass *leftPtn = (VectorClass*) &left[i_states];
+                VectorClass *rightPtn = (VectorClass*) &right[i_states];
+                VectorClass *curPtn = (VectorClass*) &cur[i_states];
+                VectorClass *costPtn = (VectorClass*)vectorCostMatrix;
+                VectorClass value;
+                for (z = 0; z < states; z++) {
+                    VectorClass left_contrib = UINT_MAX;
+                    VectorClass right_contrib = UINT_MAX;
+                    for (x = 0; x < states; x++) {
+                        value = leftPtn[x] + costPtn[x];
+                        left_contrib = min(left_contrib, value);
+                        value = rightPtn[x] + costPtn[x];
+                        right_contrib = min(right_contrib, value);
                     }
-                    break;
-                default:
-                    for(i = 0; i < patterns; i++)
-                    {
-                        // cout << "i = " << i << endl;
-                        parsimonyNumber cur_contrib = UINT_MAX;
-                        size_t i_states = i*states;
-                        parsimonyNumber *leftPtn = &left[i_states];
-                        parsimonyNumber *rightPtn = &right[i_states];
-                        parsimonyNumber *curPtn = &cur[i_states];
-                        parsimonyNumber *costRow = pllCostMatrix;
+                    curPtn[z] = left_contrib + right_contrib;
 
-                        for (z = 0; z < states; z++) {
-                            parsimonyNumber left_contrib = UINT_MAX;
-                            parsimonyNumber right_contrib = UINT_MAX;
-                            for (x = 0; x < states; x++)
-                            {
-                                // if(z == 0) cout << "left[" << x << "][i] = " << left[x][i]
-                                // 	<< ", right[" << x << "][i] = " << right[x][i] << endl;
-                                parsimonyNumber value = costRow[x] + leftPtn[x];
-                                if (value < left_contrib)
-                                    left_contrib = value;
-
-                                value = costRow[x] + rightPtn[x];
-                                if (value < right_contrib)
-                                    right_contrib = value;
-                            }
-                            curPtn[z] = left_contrib + right_contrib;
-                            if(curPtn[z] < cur_contrib) cur_contrib = curPtn[z];
-                            costRow += states;
-                        }
-
-                        // totalScore += min(cur[0][i], cur[1][i], cur[2][i], cur[3][i]);
-
-                        tr->parsimonyScore[pNumber] += cur_contrib * pr->partitionData[model]->informativePtnWgt[i];;
-                        // cout << "newview: " << cur_contrib << endl;
-
-                    }
-                    break;
+                    costPtn += states;
                 }
-              }
+                cur_contrib = min(cur_contrib, curPtn[z]);
 
-
+                //tr->parsimonyScore[pNumber] += cur_contrib * pr->partitionData[model]->informativePtnWgt[i];
+                // because stepwise addition only check if this is > 0
+                total_score += cur_contrib;
+            }
+            tr->parsimonyScore[pNumber] += horizontal_add(total_score);
+        }
     }
-//	cout << "... DONE" << endl;
 }
 
 
 static void newviewParsimonyIterativeFast(pllInstance *tr, partitionList *pr, int perSiteScores)
 {
-	if(pllCostMatrix) return newviewSankoffParsimonyIterativeFast(tr, pr, perSiteScores);
+	if(pllCostMatrix) {
+//        newviewSankoffParsimonyIterativeFast(tr, pr, perSiteScores);
+//        return;
+#ifdef __AVX
+        switch (pr->partitionData[0]->states) {
+        case 4:
+            newviewSankoffParsimonyIterativeFastSIMD<Vec8ui,4>(tr, pr, perSiteScores);
+            break;
+        case 20:
+            newviewSankoffParsimonyIterativeFastSIMD<Vec8ui,20>(tr, pr, perSiteScores);
+            break;
+        default:
+            cerr << "Unsupported" << endl;
+            exit(EXIT_FAILURE);
+        }
+#else
+        switch (pr->partitionData[0]->states) {
+        case 4:
+            newviewSankoffParsimonyIterativeFastSIMD<Vec4ui,4>(tr, pr, perSiteScores);
+            break;
+        case 20:
+            newviewSankoffParsimonyIterativeFastSIMD<Vec4ui,20>(tr, pr, perSiteScores);
+            break;
+        default:
+            cerr << "Unsupported" << endl;
+            exit(EXIT_FAILURE);
+        }
+#endif
+        return;
+    }
 
   INT_TYPE
     allOne = SET_ALL_BITS_ONE;
@@ -724,141 +670,96 @@ static void newviewParsimonyIterativeFast(pllInstance *tr, partitionList *pr, in
     }
 }
 
-static unsigned int evaluateSankoffParsimonyIterativeFast(pllInstance *tr, partitionList * pr, int perSiteScores)
+template <class VectorClass, const size_t states>
+parsimonyNumber evaluateSankoffParsimonyIterativeFastSIMD(pllInstance *tr, partitionList * pr, int perSiteScores)
 {
-//	cout << "evaluateSankoffParsimonyIterativeFast ...";
-  size_t
-    pNumber = (size_t)tr->ti[1],
-    qNumber = (size_t)tr->ti[2];
 
-  int
-    model;
+    size_t pNumber = (size_t)tr->ti[1];
+    size_t qNumber = (size_t)tr->ti[2];
 
-  unsigned int
-    bestScore = tr->bestParsimony,
-    sum;
+    int model;
 
-  if(tr->ti[0] > 4)
-    newviewParsimonyIterativeFast(tr, pr, perSiteScores);
+    VectorClass sum = 0;
 
-//  sum = tr->parsimonyScore[pNumber] + tr->parsimonyScore[qNumber];
-	sum = 0;
+    if(tr->ti[0] > 4)
+        newviewParsimonyIterativeFast(tr, pr, perSiteScores);
 
 	for(model = 0; model < pr->numberOfPartitions; model++)
 	{
-		size_t
-			k,
-			states = pr->partitionData[model]->states,
-			patterns  = pr->partitionData[model]->parsimonyLength,
-			i;
+		size_t patterns  = pr->partitionData[model]->parsimonyLength;
+        size_t i;
+        parsimonyNumber *left  = &(pr->partitionData[model]->parsVect[(patterns * states * qNumber)]);
+		parsimonyNumber *right = &(pr->partitionData[model]->parsVect[(patterns * states * pNumber)]);
+		size_t x, y;
 
-		if(states != 2 && states != 4 && states != 20) states = 32;
+//        VectorClass vc_costs[states*states/VECTOR_SIZE];
+//        for (y = 0; y < states; y++)
+//            for (x = 0; x < states/VECTOR_SIZE; x++)
+//                vc_costs[y*states/VECTOR_SIZE+x].load_a(&pllCostMatrix[y*states+x*VECTOR_SIZE]);
 
-		parsimonyNumber
-			*left,
-			*right;
+        for(i = 0; i < patterns; i+=VECTOR_SIZE){
 
-			left  = &(pr->partitionData[model]->parsVect[(patterns * states * qNumber)]);
-			right = &(pr->partitionData[model]->parsVect[(patterns * states * pNumber)]);
-        /*
-		for(k = 0; k < states; k++)
-		{
-			left[k]  = &(pr->partitionData[model]->parsVect[(width * states * qNumber) + width * k]);
-			right[k] = &(pr->partitionData[model]->parsVect[(width * states * pNumber) + width * k]);
-		}
-        */
+            size_t i_states = i*states;
+            VectorClass *leftPtn = (VectorClass*) &left[i_states];
+            VectorClass *rightPtn = (VectorClass*) &right[i_states];
+            VectorClass best_score = UINT_MAX;
+            VectorClass *costRow = (VectorClass*) vectorCostMatrix;
 
-
-		/*
-
-				for each branch (left --- right), compute the score
-
-
-				 left ----------------- right
-			score_left(A,C,G,T)   score_right(A,C,G,T)
-
-
-			score = min_x,y  { score_left(x) + cost(x-->y) + score_right(y)  }
-
-
-		*/
-		int x, y;
-
-        switch (states) {
-        case 4:
-            for(i = 0; i < patterns; i++){
-                parsimonyNumber best_score = UINT_MAX;
-                size_t i_states = i*4;
-                parsimonyNumber *leftPtn = &left[i_states];
-                parsimonyNumber *rightPtn = &right[i_states];
-                parsimonyNumber *costRow = pllCostMatrix;
-
-                for (x = 0; x < 4; x++) {
-                    parsimonyNumber this_best_score = costRow[0] + rightPtn[0];
-                    for (y = 1; y < 4; y++) {
-                        parsimonyNumber value = costRow[y] + rightPtn[y];
-                        if (value < this_best_score) this_best_score = value;
-                    }
-                    this_best_score += leftPtn[x];
-                    if (this_best_score < best_score)
-                        best_score = this_best_score;
-                    costRow += 4;
+            for (x = 0; x < states; x++) {
+                VectorClass this_best_score = costRow[0] + rightPtn[0];
+                for (y = 1; y < states; y++) {
+                    VectorClass value = costRow[y] + rightPtn[y];
+                    this_best_score = min(this_best_score, value);
                 }
-
-                    // add weight here because weighted computation is based on pattern
-                    // sum += best_score * (size_t)tr->aliaswgt[i]; // wrong (because aliaswgt is for all patterns, not just informative pattern)
-                    if(perSiteScores) pr->partitionData[model]->informativePtnScore[i] = best_score;
-
-                    sum += best_score * pr->partitionData[model]->informativePtnWgt[i];
-
-                    // if(sum >= bestScore)
-                    // 		return sum;
+                this_best_score += leftPtn[x];
+                best_score = min(best_score, this_best_score);
+                costRow += states;
             }
-            break;
 
-        default:
+            // add weight here because weighted computation is based on pattern
+            // sum += best_score * (size_t)tr->aliaswgt[i]; // wrong (because aliaswgt is for all patterns, not just informative pattern)
+            if(perSiteScores)
+                best_score.store_a(&pr->partitionData[model]->informativePtnScore[i]);
 
-            for(i = 0; i < patterns; i++){
-                parsimonyNumber best_score = UINT_MAX;
-                size_t i_states = i*states;
-                parsimonyNumber *leftPtn = &left[i_states];
-                parsimonyNumber *rightPtn = &right[i_states];
-                parsimonyNumber *costRow = pllCostMatrix;
+            sum += best_score * VectorClass().load_a(&pr->partitionData[model]->informativePtnWgt[i]);
 
-                for (x = 0; x < states; x++) {
-                    parsimonyNumber this_best_score = costRow[0] + rightPtn[0];
-                    for (y = 1; y < states; y++) {
-                        parsimonyNumber value = costRow[y] + rightPtn[y];
-                        if (value < this_best_score) this_best_score = value;
-                    }
-                    this_best_score += leftPtn[x];
-                    if (this_best_score < best_score)
-                        best_score = this_best_score;
-                    costRow += states;
-                }
-
-                    // add weight here because weighted computation is based on pattern
-                    // sum += best_score * (size_t)tr->aliaswgt[i]; // wrong (because aliaswgt is for all patterns, not just informative pattern)
-                    if(perSiteScores) pr->partitionData[model]->informativePtnScore[i] = best_score;
-
-                    sum += best_score * pr->partitionData[model]->informativePtnWgt[i];
-
-                    // if(sum >= bestScore)
-                    // 		return sum;
-            }
-            break;
+            // if(sum >= bestScore)
+            // 		return sum;
         }
 	}
 
 
-  return sum;
+  return horizontal_add(sum);
 }
 
 
 
 static unsigned int evaluateParsimonyIterativeFast(pllInstance *tr, partitionList *pr, int perSiteScores)
 {
-	if(pllCostMatrix) return evaluateSankoffParsimonyIterativeFast(tr, pr, perSiteScores);
+	if(pllCostMatrix) {
+//        return evaluateSankoffParsimonyIterativeFast(tr, pr, perSiteScores);
+#ifdef __AVX
+        switch (pr->partitionData[0]->states) {
+        case 4:
+            return evaluateSankoffParsimonyIterativeFastSIMD<Vec8ui,4>(tr, pr, perSiteScores);
+        case 20:
+            return evaluateSankoffParsimonyIterativeFastSIMD<Vec8ui,20>(tr, pr, perSiteScores);
+        default:
+            cerr << "Unsupported" << endl;
+            exit(EXIT_FAILURE);
+        }
+#else // SSE
+        switch (pr->partitionData[0]->states) {
+        case 4:
+            return evaluateSankoffParsimonyIterativeFastSIMD<Vec4ui,4>(tr, pr, perSiteScores);
+        case 20:
+            return evaluateSankoffParsimonyIterativeFastSIMD<Vec4ui,20>(tr, pr, perSiteScores);
+        default:
+            cerr << "Unsupported" << endl;
+            exit(EXIT_FAILURE);
+        }
+#endif
+    }
 
   INT_TYPE
     allOne = SET_ALL_BITS_ONE;
@@ -1040,7 +941,7 @@ static unsigned int evaluateParsimonyIterativeFast(pllInstance *tr, partitionLis
 #else
 /**
  * Diep: Sankoff weighted parsimony
- * Temporarily use the unvectorized version in the vectorized place
+ * The unvectorized version
  */
 static void newviewSankoffParsimonyIterativeFast(pllInstance *tr, partitionList * pr, int perSiteScores)
 {
@@ -2507,7 +2408,7 @@ static void compressSankoffDNA(pllInstance *tr, partitionList *pr, int *informat
 
 	// TODO: correct the below
     // number of informative site patterns padded at the end to be divisible by vectorized entries
-	compressedEntriesPadded = compressedEntries;
+//	compressedEntriesPadded = compressedEntries;
 	// parsVect stores cost for each node by state at each pattern
 	// for a certain node of DNA: ptn1_A, ptn2_A, ptn3_A,..., ptn1_C, ptn2_C, ptn3_C,...,ptn1_G, ptn2_G, ptn3_G,...,ptn1_T, ptn2_T, ptn3_T,...,
 	// (not 100% sure) this is also the perSitePartialPars
@@ -2563,35 +2464,42 @@ static void compressSankoffDNA(pllInstance *tr, partitionList *pr, int *informat
 				  for(k = 0; k < states; k++)
 					{
 					  if(value & mask32[k])
-                        tipVect[k] = 0; // Diep: if the state is present, corresponding value is set to zero
+                        tipVect[k*VECTOR_SIZE] = 0; // Diep: if the state is present, corresponding value is set to zero
 					  else
-                        tipVect[k] = 1000; // TODO: set to be equal the highest cost of cost matrix  + 1
+                        tipVect[k*VECTOR_SIZE] = 1000; // TODO: set to be equal the highest cost of cost matrix  + 1
 //					  compressedTips[k][informativeIndex] = compressedValues[k]; // Diep
 //					  cout << "compressedValues[k]: " << compressedValues[k] << endl;
 					}
 					pr->partitionData[model]->informativePtnWgt[informativeIndex] = tr->aliaswgt[index];
 					informativeIndex++;
 
-                    tipVect += states; // process to the next site
+                    tipVect += 1; // process to the next site
+
+                    // jump to the next block
+                    if (informativeIndex % VECTOR_SIZE == 0)
+                        tipVect += VECTOR_SIZE*(states-1);
 
 
                 }
             }
 
-          for(;index < compressedEntriesPadded; index++)
+            // dummy values for the last padded entries
+          for(index = informativeIndex; index < compressedEntriesPadded; index++)
             {
 
                  for(k = 0; k < states; k++)
 					{
-					  tipVect[k] = 1000; // Diep TODO: set to be equal the highest cost of cost matrix  + 1
+					  tipVect[k*VECTOR_SIZE] = 0;
 					}
-                tipVect += states;
-
+                tipVect += 1;
             }
         }
 
-//      pr->partitionData[model]->parsimonyLength = compressedEntriesPadded;
+#if (defined(__SSE3) || defined(__AVX))
+      pr->partitionData[model]->parsimonyLength = compressedEntriesPadded;
+#else
       pr->partitionData[model]->parsimonyLength = compressedEntries; // for unvectorized version
+#endif
 //	cout << "compressedEntries = " << compressedEntries << endl;
 //      rax_free(compressedTips);
 //      rax_free(compressedValues);
@@ -2783,6 +2691,7 @@ static void stepwiseAddition(pllInstance *tr, partitionList *pr, nodeptr p, node
   q->back = r;
   r->back = q;
 
+  // TODO: why need parsimonyScore here?
   if(q->number > tr->mxtips && tr->parsimonyScore[q->number] > 0)
     {
       stepwiseAddition(tr, pr, p, q->next->back);
