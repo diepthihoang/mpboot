@@ -218,7 +218,7 @@ elseif (IQTREE_FLAGS MATCHES "avx") # AVX instruction set
 		endif()
 	endif()
 	SET(EXE_SUFFIX "${EXE_SUFFIX}-avx")
-else() #SSE intruction set
+elseif (IQTREE_FLAGS MATCHES "sse") #SSE intruction set
 	message("Vectorization : SSE3")
 	add_definitions(-D__SSE3)
 	

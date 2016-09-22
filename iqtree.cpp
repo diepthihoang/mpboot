@@ -36,7 +36,7 @@ Params *globalParam;
 Alignment *globalAlignment;
 extern StringIntMap pllTreeCounter;
 
-int * pllCostMatrix; // Diep: For weighted version
+unsigned int * pllCostMatrix; // Diep: For weighted version
 int pllCostNstates; // Diep: For weighted version
 
 IQTree::IQTree() : PhyloTree() {

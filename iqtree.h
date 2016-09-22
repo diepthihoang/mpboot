@@ -578,7 +578,7 @@ public:
     * Diep:
     * Sankoff cost matrix, to be inherited and used in ParsTree
     */
-    int * cost_matrix; // Sep 2016: store cost matrix in 1D array
+    unsigned int * cost_matrix; // Sep 2016: store cost matrix in 1D array
     int cost_nstates; // Sep 2016: # of states provided by cost matrix
 
 protected:
