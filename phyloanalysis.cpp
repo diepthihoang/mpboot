@@ -2634,13 +2634,16 @@ void optimizeAlignment(IQTree * & tree, Params & params){
 	tree->clearAllPartialLH();
 //	tree->fixNegativeBranch(true);
 	int pars_before = tree->computeParsimony();
+    cout << "Time for parsimony tree construction: " << getCPUTime() - start << " seconds" << endl;
+    cout << "Parsimony score: " << pars_before << endl;
 	BootValTypePars * tmpPatternPars = tree->getPatternPars();
 	for(int i = 0; i < tree->getAlnNPattern(); i++){
 		(tree->aln)->at(i).ras_pars_score = tmpPatternPars[i];
 	}
 
 	if(params.sort_alignment){
-		cout << "Reordering patterns in alignment by decreasing order of pattern parsimony...";
+		cout << "Reordering patterns in alignment by decreasing order of pattern parsimony... ";
+        start = getCPUTime();
 		// sort
 		PatternComp pcomp;
 		sort(tree->aln->begin(), tree->aln->end(), pcomp);

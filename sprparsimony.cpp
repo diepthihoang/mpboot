@@ -128,10 +128,16 @@ unsigned long bestTreeScoreHits; // to count hits to bestParsimony
 extern parsimonyNumber * pllCostMatrix; // Diep: For weighted version
 extern int pllCostNstates; // Diep: For weighted version
 parsimonyNumber *vectorCostMatrix; // BQM: vectorized cost matrix
+parsimonyNumber highest_cost;
 
 void initializeCostMatrix() {
+
+    int i, j, k;
+    highest_cost = *max_element(pllCostMatrix, pllCostMatrix+pllCostNstates*pllCostNstates) + 1;
+
 #if (defined(__SSE3) || defined(__AVX))
     assert(pllCostMatrix);
+    // TODO: where can I free this memory?
     rax_posix_memalign ((void **) &(vectorCostMatrix), PLL_BYTE_ALIGNMENT, sizeof(parsimonyNumber)*pllCostNstates*pllCostNstates*VECTOR_SIZE);
     // duplicate the cost entries for vector operations
     for (int i = 0; i < pllCostNstates; i++)
@@ -339,7 +345,7 @@ static void computeTraversalInfoParsimony(nodeptr p, int *ti, int *counter, int 
  * BQM: highly optimized vectorized version
  */
 template<class VectorClass, const size_t states>
-void newviewSankoffParsimonyIterativeFastSIMD(pllInstance *tr, partitionList * pr, int perSiteScores)
+void newviewSankoffParsimonyIterativeFastSIMD(pllInstance *tr, partitionList * pr)
 {
 
     assert(VectorClass::size() == VECTOR_SIZE);
@@ -363,6 +369,21 @@ void newviewSankoffParsimonyIterativeFastSIMD(pllInstance *tr, partitionList * p
             parsimonyNumber *cur   = &(pr->partitionData[model]->parsVect[(patterns * states * pNumber)]);
 
             size_t x, z;
+
+            /*
+                    memory for score per node, assuming VECTOR_SIZE=2, and states=4 (A,C,G,T)
+                    in block of size VECTOR_SIZE*states
+
+                    Index  0  1  2  3  4  5  6  7  8  9  10 ...
+                    Site   0  1  0  1  0  1  0  1  2  3   2 ...
+                    State  A  A  C  C  G  G  T  T  A  A   C ...
+                    
+                    
+                    memory for cost matrix (vectorCostMatrix)
+                    Index  0  1  2  3  4  5  6  7  8  9  10 ...
+                    Entry AA AA AC AC AG AG AT AT CA CA  CC ...
+
+            */
 
             VectorClass total_score = 0;
 
@@ -392,6 +413,8 @@ void newviewSankoffParsimonyIterativeFastSIMD(pllInstance *tr, partitionList * p
                 //tr->parsimonyScore[pNumber] += cur_contrib * pr->partitionData[model]->informativePtnWgt[i];
                 // because stepwise addition only check if this is > 0
                 total_score += cur_contrib;
+                // note that the true computation is, but the multiplication is slow
+                // total_score += cur_contrib * VectorClass().load_a(&pr->partitionData[model]->informativePtnWgt[i]);
             }
             tr->parsimonyScore[pNumber] += horizontal_add(total_score);
         }
@@ -407,10 +430,10 @@ static void newviewParsimonyIterativeFast(pllInstance *tr, partitionList *pr, in
 #ifdef __AVX
         switch (pr->partitionData[0]->states) {
         case 4:
-            newviewSankoffParsimonyIterativeFastSIMD<Vec8ui,4>(tr, pr, perSiteScores);
+            newviewSankoffParsimonyIterativeFastSIMD<Vec8ui,4>(tr, pr);
             break;
         case 20:
-            newviewSankoffParsimonyIterativeFastSIMD<Vec8ui,20>(tr, pr, perSiteScores);
+            newviewSankoffParsimonyIterativeFastSIMD<Vec8ui,20>(tr, pr);
             break;
         default:
             cerr << "Unsupported" << endl;
@@ -419,10 +442,10 @@ static void newviewParsimonyIterativeFast(pllInstance *tr, partitionList *pr, in
 #else
         switch (pr->partitionData[0]->states) {
         case 4:
-            newviewSankoffParsimonyIterativeFastSIMD<Vec4ui,4>(tr, pr, perSiteScores);
+            newviewSankoffParsimonyIterativeFastSIMD<Vec4ui,4>(tr, pr);
             break;
         case 20:
-            newviewSankoffParsimonyIterativeFastSIMD<Vec4ui,20>(tr, pr, perSiteScores);
+            newviewSankoffParsimonyIterativeFastSIMD<Vec4ui,20>(tr, pr);
             break;
         default:
             cerr << "Unsupported" << endl;
@@ -2460,12 +2483,22 @@ static void compressSankoffDNA(pllInstance *tr, partitionList *pr, int *informat
                   parsimonyNumber
                     value = bitValue[tr->yVector[i + 1][index]];
 
+                /*
+                        memory for score per node, assuming VECTOR_SIZE=2, and states=4 (A,C,G,T)
+                        in block of size VECTOR_SIZE*states
+
+                        Index  0  1  2  3  4  5  6  7  8  9  10 ...
+                        Site   0  1  0  1  0  1  0  1  2  3   2 ...
+                        State  A  A  C  C  G  G  T  T  A  A   C ...
+
+                */
+
 				  for(k = 0; k < states; k++)
 					{
 					  if(value & mask32[k])
                         tipVect[k*VECTOR_SIZE] = 0; // Diep: if the state is present, corresponding value is set to zero
 					  else
-                        tipVect[k*VECTOR_SIZE] = 1000; // TODO: set to be equal the highest cost of cost matrix  + 1
+                        tipVect[k*VECTOR_SIZE] = highest_cost;
 //					  compressedTips[k][informativeIndex] = compressedValues[k]; // Diep
 //					  cout << "compressedValues[k]: " << compressedValues[k] << endl;
 					}
