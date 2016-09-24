@@ -38,6 +38,7 @@ extern StringIntMap pllTreeCounter;
 
 unsigned int * pllCostMatrix; // Diep: For weighted version
 int pllCostNstates; // Diep: For weighted version
+parsimonyNumber *vectorCostMatrix; // BQM: vectorized cost matrix
 
 IQTree::IQTree() : PhyloTree() {
     init();
@@ -464,6 +465,14 @@ IQTree::~IQTree() {
     	aligned_free(original_sample);
     	original_sample = NULL;
     }
+
+#if (defined(__SSE3) || defined(__AVX))
+	if(vectorCostMatrix != NULL){
+		rax_free(vectorCostMatrix);
+		vectorCostMatrix = NULL;
+	}
+#endif
+
 }
 
 void IQTree::createPLLPartition(Params &params, ostream &pllPartitionFileHandle) {

@@ -127,7 +127,7 @@ unsigned long bestTreeScoreHits; // to count hits to bestParsimony
 
 extern parsimonyNumber * pllCostMatrix; // Diep: For weighted version
 extern int pllCostNstates; // Diep: For weighted version
-parsimonyNumber *vectorCostMatrix; // BQM: vectorized cost matrix
+extern parsimonyNumber *vectorCostMatrix; // BQM: vectorized cost matrix
 parsimonyNumber highest_cost;
 
 void initializeCostMatrix() {
@@ -2827,13 +2827,15 @@ void _pllFreeParsimonyDataStructures(pllInstance *tr, partitionList *pr)
   }
   if(pllCostMatrix)
 		for(int i = 0; i < pr->numberOfPartitions; i++){
-			if(pr->partitionData[i]->informativePtnWgt != NULL) rax_free(pr->partitionData[i]->informativePtnWgt);
-			if(pr->partitionData[i]->informativePtnScore != NULL) rax_free(pr->partitionData[i]->informativePtnScore);
+			if(pr->partitionData[i]->informativePtnWgt != NULL){
+				rax_free(pr->partitionData[i]->informativePtnWgt);
+				pr->partitionData[i]->informativePtnWgt = NULL;
+			}
+			if(pr->partitionData[i]->informativePtnScore != NULL){
+				rax_free(pr->partitionData[i]->informativePtnScore);
+				pr->partitionData[i]->informativePtnScore = NULL;
+			}
 		}
-
-#if (defined(__SSE3) || defined(__AVX))
-	if(vectorCostMatrix != NULL) rax_free(vectorCostMatrix);
-#endif
 
 }
 
