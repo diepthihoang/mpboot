@@ -210,29 +210,61 @@ static inline void storePerSiteNodeScores (partitionList * pr, int model, INT_TY
 
 	int partialParsLength = pr->partitionData[model]->parsimonyLength * PLL_PCF;
 	int nodeStart = partialParsLength * nodeNumber;
+	int nodeStartPlusOffset = nodeStart + offset * PLL_PCF;
 	for (i = 0; i < LONG_INTS_PER_VECTOR; ++i){
-		buf = &(pr->partitionData[model]->perSitePartialPars[nodeStart + offset * PLL_PCF + i * ULINT_SIZE]);
-//		buf = &(pr->partitionData[model]->perSitePartialPars[nodeStart + offset * PLL_PCF + i]);
+		buf = &(pr->partitionData[model]->perSitePartialPars[nodeStartPlusOffset]);
+		nodeStartPlusOffset += ULINT_SIZE;
+//		buf = &(pr->partitionData[model]->perSitePartialPars[nodeStart + offset * PLL_PCF + i * ULINT_SIZE]); // Diep's
+//		buf = &(pr->partitionData[model]->perSitePartialPars[nodeStart + offset * PLL_PCF + i]); // Tomas's code
 		for (j = 0; j < ULINT_SIZE; ++ j)
 			buf[j] += ((counts[i] >> j) & 1);
 	}
     
 }
 
+
 // Diep:
 // Add site scores in q and r to p
 // q and r are children of p
-void addPerSiteSubtreeScores(partitionList *pr, int pNumber, int qNumber, int rNumber){
+template<class VectorClass>
+void addPerSiteSubtreeScoresSIMD(partitionList *pr, int pNumber, int qNumber, int rNumber){
+	assert(VectorClass::size() == VECTOR_SIZE);
 	parsimonyNumber * pBuf, * qBuf, *rBuf;
 	for(int i = 0; i < pr->numberOfPartitions; i++){
 		int partialParsLength = pr->partitionData[i]->parsimonyLength * PLL_PCF;
 		pBuf = &(pr->partitionData[i]->perSitePartialPars[partialParsLength * pNumber]);
 		qBuf = &(pr->partitionData[i]->perSitePartialPars[partialParsLength * qNumber]);
 		rBuf = &(pr->partitionData[i]->perSitePartialPars[partialParsLength * rNumber]);
-		for(int k = 0; k < partialParsLength; k++)
-			pBuf[k] += qBuf[k] + rBuf[k];
+		for(int k = 0; k < partialParsLength; k+= VECTOR_SIZE){
+			VectorClass *pBufVC = (VectorClass*) &pBuf[k];
+			VectorClass *qBufVC = (VectorClass*) &qBuf[k];
+			VectorClass *rBufVC = (VectorClass*) &rBuf[k];
+			*pBufVC += *qBufVC + *rBufVC;
+		}
 	}
 }
+
+// Diep:
+// Add site scores in q and r to p
+// q and r are children of p
+void addPerSiteSubtreeScores(partitionList *pr, int pNumber, int qNumber, int rNumber){
+//	parsimonyNumber * pBuf, * qBuf, *rBuf;
+//	for(int i = 0; i < pr->numberOfPartitions; i++){
+//		int partialParsLength = pr->partitionData[i]->parsimonyLength * PLL_PCF;
+//		pBuf = &(pr->partitionData[i]->perSitePartialPars[partialParsLength * pNumber]);
+//		qBuf = &(pr->partitionData[i]->perSitePartialPars[partialParsLength * qNumber]);
+//		rBuf = &(pr->partitionData[i]->perSitePartialPars[partialParsLength * rNumber]);
+//		for(int k = 0; k < partialParsLength; k++)
+//			pBuf[k] += qBuf[k] + rBuf[k];
+//	}
+
+#ifdef __AVX
+        addPerSiteSubtreeScoresSIMD<Vec8ui>(pr, pNumber, qNumber, rNumber);
+#else
+        addPerSiteSubtreeScoresSIMD<Vec4ui>(pr, pNumber, qNumber, rNumber);
+#endif
+}
+
 
 // Diep:
 // Reset site scores of p
