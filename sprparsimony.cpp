@@ -137,7 +137,7 @@ void initializeCostMatrix() {
 
 #if (defined(__SSE3) || defined(__AVX))
     assert(pllCostMatrix);
-    // TODO: where can I free this memory?
+
     rax_posix_memalign ((void **) &(vectorCostMatrix), PLL_BYTE_ALIGNMENT, sizeof(parsimonyNumber)*pllCostNstates*pllCostNstates*VECTOR_SIZE);
     // duplicate the cost entries for vector operations
     for (int i = 0; i < pllCostNstates; i++)
@@ -2428,9 +2428,6 @@ static void compressSankoffDNA(pllInstance *tr, partitionList *pr, int *informat
       compressedEntriesPadded = compressedEntries;
 #endif
 
-	// TODO: correct the below
-    // number of informative site patterns padded at the end to be divisible by vectorized entries
-//	compressedEntriesPadded = compressedEntries;
 	// parsVect stores cost for each node by state at each pattern
 	// for a certain node of DNA: ptn1_A, ptn2_A, ptn3_A,..., ptn1_C, ptn2_C, ptn3_C,...,ptn1_G, ptn2_G, ptn3_G,...,ptn1_T, ptn2_T, ptn3_T,...,
 	// (not 100% sure) this is also the perSitePartialPars
@@ -2443,7 +2440,6 @@ static void compressSankoffDNA(pllInstance *tr, partitionList *pr, int *informat
       }
 //        memset(pr->partitionData[model]->parsVect, 0,compressedEntriesPadded * states * totalNodes * sizeof(parsimonyNumber));
 
-//		// Diep: TODO: temporarily leave bootstrap out
 //      if (perSiteScores)
 //       {
 //         /* for per site parsimony score at each node */
@@ -2538,7 +2534,7 @@ static void compressSankoffDNA(pllInstance *tr, partitionList *pr, int *informat
     }
 
 
-    // TODO: remove this for Sankoff
+    // TODO: remove this for Sankoff?
 
   rax_posix_memalign ((void **) &(tr->parsimonyScore), PLL_BYTE_ALIGNMENT, sizeof(unsigned int) * totalNodes);
 
@@ -2802,6 +2798,11 @@ void _pllFreeParsimonyDataStructures(pllInstance *tr, partitionList *pr)
 			if(pr->partitionData[i]->informativePtnWgt != NULL) rax_free(pr->partitionData[i]->informativePtnWgt);
 			if(pr->partitionData[i]->informativePtnScore != NULL) rax_free(pr->partitionData[i]->informativePtnScore);
 		}
+
+#if (defined(__SSE3) || defined(__AVX))
+	if(vectorCostMatrix != NULL) rax_free(vectorCostMatrix);
+#endif
+
 }
 
 
