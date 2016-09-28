@@ -1912,7 +1912,7 @@ double IQTree::doTreeSearch() {
                  if (!params->maximum_parsimony)
                  	imd_tree = optimizeModelParameters();
                  stop_rule.addImprovedIteration(curIt);
-                 cout << "BETTER TREE FOUND at iteration " << curIt << ": " << curScore;
+                 cout << "BETTER TREE FOUND at iteration " << curIt << ": " << -curScore;
                  cout << " / CPU time: " << (int) round(getCPUTime() - params->startCPUTime) << "s" << endl << endl;
                  if (curScore > bestScore) {
                      searchinfo.curPerStrength = params->initPerStrength;
