@@ -2912,7 +2912,7 @@ static void _pllMakeParsimonyTreeFast(pllInstance *tr, partitionList *pr, int sp
 
   randomMP = tr->bestParsimony;
 
-	int * hill_climbing_perm = (int *)rax_malloc((size_t)(tr->mxtips + tr->mxtips - 1) * sizeof(int));
+//	int * hill_climbing_perm = (int *)rax_malloc((size_t)(tr->mxtips + tr->mxtips - 1) * sizeof(int));
 	int j;
 //	makePermutationFast(hill_climbing_perm, tr->mxtips + tr->mxtips - 2, tr);
 
@@ -3012,7 +3012,8 @@ int pllOptimizeSprParsimony(pllInstance * tr, partitionList * pr, int mintrav, i
 	evaluateParsimony(tr, pr, tr->start, PLL_TRUE, perSiteScores);
 	*/
 
-	int j, *perm        = (int *)rax_malloc((size_t)(tr->mxtips + tr->mxtips - 1) * sizeof(int));
+	int j;
+    // *perm        = (int *)rax_malloc((size_t)(tr->mxtips + tr->mxtips - 1) * sizeof(int));
 //	makePermutationFast(perm, tr->mxtips + tr->mxtips - 2, tr);
 
 	unsigned int bestIterationScoreHits = 1;
@@ -3327,7 +3328,7 @@ void computeUserTreeParsimomy(Params &params) {
 		assert(pll_tree != NULL);
 		pllTreeInitTopologyNewick(ptree->pllInst, pll_tree, PLL_FALSE);
 		iqtree = ptree;
-
+        pllNewickParseDestroy(&pll_tree);
 		_allocateParsimonyDataStructures(ptree->pllInst, ptree->pllPartitions, false);
 
 		unsigned int pll_score = evaluateParsimony(ptree->pllInst, ptree->pllPartitions, ptree->pllInst->start, PLL_TRUE, false);
@@ -3352,6 +3353,7 @@ void computeUserTreeParsimomy(Params &params) {
 		assert(pll_tree != NULL);
 		pllTreeInitTopologyNewick(ptree->pllInst, pll_tree, PLL_FALSE);
 		iqtree = ptree;
+        pllNewickParseDestroy(&pll_tree);
 		_allocateParsimonyDataStructures(ptree->pllInst, ptree->pllPartitions, false);
 		unsigned int pll_score = evaluateParsimony(ptree->pllInst, ptree->pllPartitions, ptree->pllInst->start, PLL_TRUE, false);
 		cout << "Parsimony score (by PLL kernel) is: " << pll_score << endl;
