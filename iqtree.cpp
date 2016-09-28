@@ -1742,7 +1742,6 @@ double IQTree::doTreeSearch() {
 					pllNewickTree *perturbTree = pllNewickParseString(perturb_tree_string.c_str());
 					assert(perturbTree != NULL);
 					pllTreeInitTopologyNewick(pllInst, perturbTree, PLL_FALSE);
-					pllNewickParseDestroy(&perturbTree);
 					initializeAllPartialPars();
 					clearAllPartialLH();
 					curScore = perturbScore = -computeParsimony();
@@ -2056,7 +2055,6 @@ string IQTree::doNNISearch(int& nniCount, int& nniSteps) {
 			pllNewickTree *btree = pllNewickParseString(getTreeString().c_str());
 			assert(btree != NULL);
 			pllTreeInitTopologyNewick(pllInst, btree, PLL_FALSE);
-			pllNewickParseDestroy(&btree);
 		}
 
 //		if(false){

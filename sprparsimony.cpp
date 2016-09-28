@@ -3076,7 +3076,7 @@ void pllComputeSankoffPatternParsimony(pllInstance * tr, partitionList * pr, uns
 	for(int i = 0; i < pr->numberOfPartitions; i++){
 		for(ptn = 0; ptn < pr->partitionData[i]->parsimonyLength; ptn++){
 			ptn_pars[ptn] = pr->partitionData[i]->informativePtnScore[ptn];
-			sum += pr->partitionData[i]->informativePtnScore[ptn] * pr->partitionData[i]->informativePtnWgt[ptn];
+			sum += ptn_pars[ptn] * pr->partitionData[i]->informativePtnWgt[ptn];
 		}
 	}
 
@@ -3326,7 +3326,6 @@ void computeUserTreeParsimomy(Params &params) {
 		pllNewickTree *pll_tree = pllNewickParseString(tree_string.c_str());
 		assert(pll_tree != NULL);
 		pllTreeInitTopologyNewick(ptree->pllInst, pll_tree, PLL_FALSE);
-		pllNewickParseDestroy(&pll_tree);
 		iqtree = ptree;
 
 		_allocateParsimonyDataStructures(ptree->pllInst, ptree->pllPartitions, false);
@@ -3352,7 +3351,6 @@ void computeUserTreeParsimomy(Params &params) {
 		pllNewickTree *pll_tree = pllNewickParseString(tree_string.c_str());
 		assert(pll_tree != NULL);
 		pllTreeInitTopologyNewick(ptree->pllInst, pll_tree, PLL_FALSE);
-		pllNewickParseDestroy(&pll_tree);
 		iqtree = ptree;
 		_allocateParsimonyDataStructures(ptree->pllInst, ptree->pllPartitions, false);
 		unsigned int pll_score = evaluateParsimony(ptree->pllInst, ptree->pllPartitions, ptree->pllInst->start, PLL_TRUE, false);
