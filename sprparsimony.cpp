@@ -132,18 +132,17 @@ parsimonyNumber highest_cost;
 
 void initializeCostMatrix() {
 
-    int i, j, k;
     highest_cost = *max_element(pllCostMatrix, pllCostMatrix+pllCostNstates*pllCostNstates) + 1;
 
 #if (defined(__SSE3) || defined(__AVX))
     assert(pllCostMatrix);
-
-    rax_posix_memalign ((void **) &(vectorCostMatrix), PLL_BYTE_ALIGNMENT, sizeof(parsimonyNumber)*pllCostNstates*pllCostNstates*VECTOR_SIZE);
-    // duplicate the cost entries for vector operations
-    for (int i = 0; i < pllCostNstates; i++)
-        for (int j = 0; j < pllCostNstates; j++)
-            for (int k = 0; k < VECTOR_SIZE; k++)
-                vectorCostMatrix[(i*pllCostNstates+j)*VECTOR_SIZE+k] = pllCostMatrix[i*pllCostNstates+j];
+    if (!vectorCostMatrix) {
+        rax_posix_memalign ((void **) &(vectorCostMatrix), PLL_BYTE_ALIGNMENT, sizeof(parsimonyNumber)*pllCostNstates*pllCostNstates);
+        // duplicate the cost entries for vector operations
+        for (int i = 0; i < pllCostNstates; i++)
+            for (int j = 0; j < pllCostNstates; j++)
+                    vectorCostMatrix[(i*pllCostNstates+j)] = pllCostMatrix[i*pllCostNstates+j];
+    }
 #else
     vectorCostMatrix = NULL;
 #endif
@@ -426,7 +425,7 @@ void newviewSankoffParsimonyIterativeFastSIMD(pllInstance *tr, partitionList * p
                 VectorClass *leftPtn = (VectorClass*) &left[i_states];
                 VectorClass *rightPtn = (VectorClass*) &right[i_states];
                 VectorClass *curPtn = (VectorClass*) &cur[i_states];
-                VectorClass *costPtn = (VectorClass*)vectorCostMatrix;
+                parsimonyNumber *costPtn = vectorCostMatrix;
                 VectorClass value;
                 for (z = 0; z < states; z++) {
                     VectorClass left_contrib = leftPtn[0] + costPtn[0];
@@ -437,9 +436,8 @@ void newviewSankoffParsimonyIterativeFastSIMD(pllInstance *tr, partitionList * p
                         value = rightPtn[x] + costPtn[x];
                         right_contrib = min(right_contrib, value);
                     }
-                    curPtn[z] = left_contrib + right_contrib;
                     costPtn += states;
-                    cur_contrib = min(cur_contrib, curPtn[z]);
+                    cur_contrib = min(cur_contrib, (curPtn[z] = left_contrib + right_contrib));
                 }
 
                 //tr->parsimonyScore[pNumber] += cur_contrib * pr->partitionData[model]->informativePtnWgt[i];
@@ -757,7 +755,7 @@ parsimonyNumber evaluateSankoffParsimonyIterativeFastSIMD(pllInstance *tr, parti
             VectorClass *leftPtn = (VectorClass*) &left[i_states];
             VectorClass *rightPtn = (VectorClass*) &right[i_states];
             VectorClass best_score = UINT_MAX;
-            VectorClass *costRow = (VectorClass*) vectorCostMatrix;
+            parsimonyNumber *costRow = vectorCostMatrix;
 
             for (x = 0; x < states; x++) {
                 VectorClass this_best_score = costRow[0] + rightPtn[0];
