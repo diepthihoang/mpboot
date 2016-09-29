@@ -2108,7 +2108,7 @@ void runPhyloAnalysis(Params &params) {
 	}
 
 //		if(params.maximum_parsimony && params.sort_alignment){
-	if(params.maximum_parsimony && params.gbo_replicates){
+	if(params.maximum_parsimony && (params.gbo_replicates || params.sankoff_cost_file)){
 		optimizeAlignment(tree, params);// Diep: this is to rearrange columns for better speed in REPS
 	}
 
@@ -2644,7 +2644,7 @@ void optimizeAlignment(IQTree * & tree, Params & params){
 	if(params.sort_alignment){
 		cout << "Reordering patterns in alignment by decreasing order of pattern parsimony... ";
         start = getCPUTime();
-		// sort
+		// reordering patterns
 		PatternComp pcomp;
 		sort(tree->aln->begin(), tree->aln->end(), pcomp);
 		tree->aln->updateSitePatternAfterOptimized();
@@ -2657,6 +2657,37 @@ void optimizeAlignment(IQTree * & tree, Params & params){
 	}else{
 		tree->aln->updateSitePatternAfterOptimized();
 	}
+
+	// segment the alignment
+	// do this once!
+	// This is helpful only if the alignment is sorted
+
+	// segment_upper is the array of first index of the next segment
+	// segment0: 0.................... segment_upper[0] - 1
+	// segment1: segment_upper[0] .... segment_upper[1] - 1
+	// segment2: segment_upper[1] .... segment_upper[2] - 1
+
+	int nptn = tree->getAlnNPattern();
+
+	tree->segment_upper = new int[nptn]; // it takes at least one pattern per segment
+	int segment_no = 0;
+	int seg_sum = 0;
+	for(int i = 0; i < nptn; i++){
+		seg_sum += (tree->aln)->at(i).ras_pars_score * (tree->aln)->at(i).frequency;
+		if((i + 1) % VCSIZE_USHORT == 0 && seg_sum > USHRT_MAX / 4){
+			tree->segment_upper[segment_no] = i + 1;
+			segment_no++;
+			seg_sum = 0;
+		}
+	}
+
+	if(seg_sum){
+		tree->segment_upper[segment_no] = nptn;
+		segment_no++;
+	}
+
+	tree->reps_segments = segment_no;
+
 
 //	if(checkDuplicatePattern(tree))
 //		cout << "SECOND CHECK: Sorted alignment patterns are duplicate!" << endl;

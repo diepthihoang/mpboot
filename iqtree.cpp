@@ -39,6 +39,8 @@ extern StringIntMap pllTreeCounter;
 unsigned int * pllCostMatrix; // Diep: For weighted version
 int pllCostNstates; // Diep: For weighted version
 parsimonyNumber *vectorCostMatrix = NULL; // BQM: vectorized cost matrix
+int pllRepsSegments;
+int * pllSegmentUpper;
 
 IQTree::IQTree() : PhyloTree() {
     init();
@@ -216,7 +218,7 @@ void IQTree::setParams(Params &params) {
         {
 			// Diep: For parsimony bootstrap
 			boot_samples_pars.resize(params.gbo_replicates);
-			boot_samples_pars_remain_bounds.resize(params.gbo_replicates);
+			boot_samples_pars_remain_bounds.resize(params.gbo_replicates, NULL);
 			nunit = getAlnNPattern() + VCSIZE_USHORT;
 
 //			BootValTypePars *mem = aligned_alloc<BootValTypePars>(nunit * (size_t)(params.gbo_replicates));
@@ -583,10 +585,14 @@ void IQTree::initializePLL(Params &params) {
 	if(params.maximum_parsimony && params.sankoff_cost_file){
 		pllCostMatrix = cost_matrix;
 		pllCostNstates = cost_nstates;
+		pllSegmentUpper = segment_upper;
+		pllRepsSegments = reps_segments;
         initializeCostMatrix();
 	}else{
 		pllCostMatrix = NULL;
 		pllCostNstates = -1;
+		pllSegmentUpper = NULL;
+		pllRepsSegments = -1;
 	}
 }
 
@@ -3300,39 +3306,17 @@ void IQTree::saveCurrentTree(double cur_logl) {
 				outError("WRONG pllComputeSiteParsimony: sum of site parsimony is different from alignment parsimony");
 		}
 
-		if(!params->auto_vectorize && reps_segments == -1){
-			// do this once
-			int i = 0;
+		if(!params->auto_vectorize && reps_segments > 1 && boot_samples_pars_remain_bounds[0] == NULL){ // do this once
 			double starts = getCPUTime();
-
-			segment_upper = new int[nptn]; // it takes at least one pattern per segment
-			int segment_no = 0;
-			int seg_sum = 0;
-			for(int i = 0; i < nptn; i++){
-				seg_sum += _pattern_pars[i] * aln->at(i).frequency;
-				if((i + 1) % VCSIZE_USHORT == 0 && seg_sum > USHRT_MAX / 16){
-					segment_upper[segment_no] = i + 1;
-					segment_no++;
-					seg_sum = 0;
-				}
+			cout << "NOTE: REPS computation is segmented into " << reps_segments << " parts for speed..." << endl;
+			for(int s = 0; s < reps_segments; s++){
+				cout << "segment#" << s + 1 << " ends at " << segment_upper[s] << endl;
 			}
 
-			if(seg_sum){
-				segment_upper[segment_no] = nptn;
-				segment_no++;
-			}
+			if(params->do_first_rell) pllComputeRellRemainBound(nptn / 2);
+			else pllComputeRellRemainBound(nptn);
+			cout << getCPUTime() - starts << " seconds." << endl;
 
-			reps_segments = segment_no;
-			if(reps_segments > 1){
-				cout << "NOTE: REPS computation is segmented into " << reps_segments << " parts for speed..." << endl;
-				for(int s = 0; s < reps_segments; s++){
-					cout << "segment#" << s + 1 << " ends at " << segment_upper[s] << endl;
-				}
-
-				if(params->do_first_rell) pllComputeRellRemainBound(nptn / 2);
-				else pllComputeRellRemainBound(nptn);
-				cout << getCPUTime() - starts << " seconds." << endl;
-			}
 		}
 	}else{
 		pattern_lh = aligned_alloc<BootValType>(nptn);
