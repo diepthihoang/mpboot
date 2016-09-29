@@ -130,6 +130,10 @@ extern int pllCostNstates; // Diep: For weighted version
 extern parsimonyNumber *vectorCostMatrix; // BQM: vectorized cost matrix
 parsimonyNumber highest_cost;
 
+//(if needed) split the parsimony vector into several segments to avoid overflow when calc rell based on vec8us
+extern int pllRepsSegments; // # of segments
+extern int * pllSegmentUpper; // array of first index of the next segment, see IQTree::segment_upper
+
 void initializeCostMatrix() {
 
     int i, j, k;
