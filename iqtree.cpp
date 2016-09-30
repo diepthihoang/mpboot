@@ -38,7 +38,7 @@ extern StringIntMap pllTreeCounter;
 
 unsigned int * pllCostMatrix; // Diep: For weighted version
 int pllCostNstates; // Diep: For weighted version
-parsimonyNumber *vectorCostMatrix = NULL; // BQM: vectorized cost matrix
+parsimonyNumberShort *vectorCostMatrix = NULL; // BQM: vectorized cost matrix
 int pllRepsSegments;
 int * pllSegmentUpper;
 
@@ -1821,7 +1821,6 @@ double IQTree::doTreeSearch() {
 			clearAllPartialLH();
 			curScore = optimizeAllBranches();
 
-			cout << "RATCHET ";
 		}
 
 		/*
@@ -1840,22 +1839,26 @@ double IQTree::doTreeSearch() {
         double realtime_remaining = stop_rule.getRemainingTime(curIt, cur_correlation);
         cout.setf(ios::fixed, ios::floatfield);
 
-        cout << ((iqp_assess_quartet == IQP_BOOTSTRAP) ? "Bootstrap " : "Iteration ") << curIt
-        	<< (params->maximum_parsimony ? " / Score: " : " / LogL: ");
-        if (verbose_mode >= VB_MED)
-        	cout << perturbScore << " -> ";
-        cout << (params->maximum_parsimony ? (-curScore) : curScore);
-        if (verbose_mode >= VB_MED)
-        	cout << " / NNIs: " << nni_count << "," << nni_steps;
-        cout << " / Time: " << convert_time(getRealTime() - params->start_real_time);
+        if (curIt % 10 == 0 || verbose_mode >= VB_MED) {
+            if(on_ratchet_hclimb1)
+                cout << "RATCHET ";
+            cout << ((iqp_assess_quartet == IQP_BOOTSTRAP) ? "Bootstrap " : "Iteration ") << curIt
+                << (params->maximum_parsimony ? " / Score: " : " / LogL: ");
+            if (verbose_mode >= VB_MED)
+                cout << perturbScore << " -> ";
+            cout << (params->maximum_parsimony ? (-curScore) : curScore);
+            if (verbose_mode >= VB_MED)
+                cout << " / NNIs: " << nni_count << "," << nni_steps;
+            cout << " / Time: " << convert_time(getRealTime() - params->start_real_time);
 
-        if (curIt > 10) {
-			cout << " (" << convert_time(realtime_remaining) << " left)";
+            if (curIt > 10) {
+                cout << " (" << convert_time(realtime_remaining) << " left)";
+            }
+    //        if(params->maximum_parsimony && params->gbo_replicates)
+    //			cout << "; C = {" << treels_logl.size() << " trees}" << ".";
+
+            cout << endl;
         }
-//        if(params->maximum_parsimony && params->gbo_replicates)
-//			cout << "; C = {" << treels_logl.size() << " trees}" << ".";
-
-        cout << endl;
 
         if (params->write_intermediate_trees && save_all_trees != 2) {
             printIntermediateTree(WT_NEWLINE | WT_APPEND | WT_SORT_TAXA | WT_BR_LEN);

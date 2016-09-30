@@ -2634,6 +2634,7 @@ void optimizeAlignment(IQTree * & tree, Params & params){
 	tree->clearAllPartialLH();
 //	tree->fixNegativeBranch(true);
 	int pars_before = tree->computeParsimony();
+    tree->curScore = pars_before;
     cout << "Time for parsimony tree construction: " << getCPUTime() - start << " seconds" << endl;
     cout << "Parsimony score: " << pars_before << endl;
 	BootValTypePars * tmpPatternPars = tree->getPatternPars();
