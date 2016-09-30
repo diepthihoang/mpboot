@@ -407,9 +407,9 @@ void newviewSankoffParsimonyIterativeFastSIMD(pllInstance *tr, partitionList * p
             assert(patterns % VectorClass::size() == 0);
             size_t i;
 
-            Numeric *left  = &((Numeric*)pr->partitionData[model]->parsVect)[(patterns * states * qNumber)];
-            Numeric *right = &((Numeric*)pr->partitionData[model]->parsVect)[(patterns * states * rNumber)];
-            Numeric *cur   = &((Numeric*)pr->partitionData[model]->parsVect)[(patterns * states * pNumber)];
+            Numeric *left  = (Numeric*)&(pr->partitionData[model]->parsVect)[(patterns * states * qNumber)];
+            Numeric *right = (Numeric*)&(pr->partitionData[model]->parsVect)[(patterns * states * rNumber)];
+            Numeric *cur   = (Numeric*)&(pr->partitionData[model]->parsVect)[(patterns * states * pNumber)];
 
             size_t x, z;
 
@@ -752,8 +752,8 @@ parsimonyNumber evaluateSankoffParsimonyIterativeFastSIMD(pllInstance *tr, parti
 	{
 		size_t patterns  = pr->partitionData[model]->parsimonyLength;
         size_t i;
-        Numeric *left  = &((Numeric*)pr->partitionData[model]->parsVect)[(patterns * states * qNumber)];
-		Numeric *right = &((Numeric*)pr->partitionData[model]->parsVect)[(patterns * states * pNumber)];
+        Numeric *left  = (Numeric*)&(pr->partitionData[model]->parsVect)[(patterns * states * qNumber)];
+		Numeric *right = (Numeric*)&(pr->partitionData[model]->parsVect)[(patterns * states * pNumber)];
 		size_t x, y, seg;
 
 
@@ -2479,7 +2479,7 @@ static void compressSankoffDNA(pllInstance *tr, partitionList *pr, int *informat
 	// for a certain node of DNA: ptn1_A, ptn2_A, ptn3_A,..., ptn1_C, ptn2_C, ptn3_C,...,ptn1_G, ptn2_G, ptn3_G,...,ptn1_T, ptn2_T, ptn3_T,...,
 	// (not 100% sure) this is also the perSitePartialPars
 
-      rax_posix_memalign ((void **) &(pr->partitionData[model]->parsVect), PLL_BYTE_ALIGNMENT, (size_t)compressedEntriesPadded * states * totalNodes * sizeof(parsimonyNumberShort));
+      rax_posix_memalign ((void **) &(pr->partitionData[model]->parsVect), PLL_BYTE_ALIGNMENT, (size_t)compressedEntriesPadded * states * totalNodes * sizeof(parsimonyNumber));
 
       rax_posix_memalign ((void **) &(pr->partitionData[model]->informativePtnWgt), PLL_BYTE_ALIGNMENT, (size_t)compressedEntriesPadded * sizeof(parsimonyNumberShort));
 
@@ -2512,8 +2512,7 @@ static void compressSankoffDNA(pllInstance *tr, partitionList *pr, int *informat
 //              compressedValues[k] = INT_MAX; // Diep
 //            }
 
-            parsimonyNumberShort *parsVect = (parsimonyNumberShort*) pr->partitionData[model]->parsVect;
-            parsimonyNumberShort *tipVect = &parsVect[(compressedEntriesPadded * states * (i + 1))];
+            parsimonyNumberShort *tipVect = (parsimonyNumberShort*)&pr->partitionData[model]->parsVect[(compressedEntriesPadded * states * (i + 1))];
 
 		// for each informative pattern
           for(index = lower; index < (size_t)upper; index++)
