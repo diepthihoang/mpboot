@@ -1,8 +1,8 @@
 /****************************  vectori256.h   *******************************
 * Author:        Agner Fog
 * Date created:  2012-05-30
-* Last modified: 2014-10-16
-* Version:       1.16
+* Last modified: 2016-04-26
+* Version:       1.22
 * Project:       vector classes
 * Description:
 * Header file defining integer vector classes as interface to intrinsic 
@@ -36,7 +36,7 @@
 *
 * For detailed instructions, see VectorClass.pdf
 *
-* (c) Copyright 2012 - 2013 GNU General Public License http://www.gnu.org/licenses
+* (c) Copyright 2012 - 2016 GNU General Public License http://www.gnu.org/licenses
 *****************************************************************************/
 
 // check combination of header files
@@ -58,6 +58,9 @@
 
 #include "vectori128.h"
 
+#ifdef VCL_NAMESPACE
+namespace VCL_NAMESPACE {
+#endif
 
 /*****************************************************************************
 *
@@ -78,7 +81,7 @@ protected:
 public:
     // Default constructor:
     Vec256b() {
-    };
+    }
     // Constructor to broadcast the same value into all elements
     // Removed because of undesired implicit conversions
     //Vec256b(int i) {
@@ -91,12 +94,12 @@ public:
     // Constructor to convert from type __m256i used in intrinsics:
     Vec256b(__m256i const & x) {
         ymm = x;
-    };
+    }
     // Assignment operator to convert from type __m256i used in intrinsics:
     Vec256b & operator = (__m256i const & x) {
         ymm = x;
         return *this;
-    };
+    }
     // Type cast operator to convert to __m256i used in intrinsics
     operator __m256i() const {
         return ymm;
@@ -285,11 +288,11 @@ class Vec32c : public Vec256b {
 public:
     // Default constructor:
     Vec32c(){
-    };
+    }
     // Constructor to broadcast the same value into all elements:
     Vec32c(int i) {
         ymm = _mm256_set1_epi8((char)i);
-    };
+    }
     // Constructor to build from all elements:
     Vec32c(int8_t i0, int8_t i1, int8_t i2, int8_t i3, int8_t i4, int8_t i5, int8_t i6, int8_t i7,
         int8_t i8, int8_t i9, int8_t i10, int8_t i11, int8_t i12, int8_t i13, int8_t i14, int8_t i15,        
@@ -297,7 +300,7 @@ public:
         int8_t i24, int8_t i25, int8_t i26, int8_t i27, int8_t i28, int8_t i29, int8_t i30, int8_t i31) {
         ymm = _mm256_setr_epi8(i0, i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12, i13, i14, i15,
             i16, i17, i18, i19, i20, i21, i22, i23, i24, i25, i26, i27, i28, i29, i30, i31);
-    };
+    }
     // Constructor to build from two Vec16c:
     Vec32c(Vec16c const & a0, Vec16c const & a1) {
         ymm = set_m128ir(a0, a1);
@@ -305,12 +308,12 @@ public:
     // Constructor to convert from type __m256i used in intrinsics:
     Vec32c(__m256i const & x) {
         ymm = x;
-    };
+    }
     // Assignment operator to convert from type __m256i used in intrinsics:
     Vec32c & operator = (__m256i const & x) {
         ymm = x;
         return *this;
-    };
+    }
     // Type cast operator to convert to __m256i used in intrinsics
     operator __m256i() const {
         return ymm;
@@ -334,7 +337,7 @@ public:
             *this = Vec32c(Vec16c().load_partial(n, p), 0);
         }
         else if (n < 32) {
-            *this = Vec32c(Vec16c().load(p), Vec16c().load_partial(n-16, (char*)p+16));
+            *this = Vec32c(Vec16c().load(p), Vec16c().load_partial(n-16, (char const*)p+16));
         }
         else {
             load(p);
@@ -643,11 +646,7 @@ static inline Vec32cb operator == (Vec32c const & a, Vec32c const & b) {
 
 // vector operator != : returns true for elements for which a != b
 static inline Vec32cb operator != (Vec32c const & a, Vec32c const & b) {
-#ifdef __XOP2__  // Possible future 256-bit XOP extension ?
-    return _mm256_comneq_epi8(a,b);
-#else  // AVX2 instruction set
     return Vec32cb(Vec32c(~(a == b)));
-#endif
 }
 
 // vector operator > : returns true for elements for which a > b (signed)
@@ -662,11 +661,7 @@ static inline Vec32cb operator < (Vec32c const & a, Vec32c const & b) {
 
 // vector operator >= : returns true for elements for which a >= b (signed)
 static inline Vec32cb operator >= (Vec32c const & a, Vec32c const & b) {
-#ifdef __XOP2__  // // Possible future 256-bit XOP extension ?
-    return _mm256_comge_epi8(a,b);
-#else  // SSE2 instruction set
     return Vec32cb(Vec32c(~(b > a)));
-#endif
 }
 
 // vector operator <= : returns true for elements for which a <= b (signed)
@@ -805,9 +800,6 @@ static inline Vec32c abs_saturated(Vec32c const & a) {
 // function rotate_left all elements
 // Use negative count to rotate right
 static inline Vec32c rotate_left(Vec32c const & a, int b) {
-#ifdef __XOP2__      // Possible future 256-bit XOP extension ?
-    return _mm256_rot_epi8(a,_mm256_set1_epi8(b));
-#else  // SSE2 instruction set
     __m128i bb        = _mm_cvtsi32_si128(b & 7);             // b modulo 8
     __m128i mbb       = _mm_cvtsi32_si128((8-b) & 7);         // 8-b modulo 8
     __m256i maskeven  = _mm256_set1_epi32(0x00FF00FF);        // mask for even numbered bytes
@@ -821,7 +813,6 @@ static inline Vec32c rotate_left(Vec32c const & a, int b) {
     __m256i oddrot    = _mm256_or_si256(oddleft,oddright);    // odd  bytes of a rotated
     __m256i allrot    = selectb(maskeven,evenrot,oddrot);     // all  bytes rotated
     return  allrot;
-#endif
 }
 
 
@@ -836,11 +827,11 @@ class Vec32uc : public Vec32c {
 public:
     // Default constructor:
     Vec32uc(){
-    };
+    }
     // Constructor to broadcast the same value into all elements:
     Vec32uc(uint32_t i) {
         ymm = _mm256_set1_epi8((char)i);
-    };
+    }
     // Constructor to build from all elements:
     Vec32uc(uint8_t i0, uint8_t i1, uint8_t i2, uint8_t i3, uint8_t i4, uint8_t i5, uint8_t i6, uint8_t i7,
         uint8_t i8, uint8_t i9, uint8_t i10, uint8_t i11, uint8_t i12, uint8_t i13, uint8_t i14, uint8_t i15,        
@@ -848,7 +839,7 @@ public:
         uint8_t i24, uint8_t i25, uint8_t i26, uint8_t i27, uint8_t i28, uint8_t i29, uint8_t i30, uint8_t i31) {
         ymm = _mm256_setr_epi8(i0, i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12, i13, i14, i15,
             i16, i17, i18, i19, i20, i21, i22, i23, i24, i25, i26, i27, i28, i29, i30, i31);
-    };
+    }
     // Constructor to build from two Vec16uc:
     Vec32uc(Vec16uc const & a0, Vec16uc const & a1) {
         ymm = set_m128ir(a0, a1);
@@ -856,12 +847,12 @@ public:
     // Constructor to convert from type __m256i used in intrinsics:
     Vec32uc(__m256i const & x) {
         ymm = x;
-    };
+    }
     // Assignment operator to convert from type __m256i used in intrinsics:
     Vec32uc & operator = (__m256i const & x) {
         ymm = x;
         return *this;
-    };
+    }
     // Member function to load from array (unaligned)
     Vec32uc & load(void const * p) {
         ymm = _mm256_loadu_si256((__m256i const*)p);
@@ -947,11 +938,7 @@ static inline Vec32uc & operator >>= (Vec32uc & a, uint32_t b) {
 
 // vector operator >= : returns true for elements for which a >= b (unsigned)
 static inline Vec32cb operator >= (Vec32uc const & a, Vec32uc const & b) {
-#ifdef __XOP2__  // Possible future 256-bit XOP extension ?
-    return _mm256_comge_epu8(a,b);
-#else 
     return _mm256_cmpeq_epi8(_mm256_max_epu8(a,b), a); // a == max(a,b)
-#endif
 }
 
 // vector operator <= : returns true for elements for which a <= b (unsigned)
@@ -961,11 +948,7 @@ static inline Vec32cb operator <= (Vec32uc const & a, Vec32uc const & b) {
 
 // vector operator > : returns true for elements for which a > b (unsigned)
 static inline Vec32cb operator > (Vec32uc const & a, Vec32uc const & b) {
-#ifdef __XOP2__  // Possible future 256-bit XOP extension ?
-    return _mm256_comgt_epu8(a,b);
-#else  // SSE2 instruction set
     return Vec32cb(Vec32c(~(b >= a)));
-#endif
 }
 
 // vector operator < : returns true for elements for which a < b (unsigned)
@@ -1078,16 +1061,16 @@ class Vec16s : public Vec256b {
 public:
     // Default constructor:
     Vec16s() {
-    };
+    }
     // Constructor to broadcast the same value into all elements:
     Vec16s(int i) {
         ymm = _mm256_set1_epi16((int16_t)i);
-    };
+    }
     // Constructor to build from all elements:
     Vec16s(int16_t i0, int16_t i1, int16_t i2,  int16_t i3,  int16_t i4,  int16_t i5,  int16_t i6,  int16_t i7,
            int16_t i8, int16_t i9, int16_t i10, int16_t i11, int16_t i12, int16_t i13, int16_t i14, int16_t i15) {
         ymm = _mm256_setr_epi16(i0, i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12, i13, i14, i15 );
-    };
+    }
     // Constructor to build from two Vec8s:
     Vec16s(Vec8s const & a0, Vec8s const & a1) {
         ymm = set_m128ir(a0, a1);
@@ -1095,16 +1078,16 @@ public:
     // Constructor to convert from type __m256i used in intrinsics:
     Vec16s(__m256i const & x) {
         ymm = x;
-    };
+    }
     // Assignment operator to convert from type __m256i used in intrinsics:
     Vec16s & operator = (__m256i const & x) {
         ymm = x;
         return *this;
-    };
+    }
     // Type cast operator to convert to __m256i used in intrinsics
     operator __m256i() const {
         return ymm;
-    };
+    }
     // Member function to load from array (unaligned)
     Vec16s & load(void const * p) {
         ymm = _mm256_loadu_si256((__m256i const*)p);
@@ -1124,7 +1107,7 @@ public:
             *this = Vec16s(Vec8s().load_partial(n, p), 0);
         }
         else if (n < 16) {
-            *this = Vec16s(Vec8s().load(p), Vec8s().load_partial(n-8, (int16_t*)p+8));
+            *this = Vec16s(Vec8s().load(p), Vec8s().load_partial(n-8, (int16_t const*)p+8));
         }
         else {
             load(p);
@@ -1160,7 +1143,7 @@ public:
         __m256i broad = _mm256_set1_epi16(value);
         ymm = selectb(mask, broad, ymm);
         return *this;
-    };
+    }
     // Member function extract a single element from vector
     int16_t extract(uint32_t index) const {
         int16_t x[16];
@@ -1405,11 +1388,7 @@ static inline Vec16sb operator == (Vec16s const & a, Vec16s const & b) {
 
 // vector operator != : returns true for elements for which a != b
 static inline Vec16sb operator != (Vec16s const & a, Vec16s const & b) {
-#ifdef __XOP2__  // Possible future 256-bit XOP extension ?
-    return _mm256_comneq_epi16(a,b);
-#else  // SSE2 instruction set
     return Vec16sb(Vec16s(~(a == b)));
-#endif
 }
 
 // vector operator > : returns true for elements for which a > b
@@ -1424,11 +1403,7 @@ static inline Vec16sb operator < (Vec16s const & a, Vec16s const & b) {
 
 // vector operator >= : returns true for elements for which a >= b (signed)
 static inline Vec16sb operator >= (Vec16s const & a, Vec16s const & b) {
-#ifdef __XOP2__  // Possible future 256-bit XOP extension ?
-    return _mm256_comge_epi16(a,b);
-#else  // SSE2 instruction set
     return Vec16sb(Vec16s(~(b > a)));
-#endif
 }
 
 // vector operator <= : returns true for elements for which a <= b (signed)
@@ -1500,7 +1475,6 @@ static inline Vec16s if_add (Vec16sb const & f, Vec16s const & a, Vec16s const &
 // Horizontal add: Calculates the sum of all vector elements.
 // Overflow will wrap around
 static inline int32_t horizontal_add (Vec16s const & a) {
-// #ifdef __XOP2__  // Possible future 256-bit XOP extension ?
     __m256i sum1  = _mm256_hadd_epi16(a,a);                           // horizontally add 2x8 elements in 3 steps
     __m256i sum2  = _mm256_hadd_epi16(sum1,sum1);
     __m256i sum3  = _mm256_hadd_epi16(sum2,sum2); 
@@ -1567,14 +1541,10 @@ static inline Vec16s abs_saturated(Vec16s const & a) {
 // function rotate_left all elements
 // Use negative count to rotate right
 static inline Vec16s rotate_left(Vec16s const & a, int b) {
-#ifdef __XOP2__  // Possible future 256-bit XOP extension ?
-    return _mm256_rot_epi16(a,_mm256_set1_epi16(b));
-#else  // SSE2 instruction set
     __m256i left  = _mm256_sll_epi16(a,_mm_cvtsi32_si128(b & 0x0F));      // a << b 
     __m256i right = _mm256_srl_epi16(a,_mm_cvtsi32_si128((16-b) & 0x0F)); // a >> (16 - b)
     __m256i rot   = _mm256_or_si256(left,right);                          // or
     return  rot;
-#endif
 }
 
 
@@ -1588,16 +1558,16 @@ class Vec16us : public Vec16s {
 public:
     // Default constructor:
     Vec16us(){
-    };
+    }
     // Constructor to broadcast the same value into all elements:
     Vec16us(uint32_t i) {
         ymm = _mm256_set1_epi16((int16_t)i);
-    };
+    }
     // Constructor to build from all elements:
     Vec16us(uint16_t i0, uint16_t i1, uint16_t i2,  uint16_t i3,  uint16_t i4,  uint16_t i5,  uint16_t i6,  uint16_t i7,
             uint16_t i8, uint16_t i9, uint16_t i10, uint16_t i11, uint16_t i12, uint16_t i13, uint16_t i14, uint16_t i15) {
         ymm = _mm256_setr_epi16(i0, i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12, i13, i14, i15 );
-    };
+    }
     // Constructor to build from two Vec8us:
     Vec16us(Vec8us const & a0, Vec8us const & a1) {
         ymm = set_m128ir(a0, a1);
@@ -1605,12 +1575,12 @@ public:
     // Constructor to convert from type __m256i used in intrinsics:
     Vec16us(__m256i const & x) {
         ymm = x;
-    };
+    }
     // Assignment operator to convert from type __m256i used in intrinsics:
     Vec16us & operator = (__m256i const & x) {
         ymm = x;
         return *this;
-    };
+    }
     // Member function to load from array (unaligned)
     Vec16us & load(void const * p) {
         ymm = _mm256_loadu_si256((__m256i const*)p);
@@ -1626,7 +1596,7 @@ public:
     Vec16us const & insert(uint32_t index, uint16_t value) {
         Vec16s::insert(index, value);
         return *this;
-    };
+    }
     // Member function extract a single element from vector
     uint16_t extract(uint32_t index) const {
         return Vec16s::extract(index);
@@ -1693,12 +1663,8 @@ static inline Vec16us operator << (Vec16us const & a, int32_t b) {
 
 // vector operator >= : returns true for elements for which a >= b (unsigned)
 static inline Vec16sb operator >= (Vec16us const & a, Vec16us const & b) {
-#ifdef __XOP2__  // Possible future 256-bit XOP extension ?
-    return _mm256_comge_epu16(a,b);
-#else
     __m256i max_ab = _mm256_max_epu16(a,b);                   // max(a,b), unsigned
     return _mm256_cmpeq_epi16(a,max_ab);                      // a == max(a,b)
-#endif
 }
 
 // vector operator <= : returns true for elements for which a <= b (unsigned)
@@ -1708,11 +1674,7 @@ static inline Vec16sb operator <= (Vec16us const & a, Vec16us const & b) {
 
 // vector operator > : returns true for elements for which a > b (unsigned)
 static inline Vec16sb operator > (Vec16us const & a, Vec16us const & b) {
-#ifdef __XOP2__  // Possible future 256-bit XOP extension ?
-    return _mm256_comgt_epu16(a,b);
-#else  // SSE2 instruction set
     return Vec16sb(Vec16s(~(b >= a)));
-#endif
 }
 
 // vector operator < : returns true for elements for which a < b (unsigned)
@@ -1764,7 +1726,6 @@ static inline Vec16us if_add (Vec16sb const & f, Vec16us const & a, Vec16us cons
 // Horizontal add: Calculates the sum of all vector elements.
 // Overflow will wrap around
 static inline uint32_t horizontal_add (Vec16us const & a) {
-//#ifdef __XOP2__  // Possible future 256-bit XOP extension ?
     __m256i sum1  = _mm256_hadd_epi16(a,a);                           // horizontally add 2x8 elements in 3 steps
     __m256i sum2  = _mm256_hadd_epi16(sum1,sum1);
     __m256i sum3  = _mm256_hadd_epi16(sum2,sum2);
@@ -1871,7 +1832,7 @@ public:
             *this = Vec8i(Vec4i().load_partial(n, p), 0);
         }
         else if (n < 8) {
-            *this = Vec8i(Vec4i().load(p), Vec4i().load_partial(n-4, (int32_t*)p+4));
+            *this = Vec8i(Vec4i().load(p), Vec4i().load_partial(n-4, (int32_t const*)p+4));
         }
         else {
             load(p);
@@ -2151,11 +2112,7 @@ static inline Vec8ib operator == (Vec8i const & a, Vec8i const & b) {
 
 // vector operator != : returns true for elements for which a != b
 static inline Vec8ib operator != (Vec8i const & a, Vec8i const & b) {
-#ifdef __XOP2__  // Possible future 256-bit XOP extension ?
-    return _mm256_comneq_epi32(a,b);
-#else  // SSE2 instruction set
     return Vec8ib(Vec8i(~(a == b)));
-#endif
 }
   
 // vector operator > : returns true for elements for which a > b
@@ -2170,11 +2127,7 @@ static inline Vec8ib operator < (Vec8i const & a, Vec8i const & b) {
 
 // vector operator >= : returns true for elements for which a >= b (signed)
 static inline Vec8ib operator >= (Vec8i const & a, Vec8i const & b) {
-#ifdef __XOP2__  // Possible future 256-bit XOP extension ?
-    return _mm256_comge_epi32(a,b);
-#else  // SSE2 instruction set
     return Vec8ib(Vec8i(~(b > a)));
-#endif
 }
 
 // vector operator <= : returns true for elements for which a <= b (signed)
@@ -2246,7 +2199,6 @@ static inline Vec8i if_add (Vec8ib const & f, Vec8i const & a, Vec8i const & b) 
 // Horizontal add: Calculates the sum of all vector elements.
 // Overflow will wrap around
 static inline int32_t horizontal_add (Vec8i const & a) {
-//#ifdef __XOP2__  // Possible future 256-bit XOP extension ?
     __m256i sum1  = _mm256_hadd_epi32(a,a);                           // horizontally add 2x4 elements in 2 steps
     __m256i sum2  = _mm256_hadd_epi32(sum1,sum1);
 #if defined (_MSC_VER) && _MSC_VER <= 1700 && ! defined(__INTEL_COMPILER)
@@ -2313,14 +2265,10 @@ static inline Vec8i abs_saturated(Vec8i const & a) {
 // function rotate_left all elements
 // Use negative count to rotate right
 static inline Vec8i rotate_left(Vec8i const & a, int b) {
-#ifdef __XOP2__  // Possible future 256-bit XOP extension ?
-    return _mm256_rot_epi32(a,_mm_set1_epi32(b));
-#else  // SSE2 instruction set
     __m256i left  = _mm256_sll_epi32(a,_mm_cvtsi32_si128(b & 0x1F));      // a << b 
     __m256i right = _mm256_srl_epi32(a,_mm_cvtsi32_si128((32-b) & 0x1F)); // a >> (32 - b)
     __m256i rot   = _mm256_or_si256(left,right);                          // or
     return  rot;
-#endif
 }
 
 
@@ -2334,15 +2282,15 @@ class Vec8ui : public Vec8i {
 public:
     // Default constructor:
     Vec8ui() {
-    };
+    }
     // Constructor to broadcast the same value into all elements:
     Vec8ui(uint32_t i) {
         ymm = _mm256_set1_epi32(i);
-    };
+    }
     // Constructor to build from all elements:
     Vec8ui(uint32_t i0, uint32_t i1, uint32_t i2, uint32_t i3, uint32_t i4, uint32_t i5, uint32_t i6, uint32_t i7) {
         ymm = _mm256_setr_epi32(i0, i1, i2, i3, i4, i5, i6, i7);
-    };
+    }
     // Constructor to build from two Vec4ui:
     Vec8ui(Vec4ui const & a0, Vec4ui const & a1) {
         ymm = set_m128ir(a0, a1);
@@ -2350,12 +2298,12 @@ public:
     // Constructor to convert from type __m256i used in intrinsics:
     Vec8ui(__m256i const & x) {
         ymm = x;
-    };
+    }
     // Assignment operator to convert from type __m256i used in intrinsics:
     Vec8ui & operator = (__m256i const & x) {
         ymm = x;
         return *this;
-    };
+    }
     // Member function to load from array (unaligned)
     Vec8ui & load(void const * p) {
         ymm = _mm256_loadu_si256((__m256i const*)p);
@@ -2438,14 +2386,10 @@ static inline Vec8ui operator << (Vec8ui const & a, int32_t b) {
 
 // vector operator > : returns true for elements for which a > b (unsigned)
 static inline Vec8ib operator > (Vec8ui const & a, Vec8ui const & b) {
-#ifdef __XOP2__  // Possible future 256-bit XOP extension ?
-    return _mm256_comgt_epu32(a,b);
-#else  // AVX2 instruction set
     __m256i signbit = _mm256_set1_epi32(0x80000000);
     __m256i a1      = _mm256_xor_si256(a,signbit);
     __m256i b1      = _mm256_xor_si256(b,signbit);
     return _mm256_cmpgt_epi32(a1,b1);                         // signed compare
-#endif
 }
 
 // vector operator < : returns true for elements for which a < b (unsigned)
@@ -2455,12 +2399,8 @@ static inline Vec8ib operator < (Vec8ui const & a, Vec8ui const & b) {
 
 // vector operator >= : returns true for elements for which a >= b (unsigned)
 static inline Vec8ib operator >= (Vec8ui const & a, Vec8ui const & b) {
-#ifdef __XOP2__  // Possible future 256-bit XOP extension ?
-    return _mm256_comge_epu32(a,b);
-#else
     __m256i max_ab = _mm256_max_epu32(a,b);                   // max(a,b), unsigned
     return _mm256_cmpeq_epi32(a,max_ab);                      // a == max(a,b)
-#endif
 }
 
 // vector operator <= : returns true for elements for which a <= b (unsigned)
@@ -2558,7 +2498,7 @@ public:
     }
     // Constructor to broadcast the same value into all elements:
     Vec4q(int64_t i) {
-#if defined (_MSC_VER) && ! defined (__x86_64__) && ! defined(__INTEL_COMPILER)
+#if defined (_MSC_VER) && _MSC_VER < 1900 && ! defined (__x86_64__) && ! defined(__INTEL_COMPILER)
         // MS compiler cannot use _mm256_set1_epi64x in 32 bit mode, and  
         // cannot put 64-bit values into xmm register without using
         // mmx registers, and it makes no emms
@@ -2574,7 +2514,7 @@ public:
     }
     // Constructor to build from all elements:
     Vec4q(int64_t i0, int64_t i1, int64_t i2, int64_t i3) {
-#if defined (_MSC_VER) && ! defined (__x86_64__) && ! defined(__INTEL_COMPILER)
+#if defined (_MSC_VER) && _MSC_VER < 1900 && ! defined (__x86_64__) && ! defined(__INTEL_COMPILER)
         // MS compiler cannot put 64-bit values into xmm register without using
         // mmx registers, and it makes no emms
         union {
@@ -2623,7 +2563,7 @@ public:
             *this = Vec4q(Vec2q().load_partial(n, p), 0);
         }
         else if (n < 4) {
-            *this = Vec4q(Vec2q().load(p), Vec2q().load_partial(n-2, (int64_t*)p+2));
+            *this = Vec4q(Vec2q().load(p), Vec2q().load_partial(n-2, (int64_t const*)p+2));
         }
         else {
             load(p);
@@ -2736,7 +2676,7 @@ public:
     Vec4qb & insert (int index, bool a) {
         Vec4q::insert(index, -(int64_t)a);
         return *this;
-    };    
+    }    
     // Member function extract a single element from vector
     bool extract(uint32_t index) const {
         return Vec4q::extract(index) != 0;
@@ -2931,11 +2871,7 @@ static inline Vec4qb operator == (Vec4q const & a, Vec4q const & b) {
 
 // vector operator != : returns true for elements for which a != b
 static inline Vec4qb operator != (Vec4q const & a, Vec4q const & b) {
-#ifdef __XOP2__  // Possible future 256-bit XOP extension ?
-    return _mm256_comneq_epi64(a,b);
-#else 
     return Vec4qb(Vec4q(~(a == b)));
-#endif
 }
   
 // vector operator < : returns true for elements for which a < b
@@ -2950,11 +2886,7 @@ static inline Vec4qb operator > (Vec4q const & a, Vec4q const & b) {
 
 // vector operator >= : returns true for elements for which a >= b (signed)
 static inline Vec4qb operator >= (Vec4q const & a, Vec4q const & b) {
-#ifdef __XOP2__  // Possible future 256-bit XOP extension ?
-    return _mm256_comge_epi64(a,b);
-#else  // SSE2 instruction set
     return Vec4qb(Vec4q(~(a < b)));
-#endif
 }
 
 // vector operator <= : returns true for elements for which a <= b (signed)
@@ -3073,14 +3005,10 @@ static inline Vec4q abs_saturated(Vec4q const & a) {
 // function rotate_left all elements
 // Use negative count to rotate right
 static inline Vec4q rotate_left(Vec4q const & a, int b) {
-#ifdef __XOP2__  // Possible future 256-bit XOP extension ?
-    return _mm256_rot_epi64(a,Vec4q(b));
-#else  // SSE2 instruction set
     __m256i left  = _mm256_sll_epi64(a,_mm_cvtsi32_si128(b & 0x3F));      // a << b 
     __m256i right = _mm256_srl_epi64(a,_mm_cvtsi32_si128((64-b) & 0x3F)); // a >> (64 - b)
     __m256i rot   = _mm256_or_si256(left, right);                         // or
     return  rot;
-#endif
 }
 
 
@@ -3094,15 +3022,15 @@ class Vec4uq : public Vec4q {
 public:
     // Default constructor:
     Vec4uq() {
-    };
+    }
     // Constructor to broadcast the same value into all elements:
     Vec4uq(uint64_t i) {
         ymm = Vec4q(i);
-    };
+    }
     // Constructor to build from all elements:
     Vec4uq(uint64_t i0, uint64_t i1, uint64_t i2, uint64_t i3) {
         ymm = Vec4q(i0, i1, i2, i3);
-    };
+    }
     // Constructor to build from two Vec2uq:
     Vec4uq(Vec2uq const & a0, Vec2uq const & a1) {
         ymm = set_m128ir(a0, a1);
@@ -3110,12 +3038,12 @@ public:
     // Constructor to convert from type __m256i used in intrinsics:
     Vec4uq(__m256i const & x) {
         ymm = x;
-    };
+    }
     // Assignment operator to convert from type __m256i used in intrinsics:
     Vec4uq & operator = (__m256i const & x) {
         ymm = x;
         return *this;
-    };
+    }
     // Member function to load from array (unaligned)
     Vec4uq & load(void const * p) {
         ymm = _mm256_loadu_si256((__m256i const*)p);
@@ -3195,20 +3123,12 @@ static inline Vec4uq operator << (Vec4uq const & a, int32_t b) {
 
 // vector operator > : returns true for elements for which a > b (unsigned)
 static inline Vec4qb operator > (Vec4uq const & a, Vec4uq const & b) {
-#ifdef __XOP2__  // Possible future 256-bit XOP extension ?
-    return _mm256_comgt_epu64(a,b);
-#else  // SSE2 instruction set
-    __m256i sign32  = _mm256_set1_epi32(0x80000000);          // sign bit of each dword
-    __m256i aflip   = _mm256_xor_si256(a,sign32);             // a with sign bits flipped
-    __m256i bflip   = _mm256_xor_si256(b,sign32);             // b with sign bits flipped
-    __m256i equal   = _mm256_cmpeq_epi32(a,b);                // a == b, dwords
-    __m256i bigger  = _mm256_cmpgt_epi32(aflip,bflip);        // a > b, dwords
-    __m256i biggerl = _mm256_shuffle_epi32(bigger,0xA0);      // a > b, low dwords copied to high dwords
-    __m256i eqbig   = _mm256_and_si256(equal,biggerl);        // high part equal and low part bigger
-    __m256i hibig   = _mm256_or_si256(bigger,eqbig);          // high part bigger or high part equal and low part bigger
-    __m256i big     = _mm256_shuffle_epi32(hibig,0xF5);       // result copied to low part
-    return  big;
-#endif
+//#if defined ( __XOP__ ) // AMD XOP instruction set
+    __m256i sign64 = Vec4uq(0x8000000000000000);
+    __m256i aflip  = _mm256_xor_si256(a, sign64);
+    __m256i bflip  = _mm256_xor_si256(b, sign64);
+    Vec4q   cmp    = _mm256_cmpgt_epi64(aflip,bflip);
+    return Vec4qb(cmp);
 }
 
 // vector operator < : returns true for elements for which a < b (unsigned)
@@ -3218,11 +3138,7 @@ static inline Vec4qb operator < (Vec4uq const & a, Vec4uq const & b) {
 
 // vector operator >= : returns true for elements for which a >= b (unsigned)
 static inline Vec4qb operator >= (Vec4uq const & a, Vec4uq const & b) {
-#ifdef __XOP2__  // Possible future 256-bit XOP extension ?
-    return _mm256_comge_epu64(a,b);
-#else  // SSE2 instruction set
     return  Vec4qb(Vec4q(~(b > a)));
-#endif
 }
 
 // vector operator <= : returns true for elements for which a <= b (unsigned)
@@ -3556,14 +3472,14 @@ static inline Vec16s permute16s(Vec16s const & a) {
             if (dozero) {
                 // zero some elements
                 const __m256i maskz = constant8i<
-                    (i0 <0?0:0xFFFF) | (i1 <0?0:0xFFFF0000),
-                    (i2 <0?0:0xFFFF) | (i3 <0?0:0xFFFF0000),
-                    (i4 <0?0:0xFFFF) | (i5 <0?0:0xFFFF0000),
-                    (i6 <0?0:0xFFFF) | (i7 <0?0:0xFFFF0000),
-                    (i8 <0?0:0xFFFF) | (i9 <0?0:0xFFFF0000),
-                    (i10<0?0:0xFFFF) | (i11<0?0:0xFFFF0000),
-                    (i12<0?0:0xFFFF) | (i13<0?0:0xFFFF0000),
-                    (i14<0?0:0xFFFF) | (i15<0?0:0xFFFF0000) > ();                    
+                    int((i0 <0?0:0xFFFF) | (i1 <0?0:0xFFFF0000)),
+                    int((i2 <0?0:0xFFFF) | (i3 <0?0:0xFFFF0000)),
+                    int((i4 <0?0:0xFFFF) | (i5 <0?0:0xFFFF0000)),
+                    int((i6 <0?0:0xFFFF) | (i7 <0?0:0xFFFF0000)),
+                    int((i8 <0?0:0xFFFF) | (i9 <0?0:0xFFFF0000)),
+                    int((i10<0?0:0xFFFF) | (i11<0?0:0xFFFF0000)),
+                    int((i12<0?0:0xFFFF) | (i13<0?0:0xFFFF0000)),
+                    int((i14<0?0:0xFFFF) | (i15<0?0:0xFFFF0000)) > ();                    
                 return _mm256_and_si256(a, maskz);
             }
             return a;                                 // do nothing
@@ -3598,14 +3514,14 @@ static inline Vec16s permute16s(Vec16s const & a) {
         }
         // need more zeroing
         mask = constant8i<
-            (i0 <0?0:0xFFFF) | (i1 <0?0:0xFFFF0000),
-            (i2 <0?0:0xFFFF) | (i3 <0?0:0xFFFF0000),
-            (i4 <0?0:0xFFFF) | (i5 <0?0:0xFFFF0000),
-            (i6 <0?0:0xFFFF) | (i7 <0?0:0xFFFF0000),
-            (i8 <0?0:0xFFFF) | (i9 <0?0:0xFFFF0000),
-            (i10<0?0:0xFFFF) | (i11<0?0:0xFFFF0000),
-            (i12<0?0:0xFFFF) | (i13<0?0:0xFFFF0000),
-            (i14<0?0:0xFFFF) | (i15<0?0:0xFFFF0000) > ();                    
+            int((i0 <0?0:0xFFFF) | (i1 <0?0:0xFFFF0000)),
+            int((i2 <0?0:0xFFFF) | (i3 <0?0:0xFFFF0000)),
+            int((i4 <0?0:0xFFFF) | (i5 <0?0:0xFFFF0000)),
+            int((i6 <0?0:0xFFFF) | (i7 <0?0:0xFFFF0000)),
+            int((i8 <0?0:0xFFFF) | (i9 <0?0:0xFFFF0000)),
+            int((i10<0?0:0xFFFF) | (i11<0?0:0xFFFF0000)),
+            int((i12<0?0:0xFFFF) | (i13<0?0:0xFFFF0000)),
+            int((i14<0?0:0xFFFF) | (i15<0?0:0xFFFF0000)) > ();                    
         return _mm256_and_si256(t1, mask);
     }
 
@@ -3749,14 +3665,14 @@ static inline Vec32c permute32c(Vec32c const & a) {
         if (dozero) {
             // zero some elements
             mask = constant8i <
-                (i0 <0?0:0xFF) | (i1 <0?0:0xFF00) | (i2 <0?0:0xFF0000) | (i3 <0?0:0xFF000000),
-                (i4 <0?0:0xFF) | (i5 <0?0:0xFF00) | (i6 <0?0:0xFF0000) | (i7 <0?0:0xFF000000),
-                (i8 <0?0:0xFF) | (i9 <0?0:0xFF00) | (i10<0?0:0xFF0000) | (i11<0?0:0xFF000000),
-                (i12<0?0:0xFF) | (i13<0?0:0xFF00) | (i14<0?0:0xFF0000) | (i15<0?0:0xFF000000),
-                (i16<0?0:0xFF) | (i17<0?0:0xFF00) | (i18<0?0:0xFF0000) | (i19<0?0:0xFF000000),
-                (i20<0?0:0xFF) | (i21<0?0:0xFF00) | (i22<0?0:0xFF0000) | (i23<0?0:0xFF000000),
-                (i24<0?0:0xFF) | (i25<0?0:0xFF00) | (i26<0?0:0xFF0000) | (i27<0?0:0xFF000000),
-                (i28<0?0:0xFF) | (i29<0?0:0xFF00) | (i30<0?0:0xFF0000) | (i31<0?0:0xFF000000) > ();
+                int((i0 <0?0:0xFF) | (i1 <0?0:0xFF00) | (i2 <0?0:0xFF0000) | (i3 <0?0:0xFF000000)),
+                int((i4 <0?0:0xFF) | (i5 <0?0:0xFF00) | (i6 <0?0:0xFF0000) | (i7 <0?0:0xFF000000)),
+                int((i8 <0?0:0xFF) | (i9 <0?0:0xFF00) | (i10<0?0:0xFF0000) | (i11<0?0:0xFF000000)),
+                int((i12<0?0:0xFF) | (i13<0?0:0xFF00) | (i14<0?0:0xFF0000) | (i15<0?0:0xFF000000)),
+                int((i16<0?0:0xFF) | (i17<0?0:0xFF00) | (i18<0?0:0xFF0000) | (i19<0?0:0xFF000000)),
+                int((i20<0?0:0xFF) | (i21<0?0:0xFF00) | (i22<0?0:0xFF0000) | (i23<0?0:0xFF000000)),
+                int((i24<0?0:0xFF) | (i25<0?0:0xFF00) | (i26<0?0:0xFF0000) | (i27<0?0:0xFF000000)),
+                int((i28<0?0:0xFF) | (i29<0?0:0xFF00) | (i30<0?0:0xFF0000) | (i31<0?0:0xFF000000)) > ();
             return _mm256_and_si256(a, mask);
         }
         return a; // do nothing
@@ -3775,7 +3691,7 @@ static inline Vec32c permute32c(Vec32c const & a) {
         && i8 ==((i0+8 )&31) && i9 ==((i0+9 )&31) && i10==((i0+10)&31) && i11==((i0+11)&31) && i12==((i0+12)&31) && i13==((i0+13)&31) && i14==((i0+14)&31) && i15==((i0+15)&31)
         && i16==((i0+16)&31) && i17==((i0+17)&31) && i18==((i0+18)&31) && i19==((i0+19)&31) && i20==((i0+20)&31) && i21==((i0+21)&31) && i22==((i0+22)&31) && i23==((i0+23)&31)
         && i24==((i0+24)&31) && i25==((i0+25)&31) && i26==((i0+26)&31) && i27==((i0+27)&31) && i28==((i0+28)&31) && i29==((i0+29)&31) && i30==((i0+30)&31) && i31==((i0+31)&31)) {
-        __m256i t1 = _mm256_permute4x64_epi64(a, 0x4E);
+        t1 = _mm256_permute4x64_epi64(a, 0x4E);
         return _mm256_alignr_epi8(a, t1, i0 & 15);
     }
 
@@ -3812,14 +3728,14 @@ static inline Vec32c permute32c(Vec32c const & a) {
         }
         // need more zeroing
         mask = constant8i <
-            (i0 <0?0:0xFF) | (i1 <0?0:0xFF00) | (i2 <0?0:0xFF0000) | (i3 <0?0:0xFF000000),
-            (i4 <0?0:0xFF) | (i5 <0?0:0xFF00) | (i6 <0?0:0xFF0000) | (i7 <0?0:0xFF000000),
-            (i8 <0?0:0xFF) | (i9 <0?0:0xFF00) | (i10<0?0:0xFF0000) | (i11<0?0:0xFF000000),
-            (i12<0?0:0xFF) | (i13<0?0:0xFF00) | (i14<0?0:0xFF0000) | (i15<0?0:0xFF000000),
-            (i16<0?0:0xFF) | (i17<0?0:0xFF00) | (i18<0?0:0xFF0000) | (i19<0?0:0xFF000000),
-            (i20<0?0:0xFF) | (i21<0?0:0xFF00) | (i22<0?0:0xFF0000) | (i23<0?0:0xFF000000),
-            (i24<0?0:0xFF) | (i25<0?0:0xFF00) | (i26<0?0:0xFF0000) | (i27<0?0:0xFF000000),
-            (i28<0?0:0xFF) | (i29<0?0:0xFF00) | (i30<0?0:0xFF0000) | (i31<0?0:0xFF000000) > ();
+            int((i0 <0?0:0xFF) | (i1 <0?0:0xFF00) | (i2 <0?0:0xFF0000) | (i3 <0?0:0xFF000000)),
+            int((i4 <0?0:0xFF) | (i5 <0?0:0xFF00) | (i6 <0?0:0xFF0000) | (i7 <0?0:0xFF000000)),
+            int((i8 <0?0:0xFF) | (i9 <0?0:0xFF00) | (i10<0?0:0xFF0000) | (i11<0?0:0xFF000000)),
+            int((i12<0?0:0xFF) | (i13<0?0:0xFF00) | (i14<0?0:0xFF0000) | (i15<0?0:0xFF000000)),
+            int((i16<0?0:0xFF) | (i17<0?0:0xFF00) | (i18<0?0:0xFF0000) | (i19<0?0:0xFF000000)),
+            int((i20<0?0:0xFF) | (i21<0?0:0xFF00) | (i22<0?0:0xFF0000) | (i23<0?0:0xFF000000)),
+            int((i24<0?0:0xFF) | (i25<0?0:0xFF00) | (i26<0?0:0xFF0000) | (i27<0?0:0xFF000000)),
+            int((i28<0?0:0xFF) | (i29<0?0:0xFF00) | (i30<0?0:0xFF0000) | (i31<0?0:0xFF000000)) > ();
         return _mm256_and_si256(a, mask);
     } 
 
@@ -3965,51 +3881,53 @@ static inline Vec4q blend4q(Vec4q const & a, Vec4q const & b) {
 
     // special case: 128 bit blend/permute
     if (((m1 ^ 0x01000100) & 0x01010101 & mz) == 0 && (((m1 + 0x00010001) ^ (m1 >> 8)) & 0x00FF00FF & mz & mz >> 8) == 0) {
-        const int j0 = i0 >= 0 ? i0 / 2 : i1 >= 0 ? i1 / 2 : 4;  // index for low 128 bits
-        const int j1 = i2 >= 0 ? i2 / 2 : i3 >= 0 ? i3 / 2 : 4;  // index for high 128 bits
-        const bool partialzero = int((i0 ^ i1) | (i2 ^ i3)) < 0; // part of a 128-bit block is zeroed
-        __m256i t1;
+        {
+            const int j0 = i0 >= 0 ? i0 / 2 : i1 >= 0 ? i1 / 2 : 4;  // index for low 128 bits
+            const int j1 = i2 >= 0 ? i2 / 2 : i3 >= 0 ? i3 / 2 : 4;  // index for high 128 bits
+            const bool partialzero = int((i0 ^ i1) | (i2 ^ i3)) < 0; // part of a 128-bit block is zeroed
 
-        switch (j0 | j1 << 4) {
-        case 0x00:
-            t1 = _mm256_inserti128_si256(a, _mm256_castsi256_si128(a), 1);  break;
-        case 0x02:
-            t1 = _mm256_inserti128_si256(b, _mm256_castsi256_si128(a), 1);  break;
-        case 0x04:
-            if (dozero && !partialzero) return _mm256_inserti128_si256(_mm256_setzero_si256(), _mm256_castsi256_si128(a), 1);
-            t1 = _mm256_inserti128_si256(a, _mm256_castsi256_si128(a), 1);  break;
-        case 0x12:
-            t1 = _mm256_inserti128_si256(a, _mm256_castsi256_si128(b), 0);  break;
-        case 0x14:
-            if (dozero && !partialzero) return _mm256_inserti128_si256(a,_mm_setzero_si128(), 0);
-            t1 = a;  break;
-        case 0x01: case 0x10: case 0x11: // all from a
-            return permute4q <i0, i1, i2, i3> (a);
-        case 0x20:
-            t1 = _mm256_inserti128_si256(a, _mm256_castsi256_si128(b), 1);  break;
-        case 0x22:
-            t1 = _mm256_inserti128_si256(b, _mm256_castsi256_si128(b), 1);  break;
-        case 0x24:
-            if (dozero && !partialzero) return _mm256_inserti128_si256(_mm256_setzero_si256(), _mm256_castsi256_si128(b), 1);
-            t1 = _mm256_inserti128_si256(b, _mm256_castsi256_si128(b), 1);  break;
-        case 0x30:
-            t1 = _mm256_inserti128_si256(b, _mm256_castsi256_si128(a), 0);  break;
-        case 0x34:
-            if (dozero && !partialzero) return _mm256_inserti128_si256(b,_mm_setzero_si128(), 0);
-            t1 = b;  break;
-        case 0x23: case 0x32: case 0x33:  // all from b
-            return permute4q <i0^4, i1^4, i2^4, i3^4> (b);
-        case 0x40:
-            if (dozero && !partialzero) return _mm256_castsi128_si256(_mm_and_si128(_mm256_castsi256_si128(a),_mm256_castsi256_si128(a)));
-            t1 = a;  break;
-        case 0x42:
-            if (dozero && !partialzero) return _mm256_castsi128_si256(_mm_and_si128(_mm256_castsi256_si128(b),_mm256_castsi256_si128(b)));
-            t1 = b;  break;
-        case 0x44:
-            return _mm256_setzero_si256();
-        default:
-            t1 = _mm256_permute2x128_si256(a, b, (j0&0x0F) | (j1&0x0F) << 4);
+            switch (j0 | j1 << 4) {
+            case 0x00:
+                t1 = _mm256_inserti128_si256(a, _mm256_castsi256_si128(a), 1);  break;
+            case 0x02:
+                t1 = _mm256_inserti128_si256(b, _mm256_castsi256_si128(a), 1);  break;
+            case 0x04:
+                if (dozero && !partialzero) return _mm256_inserti128_si256(_mm256_setzero_si256(), _mm256_castsi256_si128(a), 1);
+                t1 = _mm256_inserti128_si256(a, _mm256_castsi256_si128(a), 1);  break;
+            case 0x12:
+                t1 = _mm256_inserti128_si256(a, _mm256_castsi256_si128(b), 0);  break;
+            case 0x14:
+                if (dozero && !partialzero) return _mm256_inserti128_si256(a,_mm_setzero_si128(), 0);
+                t1 = a;  break;
+            case 0x01: case 0x10: case 0x11: // all from a
+                return permute4q <i0, i1, i2, i3> (a);
+            case 0x20:
+                t1 = _mm256_inserti128_si256(a, _mm256_castsi256_si128(b), 1);  break;
+            case 0x22:
+                t1 = _mm256_inserti128_si256(b, _mm256_castsi256_si128(b), 1);  break;
+            case 0x24:
+                if (dozero && !partialzero) return _mm256_inserti128_si256(_mm256_setzero_si256(), _mm256_castsi256_si128(b), 1);
+                t1 = _mm256_inserti128_si256(b, _mm256_castsi256_si128(b), 1);  break;
+            case 0x30:
+                t1 = _mm256_inserti128_si256(b, _mm256_castsi256_si128(a), 0);  break;
+            case 0x34:
+                if (dozero && !partialzero) return _mm256_inserti128_si256(b,_mm_setzero_si128(), 0);
+                t1 = b;  break;
+            case 0x23: case 0x32: case 0x33:  // all from b
+                return permute4q <i0^4, i1^4, i2^4, i3^4> (b);
+            case 0x40:
+                if (dozero && !partialzero) return _mm256_castsi128_si256(_mm_and_si128(_mm256_castsi256_si128(a),_mm256_castsi256_si128(a)));
+                t1 = a;  break;
+            case 0x42:
+                if (dozero && !partialzero) return _mm256_castsi128_si256(_mm_and_si128(_mm256_castsi256_si128(b),_mm256_castsi256_si128(b)));
+                t1 = b;  break;
+            case 0x44:
+                return _mm256_setzero_si256();
+            default:
+                t1 = _mm256_permute2x128_si256(a, b, (j0&0x0F) | (j1&0x0F) << 4);
+            }
         }
+        RETURNORZERO:
         if (dozero) {
             // zero some elements
             const __m256i maskz = constant8i <
@@ -4032,21 +3950,11 @@ static inline Vec4q blend4q(Vec4q const & a, Vec4q const & b) {
 
     // special case: blend without permute
     if (((m1 ^ 0x03020100) & 0xFBFBFBFB & mz) == 0) {
-
         mask = constant8i <
             (i0 & 4) ? -1 : 0, (i0 & 4) ? -1 : 0, (i1 & 4) ? -1 : 0, (i1 & 4) ? -1 : 0, 
             (i2 & 4) ? -1 : 0, (i2 & 4) ? -1 : 0, (i3 & 4) ? -1 : 0, (i3 & 4) ? -1 : 0 > ();
-
         t1 = _mm256_blendv_epi8(a, b, mask);  // blend
-
-        if (dozero) {
-            // zero some elements
-            const __m256i maskz = constant8i <
-                i0 < 0 ? 0 : -1, i0 < 0 ? 0 : -1, i1 < 0 ? 0 : -1, i1 < 0 ? 0 : -1, 
-                i2 < 0 ? 0 : -1, i2 < 0 ? 0 : -1, i3 < 0 ? 0 : -1, i3 < 0 ? 0 : -1 > ();
-            return _mm256_and_si256(t1, maskz);
-        }
-        return t1;
+        goto RETURNORZERO;
     } 
 
     // special case: shift left
@@ -4060,6 +3968,26 @@ static inline Vec4q blend4q(Vec4q const & a, Vec4q const & b) {
         t1 = _mm256_permute2x128_si256(b, a, 0x21);
         if (i0 < 6) return _mm256_alignr_epi8(t1, b, (i0 & 1) * 8);
         else        return _mm256_alignr_epi8(a, t1, (i0 & 1) * 8);
+    }
+    // special case: unpack low
+    if (((m1 ^ 0x06020400) & mz) == 0) {
+        t1 = _mm256_unpacklo_epi64(a, b);
+        goto RETURNORZERO;
+    }
+    // special case: unpack low
+    if (((m1 ^ 0x02060004) & mz) == 0) {
+        t1 = _mm256_unpacklo_epi64(b, a);
+        goto RETURNORZERO;
+    }
+    // special case: unpack high
+    if (((m1 ^ 0x07030501) & mz) == 0) {
+        t1 = _mm256_unpackhi_epi64(a, b);
+        goto RETURNORZERO;
+    }
+    // special case: unpack high
+    if (((m1 ^ 0x03070105) & mz) == 0) {
+        t1 = _mm256_unpackhi_epi64(b, a);
+        goto RETURNORZERO;
     }
 
     // general case: permute and blend and possibly zero
@@ -4202,8 +4130,6 @@ static inline Vec8ui blend8ui(Vec8ui const & a, Vec8ui const & b) {
 template <int i0,  int i1,  int i2,  int i3,  int i4,  int i5,  int i6,  int i7, 
           int i8,  int i9,  int i10, int i11, int i12, int i13, int i14, int i15 > 
 static inline Vec16s blend16s(Vec16s const & a, Vec16s const & b) {  
-    //  #ifdef __XOP2__  // Possible future 256-bit XOP extension ?
-
     // collect bit 4 of each index
     const int m1 = 
         (i0 &16)>>4  | (i1 &16)>>3  | (i2 &16)>>2  | (i3 &16)>>1  | (i4 &16)     | (i5 &16)<<1  | (i6 &16)<<2  | (i7 &16)<<3  | 
@@ -4236,28 +4162,28 @@ static inline Vec16s blend16s(Vec16s const & a, Vec16s const & b) {
         (i12<0||(i12&15)==12) && (i13<0||(i13&15)==13) && (i14<0||(i14&15)==14) && (i15<0||(i15&15)==15)) {
 
         mask = constant8i <
-            ((i0 & 16) ? 0xFFFF : 0) | ((i1 & 16) ? 0xFFFF0000 : 0),
-            ((i2 & 16) ? 0xFFFF : 0) | ((i3 & 16) ? 0xFFFF0000 : 0),
-            ((i4 & 16) ? 0xFFFF : 0) | ((i5 & 16) ? 0xFFFF0000 : 0),
-            ((i6 & 16) ? 0xFFFF : 0) | ((i7 & 16) ? 0xFFFF0000 : 0),
-            ((i8 & 16) ? 0xFFFF : 0) | ((i9 & 16) ? 0xFFFF0000 : 0),
-            ((i10& 16) ? 0xFFFF : 0) | ((i11& 16) ? 0xFFFF0000 : 0),
-            ((i12& 16) ? 0xFFFF : 0) | ((i13& 16) ? 0xFFFF0000 : 0),
-            ((i14& 16) ? 0xFFFF : 0) | ((i15& 16) ? 0xFFFF0000 : 0) > ();
+            int(((i0 & 16) ? 0xFFFF : 0) | ((i1 & 16) ? 0xFFFF0000 : 0)),
+            int(((i2 & 16) ? 0xFFFF : 0) | ((i3 & 16) ? 0xFFFF0000 : 0)),
+            int(((i4 & 16) ? 0xFFFF : 0) | ((i5 & 16) ? 0xFFFF0000 : 0)),
+            int(((i6 & 16) ? 0xFFFF : 0) | ((i7 & 16) ? 0xFFFF0000 : 0)),
+            int(((i8 & 16) ? 0xFFFF : 0) | ((i9 & 16) ? 0xFFFF0000 : 0)),
+            int(((i10& 16) ? 0xFFFF : 0) | ((i11& 16) ? 0xFFFF0000 : 0)),
+            int(((i12& 16) ? 0xFFFF : 0) | ((i13& 16) ? 0xFFFF0000 : 0)),
+            int(((i14& 16) ? 0xFFFF : 0) | ((i15& 16) ? 0xFFFF0000 : 0)) > ();
 
         t1 = _mm256_blendv_epi8(a, b, mask);  // blend
 
         if (mz != 0xFFFF) {
             // zero some elements
             mask = constant8i <
-                (i0  < 0 ? 0 : 0xFFFF) | (i1  < 0 ? 0 : 0xFFFF0000),
-                (i2  < 0 ? 0 : 0xFFFF) | (i3  < 0 ? 0 : 0xFFFF0000),
-                (i4  < 0 ? 0 : 0xFFFF) | (i5  < 0 ? 0 : 0xFFFF0000),
-                (i6  < 0 ? 0 : 0xFFFF) | (i7  < 0 ? 0 : 0xFFFF0000),
-                (i8  < 0 ? 0 : 0xFFFF) | (i9  < 0 ? 0 : 0xFFFF0000),
-                (i10 < 0 ? 0 : 0xFFFF) | (i11 < 0 ? 0 : 0xFFFF0000),
-                (i12 < 0 ? 0 : 0xFFFF) | (i13 < 0 ? 0 : 0xFFFF0000),
-                (i14 < 0 ? 0 : 0xFFFF) | (i15 < 0 ? 0 : 0xFFFF0000) > ();
+                int((i0  < 0 ? 0 : 0xFFFF) | (i1  < 0 ? 0 : 0xFFFF0000)),
+                int((i2  < 0 ? 0 : 0xFFFF) | (i3  < 0 ? 0 : 0xFFFF0000)),
+                int((i4  < 0 ? 0 : 0xFFFF) | (i5  < 0 ? 0 : 0xFFFF0000)),
+                int((i6  < 0 ? 0 : 0xFFFF) | (i7  < 0 ? 0 : 0xFFFF0000)),
+                int((i8  < 0 ? 0 : 0xFFFF) | (i9  < 0 ? 0 : 0xFFFF0000)),
+                int((i10 < 0 ? 0 : 0xFFFF) | (i11 < 0 ? 0 : 0xFFFF0000)),
+                int((i12 < 0 ? 0 : 0xFFFF) | (i13 < 0 ? 0 : 0xFFFF0000)),
+                int((i14 < 0 ? 0 : 0xFFFF) | (i15 < 0 ? 0 : 0xFFFF0000)) > ();
             return _mm256_and_si256(t1, mask);
         }
         return t1;
@@ -4274,14 +4200,14 @@ static inline Vec16s blend16s(Vec16s const & a, Vec16s const & b) {
         if (mz != 0xFFFF) {
             // zero some elements
             mask = constant8i <
-                (i0  < 0 ? 0 : 0xFFFF) | (i1  < 0 ? 0 : 0xFFFF0000),
-                (i2  < 0 ? 0 : 0xFFFF) | (i3  < 0 ? 0 : 0xFFFF0000),
-                (i4  < 0 ? 0 : 0xFFFF) | (i5  < 0 ? 0 : 0xFFFF0000),
-                (i6  < 0 ? 0 : 0xFFFF) | (i7  < 0 ? 0 : 0xFFFF0000),
-                (i8  < 0 ? 0 : 0xFFFF) | (i9  < 0 ? 0 : 0xFFFF0000),
-                (i10 < 0 ? 0 : 0xFFFF) | (i11 < 0 ? 0 : 0xFFFF0000),
-                (i12 < 0 ? 0 : 0xFFFF) | (i13 < 0 ? 0 : 0xFFFF0000),
-                (i14 < 0 ? 0 : 0xFFFF) | (i15 < 0 ? 0 : 0xFFFF0000) > ();
+                int((i0  < 0 ? 0 : 0xFFFF) | (i1  < 0 ? 0 : 0xFFFF0000)),
+                int((i2  < 0 ? 0 : 0xFFFF) | (i3  < 0 ? 0 : 0xFFFF0000)),
+                int((i4  < 0 ? 0 : 0xFFFF) | (i5  < 0 ? 0 : 0xFFFF0000)),
+                int((i6  < 0 ? 0 : 0xFFFF) | (i7  < 0 ? 0 : 0xFFFF0000)),
+                int((i8  < 0 ? 0 : 0xFFFF) | (i9  < 0 ? 0 : 0xFFFF0000)),
+                int((i10 < 0 ? 0 : 0xFFFF) | (i11 < 0 ? 0 : 0xFFFF0000)),
+                int((i12 < 0 ? 0 : 0xFFFF) | (i13 < 0 ? 0 : 0xFFFF0000)),
+                int((i14 < 0 ? 0 : 0xFFFF) | (i15 < 0 ? 0 : 0xFFFF0000)) > ();
             return _mm256_and_si256(t1, mask);
         }
         return t1;
@@ -4297,14 +4223,14 @@ static inline Vec16s blend16s(Vec16s const & a, Vec16s const & b) {
         if (mz != 0xFFFF) {
             // zero some elements
             mask = constant8i <
-                (i0  < 0 ? 0 : 0xFFFF) | (i1  < 0 ? 0 : 0xFFFF0000),
-                (i2  < 0 ? 0 : 0xFFFF) | (i3  < 0 ? 0 : 0xFFFF0000),
-                (i4  < 0 ? 0 : 0xFFFF) | (i5  < 0 ? 0 : 0xFFFF0000),
-                (i6  < 0 ? 0 : 0xFFFF) | (i7  < 0 ? 0 : 0xFFFF0000),
-                (i8  < 0 ? 0 : 0xFFFF) | (i9  < 0 ? 0 : 0xFFFF0000),
-                (i10 < 0 ? 0 : 0xFFFF) | (i11 < 0 ? 0 : 0xFFFF0000),
-                (i12 < 0 ? 0 : 0xFFFF) | (i13 < 0 ? 0 : 0xFFFF0000),
-                (i14 < 0 ? 0 : 0xFFFF) | (i15 < 0 ? 0 : 0xFFFF0000) > ();
+                int((i0  < 0 ? 0 : 0xFFFF) | (i1  < 0 ? 0 : 0xFFFF0000)),
+                int((i2  < 0 ? 0 : 0xFFFF) | (i3  < 0 ? 0 : 0xFFFF0000)),
+                int((i4  < 0 ? 0 : 0xFFFF) | (i5  < 0 ? 0 : 0xFFFF0000)),
+                int((i6  < 0 ? 0 : 0xFFFF) | (i7  < 0 ? 0 : 0xFFFF0000)),
+                int((i8  < 0 ? 0 : 0xFFFF) | (i9  < 0 ? 0 : 0xFFFF0000)),
+                int((i10 < 0 ? 0 : 0xFFFF) | (i11 < 0 ? 0 : 0xFFFF0000)),
+                int((i12 < 0 ? 0 : 0xFFFF) | (i13 < 0 ? 0 : 0xFFFF0000)),
+                int((i14 < 0 ? 0 : 0xFFFF) | (i15 < 0 ? 0 : 0xFFFF0000)) > ();
             return _mm256_and_si256(t1, mask);
         }
         return t1;
@@ -4332,14 +4258,14 @@ static inline Vec16s blend16s(Vec16s const & a, Vec16s const & b) {
     }
     // no zeroing, need to blend
     mask = constant8i <
-        ((i0 & 16) ? 0xFFFF : 0) | ((i1 & 16) ? 0xFFFF0000 : 0),
-        ((i2 & 16) ? 0xFFFF : 0) | ((i3 & 16) ? 0xFFFF0000 : 0),
-        ((i4 & 16) ? 0xFFFF : 0) | ((i5 & 16) ? 0xFFFF0000 : 0),
-        ((i6 & 16) ? 0xFFFF : 0) | ((i7 & 16) ? 0xFFFF0000 : 0),
-        ((i8 & 16) ? 0xFFFF : 0) | ((i9 & 16) ? 0xFFFF0000 : 0),
-        ((i10& 16) ? 0xFFFF : 0) | ((i11& 16) ? 0xFFFF0000 : 0),
-        ((i12& 16) ? 0xFFFF : 0) | ((i13& 16) ? 0xFFFF0000 : 0),
-        ((i14& 16) ? 0xFFFF : 0) | ((i15& 16) ? 0xFFFF0000 : 0) > ();
+        int(((i0 & 16) ? 0xFFFF : 0) | ((i1 & 16) ? 0xFFFF0000 : 0)),
+        int(((i2 & 16) ? 0xFFFF : 0) | ((i3 & 16) ? 0xFFFF0000 : 0)),
+        int(((i4 & 16) ? 0xFFFF : 0) | ((i5 & 16) ? 0xFFFF0000 : 0)),
+        int(((i6 & 16) ? 0xFFFF : 0) | ((i7 & 16) ? 0xFFFF0000 : 0)),
+        int(((i8 & 16) ? 0xFFFF : 0) | ((i9 & 16) ? 0xFFFF0000 : 0)),
+        int(((i10& 16) ? 0xFFFF : 0) | ((i11& 16) ? 0xFFFF0000 : 0)),
+        int(((i12& 16) ? 0xFFFF : 0) | ((i13& 16) ? 0xFFFF0000 : 0)),
+        int(((i14& 16) ? 0xFFFF : 0) | ((i15& 16) ? 0xFFFF0000 : 0)) > ();
 
     return _mm256_blendv_epi8(ta, tb, mask);  // blend
 }
@@ -4355,8 +4281,6 @@ template <int i0,  int i1,  int i2,  int i3,  int i4,  int i5,  int i6,  int i7,
           int i16, int i17, int i18, int i19, int i20, int i21, int i22, int i23,
           int i24, int i25, int i26, int i27, int i28, int i29, int i30, int i31 > 
 static inline Vec32c blend32c(Vec32c const & a, Vec32c const & b) {  
-    //  #ifdef __XOP2__  // Possible future 256-bit XOP extension ?
-
     // collect bit 5 of each index
     const int m1 = 
         (i0 &32)>>5  | (i1 &32)>>4  | (i2 &32)>>3  | (i3 &32)>>2  | (i4 &32)>>1  | (i5 &32)     | (i6 &32)<<1  | (i7 &32)<<2  | 
@@ -4399,28 +4323,28 @@ static inline Vec32c blend32c(Vec32c const & a, Vec32c const & b) {
         (i28<0||(i28&31)==28) && (i29<0||(i29&31)==29) && (i30<0||(i30&31)==30) && (i31<0||(i31&31)==31) ) {
 
         mask = constant8i <
-            ((i0 <<2)&0x80) | ((i1 <<10)&0x8000) | ((i2 <<18)&0x800000) | (uint32_t(i3 <<26)&0x80000000) ,
-            ((i4 <<2)&0x80) | ((i5 <<10)&0x8000) | ((i6 <<18)&0x800000) | (uint32_t(i7 <<26)&0x80000000) ,
-            ((i8 <<2)&0x80) | ((i9 <<10)&0x8000) | ((i10<<18)&0x800000) | (uint32_t(i11<<26)&0x80000000) ,
-            ((i12<<2)&0x80) | ((i13<<10)&0x8000) | ((i14<<18)&0x800000) | (uint32_t(i15<<26)&0x80000000) ,
-            ((i16<<2)&0x80) | ((i17<<10)&0x8000) | ((i18<<18)&0x800000) | (uint32_t(i19<<26)&0x80000000) ,
-            ((i20<<2)&0x80) | ((i21<<10)&0x8000) | ((i22<<18)&0x800000) | (uint32_t(i23<<26)&0x80000000) ,
-            ((i24<<2)&0x80) | ((i25<<10)&0x8000) | ((i26<<18)&0x800000) | (uint32_t(i27<<26)&0x80000000) ,
-            ((i28<<2)&0x80) | ((i29<<10)&0x8000) | ((i30<<18)&0x800000) | (uint32_t(i31<<26)&0x80000000) > ();
+            int(((i0 <<2)&0x80) | ((i1 <<10)&0x8000) | ((i2 <<18)&0x800000) | (uint32_t(i3 <<26)&0x80000000)) ,
+            int(((i4 <<2)&0x80) | ((i5 <<10)&0x8000) | ((i6 <<18)&0x800000) | (uint32_t(i7 <<26)&0x80000000)) ,
+            int(((i8 <<2)&0x80) | ((i9 <<10)&0x8000) | ((i10<<18)&0x800000) | (uint32_t(i11<<26)&0x80000000)) ,
+            int(((i12<<2)&0x80) | ((i13<<10)&0x8000) | ((i14<<18)&0x800000) | (uint32_t(i15<<26)&0x80000000)) ,
+            int(((i16<<2)&0x80) | ((i17<<10)&0x8000) | ((i18<<18)&0x800000) | (uint32_t(i19<<26)&0x80000000)) ,
+            int(((i20<<2)&0x80) | ((i21<<10)&0x8000) | ((i22<<18)&0x800000) | (uint32_t(i23<<26)&0x80000000)) ,
+            int(((i24<<2)&0x80) | ((i25<<10)&0x8000) | ((i26<<18)&0x800000) | (uint32_t(i27<<26)&0x80000000)) ,
+            int(((i28<<2)&0x80) | ((i29<<10)&0x8000) | ((i30<<18)&0x800000) | (uint32_t(i31<<26)&0x80000000)) > ();
 
         t1 = _mm256_blendv_epi8(a, b, mask);  // blend
 
         if (mz != -1) {
             // zero some elements
             const __m256i maskz = constant8i <
-                (i0 <0?0:0xFF) | (i1 <0?0:0xFF00) | (i2 <0?0:0xFF0000) | (i3 <0?0:0xFF000000),
-                (i4 <0?0:0xFF) | (i5 <0?0:0xFF00) | (i6 <0?0:0xFF0000) | (i7 <0?0:0xFF000000),
-                (i8 <0?0:0xFF) | (i9 <0?0:0xFF00) | (i10<0?0:0xFF0000) | (i11<0?0:0xFF000000),
-                (i12<0?0:0xFF) | (i13<0?0:0xFF00) | (i14<0?0:0xFF0000) | (i15<0?0:0xFF000000),
-                (i16<0?0:0xFF) | (i17<0?0:0xFF00) | (i18<0?0:0xFF0000) | (i19<0?0:0xFF000000),
-                (i20<0?0:0xFF) | (i21<0?0:0xFF00) | (i22<0?0:0xFF0000) | (i23<0?0:0xFF000000),
-                (i24<0?0:0xFF) | (i25<0?0:0xFF00) | (i26<0?0:0xFF0000) | (i27<0?0:0xFF000000),
-                (i28<0?0:0xFF) | (i29<0?0:0xFF00) | (i30<0?0:0xFF0000) | (i31<0?0:0xFF000000) > ();
+                int((i0 <0?0:0xFF) | (i1 <0?0:0xFF00) | (i2 <0?0:0xFF0000) | (i3 <0?0:0xFF000000)),
+                int((i4 <0?0:0xFF) | (i5 <0?0:0xFF00) | (i6 <0?0:0xFF0000) | (i7 <0?0:0xFF000000)),
+                int((i8 <0?0:0xFF) | (i9 <0?0:0xFF00) | (i10<0?0:0xFF0000) | (i11<0?0:0xFF000000)),
+                int((i12<0?0:0xFF) | (i13<0?0:0xFF00) | (i14<0?0:0xFF0000) | (i15<0?0:0xFF000000)),
+                int((i16<0?0:0xFF) | (i17<0?0:0xFF00) | (i18<0?0:0xFF0000) | (i19<0?0:0xFF000000)),
+                int((i20<0?0:0xFF) | (i21<0?0:0xFF00) | (i22<0?0:0xFF0000) | (i23<0?0:0xFF000000)),
+                int((i24<0?0:0xFF) | (i25<0?0:0xFF00) | (i26<0?0:0xFF0000) | (i27<0?0:0xFF000000)),
+                int((i28<0?0:0xFF) | (i29<0?0:0xFF00) | (i30<0?0:0xFF0000) | (i31<0?0:0xFF000000)) > ();
             return _mm256_and_si256(t1, maskz);
         }
         return t1;
@@ -4443,14 +4367,14 @@ static inline Vec32c blend32c(Vec32c const & a, Vec32c const & b) {
         if (mz != -1) {
             // zero some elements
             const __m256i maskz = constant8i <
-                (i0 <0?0:0xFF) | (i1 <0?0:0xFF00) | (i2 <0?0:0xFF0000) | (i3 <0?0:0xFF000000),
-                (i4 <0?0:0xFF) | (i5 <0?0:0xFF00) | (i6 <0?0:0xFF0000) | (i7 <0?0:0xFF000000),
-                (i8 <0?0:0xFF) | (i9 <0?0:0xFF00) | (i10<0?0:0xFF0000) | (i11<0?0:0xFF000000),
-                (i12<0?0:0xFF) | (i13<0?0:0xFF00) | (i14<0?0:0xFF0000) | (i15<0?0:0xFF000000),
-                (i16<0?0:0xFF) | (i17<0?0:0xFF00) | (i18<0?0:0xFF0000) | (i19<0?0:0xFF000000),
-                (i20<0?0:0xFF) | (i21<0?0:0xFF00) | (i22<0?0:0xFF0000) | (i23<0?0:0xFF000000),
-                (i24<0?0:0xFF) | (i25<0?0:0xFF00) | (i26<0?0:0xFF0000) | (i27<0?0:0xFF000000),
-                (i28<0?0:0xFF) | (i29<0?0:0xFF00) | (i30<0?0:0xFF0000) | (i31<0?0:0xFF000000) > ();
+                int((i0 <0?0:0xFF) | (i1 <0?0:0xFF00) | (i2 <0?0:0xFF0000) | (i3 <0?0:0xFF000000)),
+                int((i4 <0?0:0xFF) | (i5 <0?0:0xFF00) | (i6 <0?0:0xFF0000) | (i7 <0?0:0xFF000000)),
+                int((i8 <0?0:0xFF) | (i9 <0?0:0xFF00) | (i10<0?0:0xFF0000) | (i11<0?0:0xFF000000)),
+                int((i12<0?0:0xFF) | (i13<0?0:0xFF00) | (i14<0?0:0xFF0000) | (i15<0?0:0xFF000000)),
+                int((i16<0?0:0xFF) | (i17<0?0:0xFF00) | (i18<0?0:0xFF0000) | (i19<0?0:0xFF000000)),
+                int((i20<0?0:0xFF) | (i21<0?0:0xFF00) | (i22<0?0:0xFF0000) | (i23<0?0:0xFF000000)),
+                int((i24<0?0:0xFF) | (i25<0?0:0xFF00) | (i26<0?0:0xFF0000) | (i27<0?0:0xFF000000)),
+                int((i28<0?0:0xFF) | (i29<0?0:0xFF00) | (i30<0?0:0xFF0000) | (i31<0?0:0xFF000000)) > ();
             return _mm256_and_si256(t1, maskz);
         }
         return t1;
@@ -4472,14 +4396,14 @@ static inline Vec32c blend32c(Vec32c const & a, Vec32c const & b) {
         if (mz != -1) {
             // zero some elements
             const __m256i maskz = constant8i <
-                (i0 <0?0:0xFF) | (i1 <0?0:0xFF00) | (i2 <0?0:0xFF0000) | (i3 <0?0:0xFF000000),
-                (i4 <0?0:0xFF) | (i5 <0?0:0xFF00) | (i6 <0?0:0xFF0000) | (i7 <0?0:0xFF000000),
-                (i8 <0?0:0xFF) | (i9 <0?0:0xFF00) | (i10<0?0:0xFF0000) | (i11<0?0:0xFF000000),
-                (i12<0?0:0xFF) | (i13<0?0:0xFF00) | (i14<0?0:0xFF0000) | (i15<0?0:0xFF000000),
-                (i16<0?0:0xFF) | (i17<0?0:0xFF00) | (i18<0?0:0xFF0000) | (i19<0?0:0xFF000000),
-                (i20<0?0:0xFF) | (i21<0?0:0xFF00) | (i22<0?0:0xFF0000) | (i23<0?0:0xFF000000),
-                (i24<0?0:0xFF) | (i25<0?0:0xFF00) | (i26<0?0:0xFF0000) | (i27<0?0:0xFF000000),
-                (i28<0?0:0xFF) | (i29<0?0:0xFF00) | (i30<0?0:0xFF0000) | (i31<0?0:0xFF000000) > ();
+                int((i0 <0?0:0xFF) | (i1 <0?0:0xFF00) | (i2 <0?0:0xFF0000) | (i3 <0?0:0xFF000000)),
+                int((i4 <0?0:0xFF) | (i5 <0?0:0xFF00) | (i6 <0?0:0xFF0000) | (i7 <0?0:0xFF000000)),
+                int((i8 <0?0:0xFF) | (i9 <0?0:0xFF00) | (i10<0?0:0xFF0000) | (i11<0?0:0xFF000000)),
+                int((i12<0?0:0xFF) | (i13<0?0:0xFF00) | (i14<0?0:0xFF0000) | (i15<0?0:0xFF000000)),
+                int((i16<0?0:0xFF) | (i17<0?0:0xFF00) | (i18<0?0:0xFF0000) | (i19<0?0:0xFF000000)),
+                int((i20<0?0:0xFF) | (i21<0?0:0xFF00) | (i22<0?0:0xFF0000) | (i23<0?0:0xFF000000)),
+                int((i24<0?0:0xFF) | (i25<0?0:0xFF00) | (i26<0?0:0xFF0000) | (i27<0?0:0xFF000000)),
+                int((i28<0?0:0xFF) | (i29<0?0:0xFF00) | (i30<0?0:0xFF0000) | (i31<0?0:0xFF000000)) > ();
             return _mm256_and_si256(t1, maskz);
         }
         return t1;
@@ -4515,14 +4439,14 @@ static inline Vec32c blend32c(Vec32c const & a, Vec32c const & b) {
     }
     // no zeroing, need to blend
     mask = constant8i <
-        ((i0 <<2)&0x80) | ((i1 <<10)&0x8000) | ((i2 <<18)&0x800000) | (uint32_t(i3 <<26)&0x80000000) ,
-        ((i4 <<2)&0x80) | ((i5 <<10)&0x8000) | ((i6 <<18)&0x800000) | (uint32_t(i7 <<26)&0x80000000) ,
-        ((i8 <<2)&0x80) | ((i9 <<10)&0x8000) | ((i10<<18)&0x800000) | (uint32_t(i11<<26)&0x80000000) ,
-        ((i12<<2)&0x80) | ((i13<<10)&0x8000) | ((i14<<18)&0x800000) | (uint32_t(i15<<26)&0x80000000) ,
-        ((i16<<2)&0x80) | ((i17<<10)&0x8000) | ((i18<<18)&0x800000) | (uint32_t(i19<<26)&0x80000000) ,
-        ((i20<<2)&0x80) | ((i21<<10)&0x8000) | ((i22<<18)&0x800000) | (uint32_t(i23<<26)&0x80000000) ,
-        ((i24<<2)&0x80) | ((i25<<10)&0x8000) | ((i26<<18)&0x800000) | (uint32_t(i27<<26)&0x80000000) ,
-        ((i28<<2)&0x80) | ((i29<<10)&0x8000) | ((i30<<18)&0x800000) | (uint32_t(i31<<26)&0x80000000) > ();
+        int(((i0 <<2)&0x80) | ((i1 <<10)&0x8000) | ((i2 <<18)&0x800000) | (uint32_t(i3 <<26)&0x80000000)) ,
+        int(((i4 <<2)&0x80) | ((i5 <<10)&0x8000) | ((i6 <<18)&0x800000) | (uint32_t(i7 <<26)&0x80000000)) ,
+        int(((i8 <<2)&0x80) | ((i9 <<10)&0x8000) | ((i10<<18)&0x800000) | (uint32_t(i11<<26)&0x80000000)) ,
+        int(((i12<<2)&0x80) | ((i13<<10)&0x8000) | ((i14<<18)&0x800000) | (uint32_t(i15<<26)&0x80000000)) ,
+        int(((i16<<2)&0x80) | ((i17<<10)&0x8000) | ((i18<<18)&0x800000) | (uint32_t(i19<<26)&0x80000000)) ,
+        int(((i20<<2)&0x80) | ((i21<<10)&0x8000) | ((i22<<18)&0x800000) | (uint32_t(i23<<26)&0x80000000)) ,
+        int(((i24<<2)&0x80) | ((i25<<10)&0x8000) | ((i26<<18)&0x800000) | (uint32_t(i27<<26)&0x80000000)) ,
+        int(((i28<<2)&0x80) | ((i29<<10)&0x8000) | ((i30<<18)&0x800000) | (uint32_t(i31<<26)&0x80000000)) > ();
 
     return _mm256_blendv_epi8(ta, tb, mask);  // blend
 }
@@ -4660,7 +4584,7 @@ static inline Vec8i lookup(Vec8i const & index, void const * table) {
     }
     if (n <= 16) {
         Vec8i table1 = Vec8i().load(table);
-        Vec8i table2 = Vec8i().load((int32_t*)table + 8);
+        Vec8i table2 = Vec8i().load((int32_t const*)table + 8);
         Vec8i y1 = lookup8(index, table1);
         Vec8i y2 = lookup8(index, table2);
         Vec8ib s = index > 7;
@@ -5587,5 +5511,8 @@ static inline Vec4qb to_Vec4qb(uint8_t x);
 
 #endif  // INSTRSET < 9 || MAX_VECTOR_SIZE < 512
 
+#ifdef VCL_NAMESPACE
+}
+#endif
 
 #endif // VECTORI256_H

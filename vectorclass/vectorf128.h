@@ -1,8 +1,8 @@
 /****************************  vectorf128.h   *******************************
 * Author:        Agner Fog
 * Date created:  2012-05-30
-* Last modified: 2014-10-24
-* Version:       1.16
+* Last modified: 2016-09-27
+* Version:       1.23
 * Project:       vector classes
 * Description:
 * Header file defining floating point vector classes as interface to 
@@ -30,14 +30,22 @@
 *
 * For detailed instructions, see VectorClass.pdf
 *
-* (c) Copyright 2012 - 2014 GNU General Public License http://www.gnu.org/licenses
+* (c) Copyright 2012 - 2016 GNU General Public License http://www.gnu.org/licenses
 *****************************************************************************/
 #ifndef VECTORF128_H
 #define VECTORF128_H
 
+#if defined _MSC_VER && _MSC_VER >= 1800
+// solve problem with ambiguous overloading of pow function in Microsoft math.h:
+// make sure math.h is included first rather than last
+#include <math.h>
+#endif 
+
 #include "vectori128.h"  // Define integer vectors
 
-
+#ifdef VCL_NAMESPACE
+namespace VCL_NAMESPACE {
+#endif
 
 /*****************************************************************************
 *
@@ -131,11 +139,11 @@ public:
     operator __m128() const {
         return xmm;
     }
-#if defined (__clang__) && CLANG_VERSION < 30900 || defined(__apple_build_version__)
-#define FIX_CLANG_VECTOR_ALIAS_AMBIGUITY  // clang 3.3 - 3.5 has silent conversion between intrinsic vector types. 
-                                          // I expected this to be fixed in version 3.4 but it still exists!
+#if defined (__clang__) /* && CLANG_VERSION < xxxxx */ || defined(__apple_build_version__)
+#define FIX_CLANG_VECTOR_ALIAS_AMBIGUITY  // clang 3.3 has silent conversion between intrinsic vector types. 
+                                          // I expected this to be fixed in version 3.4 but it still exists in version 3.9!
                                           // http://llvm.org/bugs/show_bug.cgi?id=17164
-                                          // Problem: The version number is not consistent across platforms
+                                          // Additional problem: The version number is not consistent across platforms
                                           // The Apple build has different version numbers. Too bad!
                                           // http://llvm.org/bugs/show_bug.cgi?id=12643
 
@@ -246,12 +254,14 @@ static inline Vec4fb andnot(Vec4fb const & a, Vec4fb const & b) {
 
 // horizontal_and. Returns true if all bits are 1
 static inline bool horizontal_and (Vec4fb const & a) {
-    return horizontal_and(Vec128b(_mm_castps_si128(a)));
+    return _mm_movemask_ps(a) == 0x0F; 
+    //return horizontal_and(Vec128b(_mm_castps_si128(a)));
 }
 
 // horizontal_or. Returns true if at least one bit is 1
 static inline bool horizontal_or (Vec4fb const & a) {
-    return horizontal_or(Vec128b(_mm_castps_si128(a)));
+    return _mm_movemask_ps(a) != 0;
+    //return horizontal_or(Vec128b(_mm_castps_si128(a)));
 }
 
 
@@ -414,12 +424,14 @@ static inline Vec2db andnot(Vec2db const & a, Vec2db const & b) {
 
 // horizontal_and. Returns true if all bits are 1
 static inline bool horizontal_and (Vec2db const & a) {
-    return horizontal_and(Vec128b(_mm_castpd_si128(a)));
+    return _mm_movemask_pd(a) == 3;
+    //return horizontal_and(Vec128b(_mm_castpd_si128(a)));
 }
 
 // horizontal_or. Returns true if at least one bit is 1
 static inline bool horizontal_or (Vec2db const & a) {
-    return horizontal_or(Vec128b(_mm_castpd_si128(a)));
+    return _mm_movemask_pd(a) != 0;
+    //return horizontal_or(Vec128b(_mm_castpd_si128(a)));
 }
 
 
@@ -491,9 +503,9 @@ public:
         case 1:
             xmm = _mm_load_ss(p); break;
         case 2:
-            xmm = _mm_castpd_ps(_mm_load_sd((double*)p)); break;
+            xmm = _mm_castpd_ps(_mm_load_sd((double const*)p)); break;
         case 3:
-            t1 = _mm_castpd_ps(_mm_load_sd((double*)p));
+            t1 = _mm_castpd_ps(_mm_load_sd((double const*)p));
             t2 = _mm_load_ss(p + 2);
             xmm = _mm_movelh_ps(t1, t2); break;
         case 4:
@@ -940,7 +952,7 @@ static inline Vec4f round(Vec4f const & a) __attribute__ ((optimize("-fno-unsafe
 // function round: round to nearest integer (even). (result as float vector)
 static inline Vec4f round(Vec4f const & a) {
 #if INSTRSET >= 5   // SSE4.1 supported
-    return _mm_round_ps(a, 0);
+    return _mm_round_ps(a, 8);
 #else // SSE2. Use magic number method
     // Note: assume MXCSR control register is set to rounding
     // (don't use conversion to int, it will limit the value to +/- 2^31)
@@ -960,7 +972,7 @@ static inline Vec4f round(Vec4f const & a) {
 // function truncate: round towards zero. (result as float vector)
 static inline Vec4f truncate(Vec4f const & a) {
 #if INSTRSET >= 5   // SSE4.1 supported
-    return _mm_round_ps(a, 3);
+    return _mm_round_ps(a, 3+8);
 #else  // SSE2. Use magic number method (conversion to int would limit the value to 2^31)
     uint32_t t1 = _mm_getcsr();        // MXCSR
     uint32_t t2 = t1 | (3 << 13);      // bit 13-14 = 11
@@ -974,7 +986,7 @@ static inline Vec4f truncate(Vec4f const & a) {
 // function floor: round towards minus infinity. (result as float vector)
 static inline Vec4f floor(Vec4f const & a) {
 #if INSTRSET >= 5   // SSE4.1 supported
-    return _mm_round_ps(a, 1);
+    return _mm_round_ps(a, 1+8);
 #else  // SSE2. Use magic number method (conversion to int would limit the value to 2^31)
     uint32_t t1 = _mm_getcsr();        // MXCSR
     uint32_t t2 = t1 | (1 << 13);      // bit 13-14 = 01
@@ -988,7 +1000,7 @@ static inline Vec4f floor(Vec4f const & a) {
 // function ceil: round towards plus infinity. (result as float vector)
 static inline Vec4f ceil(Vec4f const & a) {
 #if INSTRSET >= 5   // SSE4.1 supported
-    return _mm_round_ps(a, 2);
+    return _mm_round_ps(a, 2+8);
 #else  // SSE2. Use magic number method (conversion to int would limit the value to 2^31)
     uint32_t t1 = _mm_getcsr();        // MXCSR
     uint32_t t2 = t1 | (2 << 13);      // bit 13-14 = 10
@@ -1099,7 +1111,8 @@ static inline Vec4i exponent(Vec4f const & a) {
 
 // Extract the fraction part of a floating point number
 // a = 2^exponent(a) * fraction(a), except for a = 0
-// fraction(1.0f) = 1.0f, fraction(5.0f) = 1.25f 
+// fraction(1.0f) = 1.0f, fraction(5.0f) = 1.25f
+// NOTE: The name fraction clashes with an ENUM in MAC XCode CarbonCore script.h !
 static inline Vec4f fraction(Vec4f const & a) {
     Vec4ui t1 = _mm_castps_si128(a);   // reinterpret as 32-bit integer
     Vec4ui t2 = Vec4ui((t1 & 0x007FFFFF) | 0x3F800000); // set exponent to 0 + bias
@@ -1436,7 +1449,7 @@ DOZERO:
 template <int i0, int i1, int i2, int i3>
 static inline Vec4f change_sign(Vec4f const & a) {
     if ((i0 | i1 | i2 | i3) == 0) return a;
-    __m128i mask = constant4i<i0 ? 0x80000000 : 0, i1 ? 0x80000000 : 0, i2 ? 0x80000000 : 0, i3 ? 0x80000000 : 0>();
+    __m128i mask = constant4i<i0 ? (int)0x80000000 : 0, i1 ? (int)0x80000000 : 0, i2 ? (int)0x80000000 : 0, i3 ? (int)0x80000000 : 0>();
     return  _mm_xor_ps(a, _mm_castsi128_ps(mask));     // flip sign bits
 }
 
@@ -1893,7 +1906,7 @@ static inline Vec2d pow(Vec2d const & a, Const_int_t<n>) {
 
 // avoid unsafe optimization in function round
 #if defined(__GNUC__) && !defined(__INTEL_COMPILER) && !defined(__clang__) && INSTRSET < 5
-static inline Vec4f round(Vec4f const & a) __attribute__ ((optimize("-fno-unsafe-math-optimizations")));
+static inline Vec2d round(Vec2d const & a) __attribute__ ((optimize("-fno-unsafe-math-optimizations")));
 #elif defined (FLOAT_CONTROL_PRECISE_FOR_ROUND)
 #pragma float_control(push) 
 #pragma float_control(precise,on)
@@ -1901,7 +1914,7 @@ static inline Vec4f round(Vec4f const & a) __attribute__ ((optimize("-fno-unsafe
 // function round: round to nearest integer (even). (result as double vector)
 static inline Vec2d round(Vec2d const & a) {
 #if INSTRSET >= 5   // SSE4.1 supported
-    return _mm_round_pd(a, 0);
+    return _mm_round_pd(a, 0+8);
 #else // SSE2. Use magic number method
     // Note: assume MXCSR control register is set to rounding
     // (don't use conversion to int, it will limit the value to +/- 2^31)
@@ -1920,7 +1933,7 @@ static inline Vec2d round(Vec2d const & a) {
 static inline Vec2d truncate(Vec2d const & a) {
 // (note: may fail on MS Visual Studio 2008, works in later versions)
 #if INSTRSET >= 5   // SSE4.1 supported
-    return _mm_round_pd(a, 3);
+    return _mm_round_pd(a, 3+8);
 #else  // SSE2. Use magic number method (conversion to int would limit the value to 2^31)
     uint32_t t1 = _mm_getcsr();        // MXCSR
     uint32_t t2 = t1 | (3 << 13);      // bit 13-14 = 11
@@ -1935,7 +1948,7 @@ static inline Vec2d truncate(Vec2d const & a) {
 // (note: may fail on MS Visual Studio 2008, works in later versions)
 static inline Vec2d floor(Vec2d const & a) {
 #if INSTRSET >= 5   // SSE4.1 supported
-    return _mm_round_pd(a, 1);
+    return _mm_round_pd(a, 1+8);
 #else  // SSE2. Use magic number method (conversion to int would limit the value to 2^31)
     uint32_t t1 = _mm_getcsr();        // MXCSR
     uint32_t t2 = t1 | (1 << 13);      // bit 13-14 = 01
@@ -1949,7 +1962,7 @@ static inline Vec2d floor(Vec2d const & a) {
 // function ceil: round towards plus infinity. (result as double vector)
 static inline Vec2d ceil(Vec2d const & a) {
 #if INSTRSET >= 5   // SSE4.1 supported
-    return _mm_round_pd(a, 2);
+    return _mm_round_pd(a, 2+8);
 #else  // SSE2. Use magic number method (conversion to int would limit the value to 2^31)
     uint32_t t1 = _mm_getcsr();        // MXCSR
     uint32_t t2 = t1 | (2 << 13);      // bit 13-14 = 10
@@ -2125,7 +2138,8 @@ static inline Vec2q exponent(Vec2d const & a) {
 
 // Extract the fraction part of a floating point number
 // a = 2^exponent(a) * fraction(a), except for a = 0
-// fraction(1.0) = 1.0, fraction(5.0) = 1.25 
+// fraction(1.0) = 1.0, fraction(5.0) = 1.25
+// NOTE: The name fraction clashes with an ENUM in MAC XCode CarbonCore script.h !
 static inline Vec2d fraction(Vec2d const & a) {
     Vec2uq t1 = _mm_castpd_si128(a);   // reinterpret as 64-bit integer
     Vec2uq t2 = Vec2uq((t1 & 0x000FFFFFFFFFFFFFll) | 0x3FF0000000000000ll); // set exponent to 0 + bias
@@ -2371,7 +2385,7 @@ static inline Vec2d blend2d(Vec2d const & a, Vec2d const & b) {
 template <int i0, int i1>
 static inline Vec2d change_sign(Vec2d const & a) {
     if ((i0 | i1) == 0) return a;
-    __m128i mask = constant4i<0, i0 ? 0x80000000 : 0, 0, i1 ? 0x80000000 : 0> ();
+    __m128i mask = constant4i<0, i0 ? (int)0x80000000 : 0, 0, i1 ? (int)0x80000000 : 0> ();
     return  _mm_xor_pd(a, _mm_castsi128_pd(mask));     // flip sign bits
 }
 
@@ -2615,5 +2629,9 @@ static inline uint8_t to_bits(Vec2db const & x) {
 static inline Vec2db to_Vec2db(uint8_t x) {
     return Vec2db(to_Vec2qb(x));
 }
+
+#ifdef VCL_NAMESPACE
+}
+#endif
 
 #endif // VECTORF128_H
