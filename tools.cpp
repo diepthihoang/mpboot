@@ -2424,8 +2424,11 @@ void parseArg(int argc, char *argv[], Params &params) {
             	continue;
             }
             if(strcmp(argv[cnt], "-test_mode") == 0){
-            	if(argc != 7)
-            		throw "These options are to compute weighted parsimony score.\nUse -s [alignment_file] -test_mode [tree_file] -cost fitch/[cost_file]";
+//            	if(argc != 7)
+//            		throw "These options are to compute weighted parsimony score.\nUse -s [alignment_file] -test_mode [tree_file] -cost fitch/[cost_file]";
+            	if(argc != 5)
+            		throw "These options are to convert newick tree string of taxa to one of id.\nUse -s [alignment_file] -test_mode [tree_file]";
+
             	params.test_mode = true;
             	continue;
             }

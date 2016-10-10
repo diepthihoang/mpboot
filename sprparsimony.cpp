@@ -3328,10 +3328,12 @@ void computeUserTreeParsimomy(Params &params) {
     }else
     	ptree = new IQTree(&alignment);
 
-    ptree->readTree(params.user_file, params.is_rooted);
-	ptree->setAlignment(&alignment);
-//	optimizeAlignment(ptree, params); // for sorting aln. This line triggers "UFBoot-MP CRASHES WITH SIGNAL ABORTED"
 
+	ptree->setAlignment(&alignment);
+	optimizeAlignment(ptree, params); // for sorting aln. This line triggers "UFBoot-MP CRASHES WITH SIGNAL ABORTED"
+	cout << "Read user tree...";
+    ptree->readTree(params.user_file, params.is_rooted);
+    cout << "done" << endl;
 	cout << "Parsimony score (by IQTree kernel) is: ";
 	cout << ptree->computeParsimony() << endl;
 
