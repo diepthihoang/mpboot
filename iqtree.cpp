@@ -2519,7 +2519,7 @@ void IQTree::optimizeBootTrees(){
 				initializeAllPartialLh();
 				clearAllPartialLH();
 
-//				curScore = -computeParsimony();
+				curScore = -computeParsimony();
 //				cout << "before: " << curScore << ", ";
 
 				int count, step;
@@ -2794,7 +2794,7 @@ void IQTree::optimizeBootTrees(){
 //			tree = ostr1.str();
 //			outb << tree << endl;
 
-//			curScore = -computeParsimony();
+			curScore = -computeParsimony();
 //			out << curScore << "\t";
 
 			int count, step;
