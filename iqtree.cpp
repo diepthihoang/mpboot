@@ -569,7 +569,8 @@ void IQTree::initializePLL(Params &params) {
     // Diep: 	Added this IF statement so that UFBoot-MP SPR code doesn't affect other IQTree mode
     // 			alignment in  UFBoot-MP SPR branch will be sorted by pattern and site pars score
     // PLL eliminates duplicate sites from the alignment and update weights vector
-    if(params.maximum_parsimony && params.gbo_replicates)
+//    if(params.maximum_parsimony && params.gbo_replicates) // WRONG
+    if(params.maximum_parsimony && params.sort_alignment)
     	pllSortedAlignmentRemoveDups(pllAlignment, pllPartitions); // to sync sorted IQTree aln and PLL one
     else
     	pllAlignmentRemoveDups(pllAlignment, pllPartitions);
@@ -1745,13 +1746,13 @@ double IQTree::doTreeSearch() {
 				}
 
 				if(params->maximum_parsimony && params->spr_parsimony && (params->snni || params->pll)){ // SPR for mpars
-					pllNewickTree *perturbTree = pllNewickParseString(perturb_tree_string.c_str());
-					assert(perturbTree != NULL);
-					pllTreeInitTopologyNewick(pllInst, perturbTree, PLL_FALSE);
+//					pllNewickTree *perturbTree = pllNewickParseString(perturb_tree_string.c_str());
+//					assert(perturbTree != NULL);
+//					pllTreeInitTopologyNewick(pllInst, perturbTree, PLL_FALSE);
 					initializeAllPartialPars();
 					clearAllPartialLH();
 					curScore = perturbScore = -computeParsimony();
-                    pllNewickParseDestroy(&perturbTree);
+//                    pllNewickParseDestroy(&perturbTree);
 				}else if (params->pll) {
 					pllNewickTree *perturbTree = pllNewickParseString(perturb_tree_string.c_str());
 					assert(perturbTree != NULL);
@@ -2074,9 +2075,30 @@ string IQTree::doNNISearch(int& nniCount, int& nniSteps) {
 			treeString = getTreeString();
 		}else{
 			string treeString1 = getTreeString();
+			size_t index = 0;
+			while (true) {
+				 /* Locate the substring to replace. */
+				 index = treeString1.find(":nan", index);
+				 if (index == std::string::npos) break;
+
+				 /* Make the replacement. */
+				 treeString1.replace(index, 4, ":0");
+
+				 /* Advance index forward so the next iteration doesn't pick it up as well. */
+				 index += 4;
+			}
+
 			int max_spr_rad = params->spr_maxtrav;
 			if(on_opt_btree && params->opt_btree_nni) params->spr_maxtrav = 1;
+
+			pllNewickTree *sprStartTree = pllNewickParseString(treeString1.c_str());
+			assert(sprStartTree != NULL);
+			pllTreeInitTopologyNewick(pllInst, sprStartTree, PLL_FALSE);
+
 			pllOptimizeSprParsimony(pllInst, pllPartitions, params->spr_mintrav, max_spr_rad, this);
+
+			pllNewickParseDestroy(&sprStartTree);
+
 			pllTreeToNewick(pllInst->tree_string, pllInst, pllPartitions, pllInst->start->back, PLL_TRUE,
 					PLL_TRUE, 0, 0, 0, PLL_SUMMARIZE_LH, 0, 0);
 			treeString = string(pllInst->tree_string);

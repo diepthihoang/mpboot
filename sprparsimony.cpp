@@ -3021,6 +3021,7 @@ int pllOptimizeSprParsimony(pllInstance * tr, partitionList * pr, int mintrav, i
 	nodeRectifierPars(tr);
 	tr->bestParsimony = UINT_MAX;
 	tr->bestParsimony = evaluateParsimony(tr, pr, tr->start, PLL_TRUE, perSiteScores);
+	assert(-iqtree->curScore == tr->bestParsimony);
 //	cout << "\ttr->bestParsimony (initial tree) = " << tr->bestParsimony << endl;
 	/*
 	// Diep: to be investigated
