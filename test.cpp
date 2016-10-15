@@ -4,9 +4,11 @@
 #include "parstree.h"
 
 void test(Params &params){
-	testWeightedParsimony(params);
+//	testWeightedParsimony(params);
+	testTreeConvertTaxaToID(params);
 }
 
+// -s <alnfile> -test_mode <treefile> -cost <costfile>
 void testWeightedParsimony(Params &params){
 	if(!params.sankoff_cost_file) return;
 
@@ -50,3 +52,26 @@ void testWeightedParsimony(Params &params){
 //	delete iqtree2;
 
 }
+
+// -s <alnfile> -test_mode <treefile>
+void testTreeConvertTaxaToID(Params &params){
+	// read aln
+	Alignment alignment(params.aln_file, params.sequence_type, params.intype);
+
+	// initialize an ParsTree instance connecting with the alignment
+	IQTree * ptree = new IQTree(&alignment);
+
+	// read in a tree from user's file
+	ptree->readTree(params.user_file, params.is_rooted);
+	ptree->setAlignment(&alignment);
+
+    string out_file;
+    out_file = params.user_file;
+    out_file += ".id";
+
+	ptree->printTree(out_file.c_str(), WT_TAXON_ID | WT_SORT_TAXA);
+	cout << "Please see result in " << out_file << endl;
+
+	delete ptree;
+}
+

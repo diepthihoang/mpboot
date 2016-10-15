@@ -2107,8 +2107,8 @@ void runPhyloAnalysis(Params &params) {
 
 	}
 
-//		if(params.maximum_parsimony && params.sort_alignment){
-	if(params.maximum_parsimony && (params.gbo_replicates || params.sankoff_cost_file)){
+//	if(params.maximum_parsimony && (params.gbo_replicates || params.sankoff_cost_file)){
+	if(params.maximum_parsimony && (params.sort_alignment || params.sankoff_cost_file)){
 		optimizeAlignment(tree, params);// Diep: this is to rearrange columns for better speed in REPS
 	}
 
