@@ -130,8 +130,8 @@ unsigned long bestTreeScoreHits; // to count hits to bestParsimony
 
 extern parsimonyNumber * pllCostMatrix; // Diep: For weighted version
 extern int pllCostNstates; // Diep: For weighted version
-extern parsimonyNumberShort *vectorCostMatrix; // BQM: vectorized cost matrix
-parsimonyNumberShort highest_cost;
+extern parsimonyNumber *vectorCostMatrix; // BQM: vectorized cost matrix
+parsimonyNumber highest_cost;
 
 //(if needed) split the parsimony vector into several segments to avoid overflow when calc rell based on vec8us
 extern int pllRepsSegments; // # of segments
@@ -149,11 +149,20 @@ void initializeCostMatrix() {
 #if (defined(__SSE3) || defined(__AVX))
     assert(pllCostMatrix);
     if (!vectorCostMatrix) {
-        rax_posix_memalign ((void **) &(vectorCostMatrix), PLL_BYTE_ALIGNMENT, sizeof(parsimonyNumberShort)*pllCostNstates*pllCostNstates);
-        // duplicate the cost entries for vector operations
-        for (int i = 0; i < pllCostNstates; i++)
-            for (int j = 0; j < pllCostNstates; j++)
-                    vectorCostMatrix[(i*pllCostNstates+j)] = pllCostMatrix[i*pllCostNstates+j];
+        rax_posix_memalign ((void **) &(vectorCostMatrix), PLL_BYTE_ALIGNMENT, sizeof(parsimonyNumber)*pllCostNstates*pllCostNstates);
+
+        if (globalParam->sankoff_short_int) {
+            parsimonyNumberShort *shortMatrix = (parsimonyNumberShort*)vectorCostMatrix;
+            // duplicate the cost entries for vector operations
+            for (int i = 0; i < pllCostNstates; i++)
+                for (int j = 0; j < pllCostNstates; j++)
+                        shortMatrix[(i*pllCostNstates+j)] = pllCostMatrix[i*pllCostNstates+j];
+        } else {
+            // duplicate the cost entries for vector operations
+            for (int i = 0; i < pllCostNstates; i++)
+                for (int j = 0; j < pllCostNstates; j++)
+                        vectorCostMatrix[(i*pllCostNstates+j)] = pllCostMatrix[i*pllCostNstates+j];
+        }
     }
 #else
     vectorCostMatrix = NULL;
@@ -391,7 +400,7 @@ template<class VectorClass, class Numeric, const size_t states>
 void newviewSankoffParsimonyIterativeFastSIMD(pllInstance *tr, partitionList * pr)
 {
 
-    assert(VectorClass::size() == USHORT_PER_VECTOR);
+//    assert(VectorClass::size() == USHORT_PER_VECTOR);
 
     int model, *ti = tr->ti, count = ti[0], index;
 
@@ -437,7 +446,7 @@ void newviewSankoffParsimonyIterativeFastSIMD(pllInstance *tr, partitionList * p
                 VectorClass *leftPtn = (VectorClass*) &left[i_states];
                 VectorClass *rightPtn = (VectorClass*) &right[i_states];
                 VectorClass *curPtn = (VectorClass*) &cur[i_states];
-                Numeric *costPtn = vectorCostMatrix;
+                Numeric *costPtn = (Numeric*)vectorCostMatrix;
                 VectorClass value;
                 for (z = 0; z < states; z++) {
                     VectorClass left_contrib = leftPtn[0] + costPtn[0];
@@ -470,28 +479,60 @@ static void newviewParsimonyIterativeFast(pllInstance *tr, partitionList *pr, in
 //        newviewSankoffParsimonyIterativeFast(tr, pr, perSiteScores);
 //        return;
 #ifdef __AVX
-        switch (pr->partitionData[0]->states) {
-        case 4:
-            newviewSankoffParsimonyIterativeFastSIMD<Vec16us, parsimonyNumberShort, 4>(tr, pr);
-            break;
-        case 20:
-            newviewSankoffParsimonyIterativeFastSIMD<Vec16us, parsimonyNumberShort, 20>(tr, pr);
-            break;
-        default:
-            cerr << "Unsupported" << endl;
-            exit(EXIT_FAILURE);
+        if (globalParam->sankoff_short_int) {
+            // using unsigned short
+            switch (pr->partitionData[0]->states) {
+            case 4:
+                newviewSankoffParsimonyIterativeFastSIMD<Vec16us, parsimonyNumberShort, 4>(tr, pr);
+                break;
+            case 20:
+                newviewSankoffParsimonyIterativeFastSIMD<Vec16us, parsimonyNumberShort, 20>(tr, pr);
+                break;
+            default:
+                cerr << "Unsupported" << endl;
+                exit(EXIT_FAILURE);
+            }
+        } else {
+            // using unsigned int
+            switch (pr->partitionData[0]->states) {
+            case 4:
+                newviewSankoffParsimonyIterativeFastSIMD<Vec8ui, parsimonyNumber, 4>(tr, pr);
+                break;
+            case 20:
+                newviewSankoffParsimonyIterativeFastSIMD<Vec8ui, parsimonyNumber, 20>(tr, pr);
+                break;
+            default:
+                cerr << "Unsupported" << endl;
+                exit(EXIT_FAILURE);
+            }
         }
-#else
-        switch (pr->partitionData[0]->states) {
-        case 4:
-            newviewSankoffParsimonyIterativeFastSIMD<Vec8us, parsimonyNumberShort, 4>(tr, pr);
-            break;
-        case 20:
-            newviewSankoffParsimonyIterativeFastSIMD<Vec8us, parsimonyNumberShort, 20>(tr, pr);
-            break;
-        default:
-            cerr << "Unsupported" << endl;
-            exit(EXIT_FAILURE);
+#else // SSE code
+        if (globalParam->sankoff_short_int) {
+            // using unsigned short
+            switch (pr->partitionData[0]->states) {
+            case 4:
+                newviewSankoffParsimonyIterativeFastSIMD<Vec8us, parsimonyNumberShort, 4>(tr, pr);
+                break;
+            case 20:
+                newviewSankoffParsimonyIterativeFastSIMD<Vec8us, parsimonyNumberShort, 20>(tr, pr);
+                break;
+            default:
+                cerr << "Unsupported" << endl;
+                exit(EXIT_FAILURE);
+            }
+        } else {
+            // using unsigned int
+            switch (pr->partitionData[0]->states) {
+            case 4:
+                newviewSankoffParsimonyIterativeFastSIMD<Vec4ui, parsimonyNumber, 4>(tr, pr);
+                break;
+            case 20:
+                newviewSankoffParsimonyIterativeFastSIMD<Vec4ui, parsimonyNumber, 20>(tr, pr);
+                break;
+            default:
+                cerr << "Unsupported" << endl;
+                exit(EXIT_FAILURE);
+            }
         }
 #endif
         return;
@@ -756,6 +797,8 @@ parsimonyNumber evaluateSankoffParsimonyIterativeFastSIMD(pllInstance *tr, parti
 		Numeric *right = (Numeric*)&(pr->partitionData[model]->parsVect)[(patterns * states * pNumber)];
 		size_t x, y, seg;
 
+        Numeric *ptnWgt = (Numeric*)pr->partitionData[model]->informativePtnWgt;
+        Numeric *ptnScore = (Numeric*)pr->partitionData[model]->informativePtnScore;
 
         for (seg = 0; seg < pllRepsSegments; seg++) {
             VectorClass sum(0);
@@ -767,7 +810,7 @@ parsimonyNumber evaluateSankoffParsimonyIterativeFastSIMD(pllInstance *tr, parti
                 VectorClass *leftPtn = (VectorClass*) &left[i_states];
                 VectorClass *rightPtn = (VectorClass*) &right[i_states];
                 VectorClass best_score = USHRT_MAX;
-                Numeric *costRow = vectorCostMatrix;
+                Numeric *costRow = (Numeric*)vectorCostMatrix;
 
                 for (x = 0; x < states; x++) {
                     VectorClass this_best_score = costRow[0] + rightPtn[0];
@@ -782,11 +825,17 @@ parsimonyNumber evaluateSankoffParsimonyIterativeFastSIMD(pllInstance *tr, parti
 
                 // add weight here because weighted computation is based on pattern
                 // sum += best_score * (size_t)tr->aliaswgt[i]; // wrong (because aliaswgt is for all patterns, not just informative pattern)
-                if(perSiteScores)
-                    best_score.store_a(&pr->partitionData[model]->informativePtnScore[i]);
+                if(perSiteScores) {
+                    best_score.store_a(&ptnScore[i]);
+                } else {
+                    // TODO without having to store per site score AND finished a block of patterns
+                    // then use the lower-bound to stop early
+                    // if current_score + lower_bound_remaining > best_score then
+                    //     return current_score + lower_bound_remaining
+                }
 
                 if (BY_PATTERN)
-                    sum += best_score * VectorClass().load_a(&pr->partitionData[model]->informativePtnWgt[i]);
+                    sum += best_score * VectorClass().load_a(&ptnWgt[i]);
                 else
                     sum += best_score;
 
@@ -808,24 +857,48 @@ static unsigned int evaluateParsimonyIterativeFast(pllInstance *tr, partitionLis
 	if(pllCostMatrix) {
 //        return evaluateSankoffParsimonyIterativeFast(tr, pr, perSiteScores);
 #ifdef __AVX
-        switch (pr->partitionData[0]->states) {
-        case 4:
-            return evaluateSankoffParsimonyIterativeFastSIMD<Vec16us, parsimonyNumberShort, 4,true>(tr, pr, perSiteScores);
-        case 20:
-            return evaluateSankoffParsimonyIterativeFastSIMD<Vec16us, parsimonyNumberShort, 20,true>(tr, pr, perSiteScores);
-        default:
-            cerr << "Unsupported" << endl;
-            exit(EXIT_FAILURE);
+        if (globalParam->sankoff_short_int) {
+            switch (pr->partitionData[0]->states) {
+            case 4:
+                return evaluateSankoffParsimonyIterativeFastSIMD<Vec16us, parsimonyNumberShort, 4,true>(tr, pr, perSiteScores);
+            case 20:
+                return evaluateSankoffParsimonyIterativeFastSIMD<Vec16us, parsimonyNumberShort, 20,true>(tr, pr, perSiteScores);
+            default:
+                cerr << "Unsupported" << endl;
+                exit(EXIT_FAILURE);
+            }
+        } else {
+            switch (pr->partitionData[0]->states) {
+            case 4:
+                return evaluateSankoffParsimonyIterativeFastSIMD<Vec8ui, parsimonyNumber, 4,true>(tr, pr, perSiteScores);
+            case 20:
+                return evaluateSankoffParsimonyIterativeFastSIMD<Vec8ui, parsimonyNumber, 20,true>(tr, pr, perSiteScores);
+            default:
+                cerr << "Unsupported" << endl;
+                exit(EXIT_FAILURE);
+            }
         }
 #else // SSE
-        switch (pr->partitionData[0]->states) {
-        case 4:
-            return evaluateSankoffParsimonyIterativeFastSIMD<Vec8us, parsimonyNumberShort,4,true>(tr, pr, perSiteScores);
-        case 20:
-            return evaluateSankoffParsimonyIterativeFastSIMD<Vec8us, parsimonyNumberShort,20,true>(tr, pr, perSiteScores);
-        default:
-            cerr << "Unsupported" << endl;
-            exit(EXIT_FAILURE);
+        if (globalParam->sankoff_short_int) {
+            switch (pr->partitionData[0]->states) {
+            case 4:
+                return evaluateSankoffParsimonyIterativeFastSIMD<Vec8us, parsimonyNumberShort,4,true>(tr, pr, perSiteScores);
+            case 20:
+                return evaluateSankoffParsimonyIterativeFastSIMD<Vec8us, parsimonyNumberShort,20,true>(tr, pr, perSiteScores);
+            default:
+                cerr << "Unsupported" << endl;
+                exit(EXIT_FAILURE);
+            }
+        } else {
+            switch (pr->partitionData[0]->states) {
+            case 4:
+                return evaluateSankoffParsimonyIterativeFastSIMD<Vec4ui, parsimonyNumber,4,true>(tr, pr, perSiteScores);
+            case 20:
+                return evaluateSankoffParsimonyIterativeFastSIMD<Vec4ui, parsimonyNumber,20,true>(tr, pr, perSiteScores);
+            default:
+                cerr << "Unsupported" << endl;
+                exit(EXIT_FAILURE);
+            }
         }
 #endif
     }
@@ -2434,6 +2507,7 @@ static void determineUninformativeSites(pllInstance *tr, partitionList *pr, int 
   /* printf("Uninformative Patterns: %d\n", number); */
 }
 
+template<class Numeric, const int VECSIZE>
 static void compressSankoffDNA(pllInstance *tr, partitionList *pr, int *informative, int perSiteScores)
 {
 //	cout << "Begin compressSankoffDNA()" << endl;
@@ -2443,6 +2517,7 @@ static void compressSankoffDNA(pllInstance *tr, partitionList *pr, int *informat
     model;
 
   totalNodes = 2 * (size_t)tr->mxtips;
+
 
   for(model = 0; model < (size_t) pr->numberOfPartitions; model++)
     {
@@ -2467,8 +2542,8 @@ static void compressSankoffDNA(pllInstance *tr, partitionList *pr, int *informat
       compressedEntries = entries;
 
 #if (defined(__SSE3) || defined(__AVX))
-      if(compressedEntries % USHORT_PER_VECTOR != 0)
-        compressedEntriesPadded = compressedEntries + (USHORT_PER_VECTOR - (compressedEntries % USHORT_PER_VECTOR));
+      if(compressedEntries % VECSIZE != 0)
+        compressedEntriesPadded = compressedEntries + (VECSIZE - (compressedEntries % VECSIZE));
       else
         compressedEntriesPadded = compressedEntries;
 #else
@@ -2480,13 +2555,16 @@ static void compressSankoffDNA(pllInstance *tr, partitionList *pr, int *informat
 	// (not 100% sure) this is also the perSitePartialPars
 
       rax_posix_memalign ((void **) &(pr->partitionData[model]->parsVect), PLL_BYTE_ALIGNMENT, (size_t)compressedEntriesPadded * states * totalNodes * sizeof(parsimonyNumber));
+        memset(pr->partitionData[model]->parsVect, 0, compressedEntriesPadded * states * totalNodes * sizeof(parsimonyNumber));
 
-      rax_posix_memalign ((void **) &(pr->partitionData[model]->informativePtnWgt), PLL_BYTE_ALIGNMENT, (size_t)compressedEntriesPadded * sizeof(parsimonyNumberShort));
+      rax_posix_memalign ((void **) &(pr->partitionData[model]->informativePtnWgt), PLL_BYTE_ALIGNMENT, (size_t)compressedEntriesPadded * sizeof(Numeric));
+
+        memset(pr->partitionData[model]->informativePtnWgt, 0, (size_t)compressedEntriesPadded * sizeof(Numeric));
 
       if(perSiteScores){
-			rax_posix_memalign ((void **) &(pr->partitionData[model]->informativePtnScore), PLL_BYTE_ALIGNMENT, (size_t)compressedEntriesPadded * sizeof(parsimonyNumberShort));
+			rax_posix_memalign ((void **) &(pr->partitionData[model]->informativePtnScore), PLL_BYTE_ALIGNMENT, (size_t)compressedEntriesPadded * sizeof(Numeric));
+            memset(pr->partitionData[model]->informativePtnScore, 0, (size_t)compressedEntriesPadded * sizeof(Numeric));
       }
-//        memset(pr->partitionData[model]->parsVect, 0,compressedEntriesPadded * states * totalNodes * sizeof(parsimonyNumber));
 
 //      if (perSiteScores)
 //       {
@@ -2512,8 +2590,9 @@ static void compressSankoffDNA(pllInstance *tr, partitionList *pr, int *informat
 //              compressedValues[k] = INT_MAX; // Diep
 //            }
 
-            parsimonyNumberShort *tipVect = (parsimonyNumberShort*)&pr->partitionData[model]->parsVect[(compressedEntriesPadded * states * (i + 1))];
+            Numeric *tipVect = (Numeric*)&pr->partitionData[model]->parsVect[(compressedEntriesPadded * states * (i + 1))];
 
+            Numeric *ptnWgt = (Numeric*)pr->partitionData[model]->informativePtnWgt;
 		// for each informative pattern
           for(index = lower; index < (size_t)upper; index++)
             {
@@ -2540,20 +2619,20 @@ static void compressSankoffDNA(pllInstance *tr, partitionList *pr, int *informat
 				  for(k = 0; k < states; k++)
 					{
 					  if(value & mask32[k])
-                        tipVect[k*USHORT_PER_VECTOR] = 0; // Diep: if the state is present, corresponding value is set to zero
+                        tipVect[k*VECSIZE] = 0; // Diep: if the state is present, corresponding value is set to zero
 					  else
-                        tipVect[k*USHORT_PER_VECTOR] = highest_cost;
+                        tipVect[k*VECSIZE] = highest_cost;
 //					  compressedTips[k][informativeIndex] = compressedValues[k]; // Diep
 //					  cout << "compressedValues[k]: " << compressedValues[k] << endl;
 					}
-					pr->partitionData[model]->informativePtnWgt[informativeIndex] = tr->aliaswgt[index];
+					ptnWgt[informativeIndex] = tr->aliaswgt[index];
 					informativeIndex++;
 
                     tipVect += 1; // process to the next site
 
                     // jump to the next block
-                    if (informativeIndex % USHORT_PER_VECTOR == 0)
-                        tipVect += USHORT_PER_VECTOR*(states-1);
+                    if (informativeIndex % VECSIZE == 0)
+                        tipVect += VECSIZE*(states-1);
 
 
                 }
@@ -2565,9 +2644,10 @@ static void compressSankoffDNA(pllInstance *tr, partitionList *pr, int *informat
 
                  for(k = 0; k < states; k++)
 					{
-					  tipVect[k*USHORT_PER_VECTOR] = 0;
+					  tipVect[k*VECSIZE] = 0;
 					}
                 tipVect += 1;
+
             }
         }
 
@@ -2593,7 +2673,12 @@ static void compressSankoffDNA(pllInstance *tr, partitionList *pr, int *informat
 
 static void compressDNA(pllInstance *tr, partitionList *pr, int *informative, int perSiteScores)
 {
-	if(pllCostMatrix != NULL) return compressSankoffDNA(tr, pr, informative, perSiteScores);
+	if(pllCostMatrix != NULL) {
+        if (globalParam->sankoff_short_int)
+            return compressSankoffDNA<parsimonyNumberShort, USHORT_PER_VECTOR>(tr, pr, informative, perSiteScores);
+        else
+            return compressSankoffDNA<parsimonyNumber, INTS_PER_VECTOR>(tr, pr, informative, perSiteScores);
+    }
 
 
   size_t

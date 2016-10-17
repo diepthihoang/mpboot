@@ -778,6 +778,7 @@ void parseArg(int argc, char *argv[], Params &params) {
     params.ratchet_percent = 50; // default if just specify -ratchet
     params.compute_parsimony = false;
     params.sankoff_cost_file = NULL;
+    params.sankoff_short_int = false;
     params.condense_parsimony_equiv_sites = false;
     params.spr_parsimony = true;// Diep: Revert for UFBoot-MP release
     params.spr_mintrav = 1; // same as PLL
@@ -2334,6 +2335,11 @@ void parseArg(int argc, char *argv[], Params &params) {
             		params.sankoff_cost_file = argv[cnt];
             	continue;
             }
+			if(strcmp(argv[cnt], "-short") == 0) {
+                params.sankoff_short_int = true;
+                continue;
+            }
+
 			if(strcmp(argv[cnt], "-mpcondense") == 0){
             	params.condense_parsimony_equiv_sites = true;
             	continue;

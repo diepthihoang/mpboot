@@ -570,7 +570,7 @@ void IQTree::initializePLL(Params &params) {
     // 			alignment in  UFBoot-MP SPR branch will be sorted by pattern and site pars score
     // PLL eliminates duplicate sites from the alignment and update weights vector
 //    if(params.maximum_parsimony && params.gbo_replicates) // WRONG
-    if(params.maximum_parsimony && params.sort_alignment || params.sankoff_cost_file)
+    if(params.maximum_parsimony && (params.sort_alignment || params.sankoff_cost_file))
     	pllSortedAlignmentRemoveDups(pllAlignment, pllPartitions); // to sync sorted IQTree aln and PLL one
     else
     	pllAlignmentRemoveDups(pllAlignment, pllPartitions);
@@ -581,6 +581,8 @@ void IQTree::initializePLL(Params &params) {
     if (!pllLoadAlignment(pllInst, pllAlignment, pllPartitions)) {
         outError("Incompatible tree/alignment combination");
     }
+
+    globalParam = &params;
 
     // Diep: Add initialization for Sankoff if needed
 	if(params.maximum_parsimony && params.sankoff_cost_file){

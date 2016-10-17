@@ -2683,7 +2683,7 @@ void optimizeAlignment(IQTree * & tree, Params & params){
 	}
 
 	if(seg_sum){
-		tree->segment_upper[segment_no] = nptn;
+		tree->segment_upper[segment_no] = tree->aln->n_informative_patterns;
 		segment_no++;
 	}
 

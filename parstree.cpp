@@ -39,7 +39,7 @@ void ParsTree::loadCostMatrixFile(char * file_name){
 //    else
 //    	cost_matrix = new SankoffCostMatrix(file_name);
 
-    if(strcmp(file_name, "fitch") == 0){ // uniform cost
+    if(strcmp(file_name, "fitch") == 0 || strcmp(file_name, "e") == 0) { // uniform cost
     	cost_nstates = aln->num_states;
     	cost_matrix = aligned_alloc<unsigned int>(cost_nstates * cost_nstates);
 		for(int i = 0; i < cost_nstates; i++)

@@ -1495,6 +1495,9 @@ struct Params {
      */
     char * sankoff_cost_file;
 
+    /** TRUE if using unsigned short for pattern parsimony score */
+    bool sankoff_short_int;
+
     /*
      * Diep: to optimize the parsimony tree using SPR implemented in PLL
      */
