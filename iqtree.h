@@ -721,6 +721,7 @@ public:
     vector<BootValType* > boot_samples;
     vector<BootValTypePars*> boot_samples_pars; // Diep added
     vector<int*> boot_samples_pars_remain_bounds; // Diep: minimal score for the remain of boot aln from segment_upper[i]
+
     int reps_segments; // Diep added: (if needed) split the parsimony vector into several segments to avoid overflow when calc rell based on vec8us
 
     // Diep: array of first index of the next segment
@@ -728,6 +729,8 @@ public:
     // segment1: segment_upper[0] .... segment_upper[1] - 1
     // segment2: segment_upper[1] .... segment_upper[2] - 1
     int * segment_upper;
+    void doSegmenting(); // Diep: calculate segments (reps_segments, segment_upper)
+
 
     void pllComputeRellRemainBound(int nunit);
 

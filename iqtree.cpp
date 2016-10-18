@@ -2069,6 +2069,13 @@ string IQTree::doNNISearch(int& nniCount, int& nniSteps) {
 			assert(btree != NULL);
 			pllTreeInitTopologyNewick(pllInst, btree, PLL_FALSE);
             pllNewickParseDestroy(&btree);
+
+            // update segmenting information
+            if(params->sankoff_cost_file){
+				doSegmenting();
+				pllRepsSegments = reps_segments;
+				pllSegmentUpper = segment_upper;
+			}
 		}
 
 //		if(false){
@@ -3748,6 +3755,38 @@ void IQTree::saveCurrentTree(double cur_logl) {
     	aligned_free(pattern_lh);
 #endif
     }
+}
+
+// segment the alignment
+// This is helpful only if the alignment is sorted
+// segment_upper is the array of first index of the next segment
+// segment0: 0.................... segment_upper[0] - 1
+// segment1: segment_upper[0] .... segment_upper[1] - 1
+// segment2: segment_upper[1] .... segment_upper[2] - 1
+void IQTree::doSegmenting(){
+	int nptn = getAlnNPattern();
+
+	if(segment_upper != NULL) delete [] segment_upper;
+	segment_upper = new int[nptn]; // it takes at least one pattern per segment
+
+	int segment_no = 0;
+	int seg_sum = 0;
+
+	for(int i = 0; i < nptn; i++){
+		seg_sum += (aln)->at(i).ras_pars_score * (aln)->at(i).frequency;
+		if((i + 1) % VCSIZE_USHORT == 0 && seg_sum > USHRT_MAX / 16){
+			segment_upper[segment_no] = i + 1;
+			segment_no++;
+			seg_sum = 0;
+		}
+	}
+
+	if(seg_sum){
+		segment_upper[segment_no] = aln->n_informative_patterns;
+		segment_no++;
+	}
+
+	reps_segments = segment_no;
 }
 
 void IQTree::pllComputeRellRemainBound(int nunit){

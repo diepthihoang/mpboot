@@ -126,16 +126,27 @@ void Alignment::modifyPatternFreq(Alignment & aln, unsigned short * new_pattern_
     int site = 0;
     std::vector<Pattern>::iterator it;
     int p;
+	n_informative_patterns = 0;
+	n_informative_sites = 0;
+
+	int cur_pat = 0;
     for(it = aln.begin(), p = 0; it != aln.end(); ++it, ++p) {
+    	if((it->ras_pars_score > 0) && (new_pattern_freqs[p] > 0)){
+    		n_informative_patterns++;
+    		n_informative_sites += new_pattern_freqs[p];
+    	}
+
     	for(int i = 0; i < new_pattern_freqs[p]; i++){
     		addPattern(*it, site, 1);
     		site++;
     	}
+
+    	if(new_pattern_freqs[p] > 0){
+    		at(cur_pat).ras_pars_score = it->ras_pars_score;
+    		cur_pat++;
+    	}
     }
     countConstSite();
-
-	n_informative_patterns = aln.getNPattern();
-	n_informative_sites = nsite;
 }
 
 string &Alignment::getSeqName(int i) {
