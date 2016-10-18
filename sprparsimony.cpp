@@ -3172,14 +3172,17 @@ void pllComputePatternParsimony(pllInstance * tr, partitionList * pr, double *pt
 	if(cur_npars) *cur_npars = -sum;
 }
 
+template<class Numeric>
 void pllComputeSankoffPatternParsimony(pllInstance * tr, partitionList * pr, unsigned short *ptn_pars, int *cur_pars){
 	int ptn = 0;
 	int sum = 0;
 
 	for(int i = 0; i < pr->numberOfPartitions; i++){
+        Numeric *ptnScore = (Numeric*)pr->partitionData[i]->informativePtnScore;
+        Numeric *ptnWgt = (Numeric*)pr->partitionData[i]->informativePtnWgt;
 		for(ptn = 0; ptn < pr->partitionData[i]->parsimonyLength; ptn++){
-			ptn_pars[ptn] = pr->partitionData[i]->informativePtnScore[ptn];
-			sum += ptn_pars[ptn] * pr->partitionData[i]->informativePtnWgt[ptn];
+			ptn_pars[ptn] = ptnScore[ptn];
+			sum += ptn_pars[ptn] * ptnWgt[ptn];
 		}
 	}
 
@@ -3187,7 +3190,12 @@ void pllComputeSankoffPatternParsimony(pllInstance * tr, partitionList * pr, uns
 }
 
 void pllComputePatternParsimony(pllInstance * tr, partitionList * pr, unsigned short *ptn_pars, int *cur_pars){
-	if(pllCostMatrix) return pllComputeSankoffPatternParsimony(tr, pr, ptn_pars, cur_pars);
+	if(pllCostMatrix) {
+        if (globalParam->sankoff_short_int)
+            return pllComputeSankoffPatternParsimony<parsimonyNumberShort>(tr, pr, ptn_pars, cur_pars);
+        else
+            return pllComputeSankoffPatternParsimony<parsimonyNumber>(tr, pr, ptn_pars, cur_pars);
+    }
 
 	int ptn = 0;
 	int site = 0;

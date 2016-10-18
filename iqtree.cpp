@@ -38,7 +38,7 @@ extern StringIntMap pllTreeCounter;
 
 unsigned int * pllCostMatrix; // Diep: For weighted version
 int pllCostNstates; // Diep: For weighted version
-parsimonyNumberShort *vectorCostMatrix = NULL; // BQM: vectorized cost matrix
+parsimonyNumber *vectorCostMatrix = NULL; // BQM: vectorized cost matrix
 int pllRepsSegments;
 int * pllSegmentUpper;
 

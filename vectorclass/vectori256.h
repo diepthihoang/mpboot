@@ -1735,7 +1735,8 @@ static inline uint32_t horizontal_add (Vec16us const & a) {
     __m128i sum4  = _mm256_extracti128_si256(sum3,1);                 // get high part
 #endif
     __m128i sum5  = _mm_add_epi32(_mm256_castsi256_si128(sum3),sum4); // add low and high parts
-    return          _mm_cvtsi128_si32(sum5);  
+//    return          _mm_cvtsi128_si32(sum5);  
+    return _mm_extract_epi16(sum5, 0);
 }
 
 // Horizontal add extended: Calculates the sum of all vector elements.
