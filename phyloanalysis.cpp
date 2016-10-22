@@ -1117,7 +1117,7 @@ void computeInitialTree(Params &params, IQTree &iqtree, string &dist_file, int &
 		iqtree.pllInst->randomNumberSeed = params.ran_seed;
 
 		if(params.maximum_parsimony){
-			_pllComputeRandomizedStepwiseAdditionParsimonyTree(iqtree.pllInst, iqtree.pllPartitions, params.sprDist);
+			_pllComputeRandomizedStepwiseAdditionParsimonyTree(iqtree.pllInst, iqtree.pllPartitions, params.sprDist, &iqtree);
 		}
 		else
 			pllComputeRandomizedStepwiseAdditionParsimonyTree(iqtree.pllInst, iqtree.pllPartitions, params.sprDist);
@@ -1228,7 +1228,7 @@ int initCandidateTreeSet(Params &params, IQTree &iqtree, int numInitTrees) {
 			iqtree.pllInst->randomNumberSeed = params.ran_seed + treeNr * 12345;
 
 			if(params.maximum_parsimony){
-				_pllComputeRandomizedStepwiseAdditionParsimonyTree(iqtree.pllInst, iqtree.pllPartitions, params.sprDist);
+				_pllComputeRandomizedStepwiseAdditionParsimonyTree(iqtree.pllInst, iqtree.pllPartitions, params.sprDist, &iqtree);
 			}
 			else
 				pllComputeRandomizedStepwiseAdditionParsimonyTree(iqtree.pllInst, iqtree.pllPartitions, params.sprDist);

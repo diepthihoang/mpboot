@@ -136,6 +136,8 @@ parsimonyNumber highest_cost;
 //(if needed) split the parsimony vector into several segments to avoid overflow when calc rell based on vec8us
 extern int pllRepsSegments; // # of segments
 extern int * pllSegmentUpper; // array of first index of the next segment, see IQTree::segment_upper
+unsigned int * pllRemainderLowerBounds; // array of lower bound score for the un-calculated part to the right of a segment
+bool first_call = true; // is this the first call to pllOptimizeSprParsimony
 
 void initializeCostMatrix() {
 
@@ -2662,12 +2664,31 @@ static void compressSankoffDNA(pllInstance *tr, partitionList *pr, int *informat
     }
 
 
-    // TODO: remove this for Sankoff?
+	// TODO: remove this for Sankoff?
 
-  rax_posix_memalign ((void **) &(tr->parsimonyScore), PLL_BYTE_ALIGNMENT, sizeof(unsigned int) * totalNodes);
+	rax_posix_memalign ((void **) &(tr->parsimonyScore), PLL_BYTE_ALIGNMENT, sizeof(unsigned int) * totalNodes);
 
-  for(i = 0; i < totalNodes; i++)
-    tr->parsimonyScore[i] = 0;
+	for(i = 0; i < totalNodes; i++)
+		tr->parsimonyScore[i] = 0;
+
+	if((!perSiteScores) && pllRepsSegments > 1){
+		// compute lower-bound if not currently extracting per site score AND having > 1 segments
+		pllRemainderLowerBounds = new UINT[pllRepsSegments - 1]; // last segment does not need lower bound
+		assert(iqtree != NULL);
+//		int partitionId = 0;
+//		for(int seg = 0; seg < pllRepsSegments - 1; seg++){
+//			pllRemainderLowerBounds[seg] = 0;
+//			for(int ptn = pllSegmentUpper[seg]; ptn < pllSegmentUpper[seg + 1]; ptn++){
+//				cout << dynamic_cast<ParsTree *>(iqtree)->findMstScore(ptn) << ", ";
+//				pllRemainderLowerBounds[seg] += dynamic_cast<ParsTree *>(iqtree)->findMstScore(ptn) *
+//					pr->partitionData[partitionId]->informativePtnWgt[ptn];
+//			}
+//			cout << endl << "pllRemainderLowerBounds[" << seg << "]: " << pllRemainderLowerBounds[seg] << endl;
+//		}
+
+	}else
+		pllRemainderLowerBounds = NULL;
+
 }
 
 
@@ -2926,7 +2947,7 @@ void _pllFreeParsimonyDataStructures(pllInstance *tr, partitionList *pr)
 	  rax_free(tr->ti);
 	  tr->ti = NULL;
   }
-  if(pllCostMatrix)
+  if(pllCostMatrix){
 		for(int i = 0; i < pr->numberOfPartitions; i++){
 			if(pr->partitionData[i]->informativePtnWgt != NULL){
 				rax_free(pr->partitionData[i]->informativePtnWgt);
@@ -2937,6 +2958,11 @@ void _pllFreeParsimonyDataStructures(pllInstance *tr, partitionList *pr)
 				pr->partitionData[i]->informativePtnScore = NULL;
 			}
 		}
+		if(pllRemainderLowerBounds){
+			delete [] pllRemainderLowerBounds;
+			pllRemainderLowerBounds = NULL;
+		}
+	}
 
 }
 
@@ -3058,8 +3084,9 @@ static void _pllMakeParsimonyTreeFast(pllInstance *tr, partitionList *pr, int sp
     @param partitions
       The partitions
 */
-void _pllComputeRandomizedStepwiseAdditionParsimonyTree(pllInstance * tr, partitionList * partitions, int sprDist)
+void _pllComputeRandomizedStepwiseAdditionParsimonyTree(pllInstance * tr, partitionList * partitions, int sprDist, IQTree *_iqtree)
 {
+	iqtree = _iqtree; // update pointer to IQTree
 	_allocateParsimonyDataStructures(tr, partitions, PLL_FALSE);
 //	cout << "DONE allocate..." << endl;
 	_pllMakeParsimonyTreeFast(tr, partitions, sprDist);
@@ -3077,16 +3104,19 @@ void _pllComputeRandomizedStepwiseAdditionParsimonyTree(pllInstance * tr, partit
  */
 int pllOptimizeSprParsimony(pllInstance * tr, partitionList * pr, int mintrav, int maxtrav, IQTree *_iqtree){
 	int perSiteScores = globalParam->gbo_replicates > 0;
-	bool first_call = false; // is this the first call to pllOptimizeSprParsimony()
-	if(!iqtree){
-		iqtree = _iqtree;
-		first_call = true;
-	}
-	if(globalParam->ratchet_iter >= 0){
+
+	iqtree = _iqtree; // update pointer to IQTree
+
+	if(globalParam->ratchet_iter >= 0 && (iqtree->on_ratchet_hclimb1 || iqtree->on_ratchet_hclimb2)){
+		// oct 23: in non-ratchet iteration, allocate is not triggered
 		_updateInternalPllOnRatchet(tr, pr);
 		_allocateParsimonyDataStructures(tr, pr, perSiteScores); // called once if not running ratchet
 	}else if(first_call || (iqtree && iqtree->on_opt_btree))
 		_allocateParsimonyDataStructures(tr, pr, perSiteScores); // called once if not running ratchet
+
+	if(first_call){
+		first_call = false;
+	}
 
 //	if(((globalParam->ratchet_iter >= 0 || globalParam->optimize_boot_trees) && (!globalParam->hclimb1_nni)) || (!iqtree)){
 //		iqtree = _iqtree;

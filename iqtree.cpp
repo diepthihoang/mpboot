@@ -323,6 +323,7 @@ void IQTree::setParams(Params &params) {
 	if(params.maximum_parsimony){
 		on_opt_btree = false;
 		on_ratchet_hclimb1 = false;
+		on_ratchet_hclimb2 = false;
 		iter_best = false;
 
 		if(params.ratchet_iter >= 0){
@@ -1817,7 +1818,7 @@ double IQTree::doTreeSearch() {
 			 *---------------------------------------*/
 			int nni_count = 0;
 			int nni_steps = 0;
-
+			on_ratchet_hclimb2 = true;
 			imd_tree = doNNISearch(nni_count, nni_steps);
 			// update current score
 			initializeAllPartialLh();
@@ -1843,8 +1844,9 @@ double IQTree::doTreeSearch() {
         cout.setf(ios::fixed, ios::floatfield);
 
         if (curIt % 10 == 0 || verbose_mode >= VB_MED) {
-            if(on_ratchet_hclimb1)
+            if(on_ratchet_hclimb2){
                 cout << "RATCHET ";
+            }
             cout << ((iqp_assess_quartet == IQP_BOOTSTRAP) ? "Bootstrap " : "Iteration ") << curIt
                 << (params->maximum_parsimony ? " / Score: " : " / LogL: ");
             if (verbose_mode >= VB_MED)
@@ -1867,6 +1869,7 @@ double IQTree::doTreeSearch() {
             printIntermediateTree(WT_NEWLINE | WT_APPEND | WT_SORT_TAXA | WT_BR_LEN);
         }
 
+		if(on_ratchet_hclimb2) on_ratchet_hclimb2 = false;
     	/*----------------------------------------
     	 * Update if better tree is found
     	 *---------------------------------------*/
@@ -2118,7 +2121,9 @@ string IQTree::doNNISearch(int& nniCount, int& nniSteps) {
 			curScore = -computeParsimony();
 
 			// deallocation will occur once at the end of runTreeReconstruction() if not running ratchet
-			if(((params->ratchet_iter >= 0 || on_opt_btree) && (!params->hclimb1_nni))){
+			// oct 23: in non-ratchet iteration, free is not triggered
+			if((((params->ratchet_iter >= 0 && (!on_ratchet_hclimb2)) || on_opt_btree)
+				&& (!params->hclimb1_nni))){
 //			if(((params->ratchet_iter >= 0) && (!params->hclimb1_nni))){
 				_pllFreeParsimonyDataStructures(pllInst, pllPartitions);
 			}
@@ -3774,7 +3779,7 @@ void IQTree::doSegmenting(){
 
 	for(int i = 0; i < nptn; i++){
 		seg_sum += (aln)->at(i).ras_pars_score * (aln)->at(i).frequency;
-		if((i + 1) % VCSIZE_USHORT == 0 && seg_sum > USHRT_MAX / 16){
+		if((i + 1) % VCSIZE_USHORT == 0 && seg_sum > USHRT_MAX / 64){
 			segment_upper[segment_no] = i + 1;
 			segment_no++;
 			seg_sum = 0;

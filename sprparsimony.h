@@ -14,7 +14,7 @@
  * An alternative for pllComputeRandomizedStepwiseAdditionParsimonyTree
  * because the original one seems to have the wrong deallocation function
  */
-void _pllComputeRandomizedStepwiseAdditionParsimonyTree(pllInstance * tr, partitionList * partitions, int sprDist);
+void _pllComputeRandomizedStepwiseAdditionParsimonyTree(pllInstance * tr, partitionList * partitions, int sprDist, IQTree *_iqtree);
 
 void _allocateParsimonyDataStructures(pllInstance *tr, partitionList *pr);
 void _pllFreeParsimonyDataStructures(pllInstance *tr, partitionList *pr);

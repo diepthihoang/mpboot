@@ -756,7 +756,8 @@ public:
 	vector<IntVector> boot_trees_parsimony_top_iter; // 1000 vectors of int (iter)
 									// each iter here corresponding to one int pair in boot_trees_parsimony_top
 
-	bool on_ratchet_hclimb1;
+	bool on_ratchet_hclimb1; // is on the 1st hill-climbing in a ratchet iteration (i.e. on perturbed aln)
+	bool on_ratchet_hclimb2; // is on the 2nd hill-climbing in a ratchet iteration (i.e. on original aln)
 	Alignment * saved_aln_on_ratchet_iter;
 	Alignment * saved_aln_on_opt_btree;
 	BootValTypePars * original_sample;
