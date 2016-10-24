@@ -136,8 +136,9 @@ parsimonyNumber highest_cost;
 //(if needed) split the parsimony vector into several segments to avoid overflow when calc rell based on vec8us
 extern int pllRepsSegments; // # of segments
 extern int * pllSegmentUpper; // array of first index of the next segment, see IQTree::segment_upper
-unsigned int * pllRemainderLowerBounds; // array of lower bound score for the un-calculated part to the right of a segment
+parsimonyNumber * pllRemainderLowerBounds; // array of lower bound score for the un-calculated part to the right of a segment
 bool first_call = true; // is this the first call to pllOptimizeSprParsimony
+bool doing_stepwise_addition = false; // is the stepwise addition on
 
 void initializeCostMatrix() {
 
@@ -844,12 +845,21 @@ parsimonyNumber evaluateSankoffParsimonyIterativeFastSIMD(pllInstance *tr, parti
                 // if(sum >= bestScore)
                 // 		return sum;
             }
+
             total_sum += horizontal_add(sum);
+
+			// Diep: IMPORTANT! since the pllRemainderLowerBounds is computed for full ntaxa
+			// the following must be disabled during stepwise addition
+            if((!doing_stepwise_addition) && (!perSiteScores) && (seg < pllRepsSegments - 1)){
+				parsimonyNumber est_score = total_sum + pllRemainderLowerBounds[seg];
+				if(est_score > tr->bestParsimony){
+					return est_score;
+				}
+            }
         }
 	}
 
-
-  return total_sum;
+	return total_sum;
 }
 
 
@@ -2673,19 +2683,25 @@ static void compressSankoffDNA(pllInstance *tr, partitionList *pr, int *informat
 
 	if((!perSiteScores) && pllRepsSegments > 1){
 		// compute lower-bound if not currently extracting per site score AND having > 1 segments
-		pllRemainderLowerBounds = new UINT[pllRepsSegments - 1]; // last segment does not need lower bound
+		pllRemainderLowerBounds = new parsimonyNumber[pllRepsSegments - 1]; // last segment does not need lower bound
 		assert(iqtree != NULL);
-//		int partitionId = 0;
-//		for(int seg = 0; seg < pllRepsSegments - 1; seg++){
-//			pllRemainderLowerBounds[seg] = 0;
-//			for(int ptn = pllSegmentUpper[seg]; ptn < pllSegmentUpper[seg + 1]; ptn++){
-//				cout << dynamic_cast<ParsTree *>(iqtree)->findMstScore(ptn) << ", ";
-//				pllRemainderLowerBounds[seg] += dynamic_cast<ParsTree *>(iqtree)->findMstScore(ptn) *
-//					pr->partitionData[partitionId]->informativePtnWgt[ptn];
-//			}
-//			cout << endl << "pllRemainderLowerBounds[" << seg << "]: " << pllRemainderLowerBounds[seg] << endl;
-//		}
+		int partitionId = 0;
+		int ptn;
+		int nptn = iqtree->aln->n_informative_patterns;
+		int * min_ptn_pars = new int[nptn];
 
+		for(ptn = 0; ptn < nptn; ptn++)
+			min_ptn_pars[ptn] = dynamic_cast<ParsTree *>(iqtree)->findMstScore(ptn);
+
+		for(int seg = 0; seg < pllRepsSegments - 1; seg++){
+			pllRemainderLowerBounds[seg] = 0;
+			for(ptn = pllSegmentUpper[seg]; ptn < nptn; ptn++){
+				pllRemainderLowerBounds[seg] += min_ptn_pars[ptn] *
+					pr->partitionData[partitionId]->informativePtnWgt[ptn];
+			}
+		}
+
+		delete [] min_ptn_pars;
 	}else
 		pllRemainderLowerBounds = NULL;
 
@@ -3086,12 +3102,14 @@ static void _pllMakeParsimonyTreeFast(pllInstance *tr, partitionList *pr, int sp
 */
 void _pllComputeRandomizedStepwiseAdditionParsimonyTree(pllInstance * tr, partitionList * partitions, int sprDist, IQTree *_iqtree)
 {
+	doing_stepwise_addition = true;
 	iqtree = _iqtree; // update pointer to IQTree
 	_allocateParsimonyDataStructures(tr, partitions, PLL_FALSE);
 //	cout << "DONE allocate..." << endl;
 	_pllMakeParsimonyTreeFast(tr, partitions, sprDist);
 //	cout << "DONE make...." << endl;
 	_pllFreeParsimonyDataStructures(tr, partitions);
+	doing_stepwise_addition = false;
 //	cout << "Done free..." << endl;
 }
 
@@ -3136,7 +3154,9 @@ int pllOptimizeSprParsimony(pllInstance * tr, partitionList * pr, int mintrav, i
 	nodeRectifierPars(tr);
 	tr->bestParsimony = UINT_MAX;
 	tr->bestParsimony = evaluateParsimony(tr, pr, tr->start, PLL_TRUE, perSiteScores);
+
 	assert(-iqtree->curScore == tr->bestParsimony);
+
 //	cout << "\ttr->bestParsimony (initial tree) = " << tr->bestParsimony << endl;
 	/*
 	// Diep: to be investigated

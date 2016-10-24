@@ -291,13 +291,13 @@ void IQTree::setParams(Params &params) {
     				bootstrap_alignment = new Alignment;
     			IntVector this_sample;
     			bootstrap_alignment->createBootstrapAlignment(aln, &this_sample, params.bootstrap_spec);
+
     			for (size_t j = 0; j < nunit; j++){
     				if(params.maximum_parsimony)
     					boot_samples_pars[i][j] = this_sample[j];
     				else
     					boot_samples[i][j] = this_sample[j];
     			}
-
 				bootstrap_alignment->printPhylip(bootaln_name.c_str(), true);
 				delete bootstrap_alignment;
         	} else {
@@ -2067,6 +2067,12 @@ string IQTree::doNNISearch(int& nniCount, int& nniSteps) {
 				pllDestroyInstance(pllInst);
 				pllInst = NULL;
 			}
+
+			// Diep: sorting the boot aln is needed for branch and bound weighted search
+			PatternComp pcomp;
+			sort(aln->begin(), aln->end(), pcomp);
+			aln->updateSitePatternAfterOptimized();
+
 			initializePLL(*params); // because the set of patterns might be a subset of the orig
 			pllNewickTree *btree = pllNewickParseString(getTreeString().c_str());
 			assert(btree != NULL);
@@ -3779,7 +3785,7 @@ void IQTree::doSegmenting(){
 
 	for(int i = 0; i < nptn; i++){
 		seg_sum += (aln)->at(i).ras_pars_score * (aln)->at(i).frequency;
-		if((i + 1) % VCSIZE_USHORT == 0 && seg_sum > USHRT_MAX / 64){
+		if((i + 1) % VCSIZE_USHORT == 0 && seg_sum > USHRT_MAX / 16){
 			segment_upper[segment_no] = i + 1;
 			segment_no++;
 			seg_sum = 0;
