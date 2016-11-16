@@ -137,7 +137,9 @@ void Alignment::modifyPatternFreq(Alignment & aln, unsigned short * new_pattern_
     	}
 
     	for(int i = 0; i < new_pattern_freqs[p]; i++){
-    		addPattern(*it, site, 1);
+    		Pattern pat = *it; // Diep: (Nov 16, 2016) Fix error that frequencies all equal to 1 since optimizeBootstrapTree
+    		addPattern(pat, site, 1);
+//    		addPattern(*it, site, 1); // WRONG old code
     		site++;
     	}
 

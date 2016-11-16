@@ -3780,6 +3780,8 @@ void IQTree::doSegmenting(){
 	if(segment_upper != NULL) delete [] segment_upper;
 	segment_upper = new int[nptn]; // it takes at least one pattern per segment
 
+//	segment_upper[0] = aln->n_informative_patterns;
+//	reps_segments = 1;
 	int segment_no = 0;
 	int seg_sum = 0;
 

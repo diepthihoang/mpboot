@@ -141,7 +141,6 @@ bool first_call = true; // is this the first call to pllOptimizeSprParsimony
 bool doing_stepwise_addition = false; // is the stepwise addition on
 
 void initializeCostMatrix() {
-
     highest_cost = *max_element(pllCostMatrix, pllCostMatrix+pllCostNstates*pllCostNstates) + 1;
 
 //    cout << "Segments: ";
@@ -781,7 +780,6 @@ static void newviewParsimonyIterativeFast(pllInstance *tr, partitionList *pr, in
 template <class VectorClass, class Numeric, const size_t states, const bool BY_PATTERN>
 parsimonyNumber evaluateSankoffParsimonyIterativeFastSIMD(pllInstance *tr, partitionList * pr, int perSiteScores)
 {
-
     size_t pNumber = (size_t)tr->ti[1];
     size_t qNumber = (size_t)tr->ti[2];
 
@@ -3473,11 +3471,20 @@ void computeUserTreeParsimomy(Params &params) {
     	ptree = new IQTree(&alignment);
 
 
-	ptree->setAlignment(&alignment);
-	optimizeAlignment(ptree, params); // for sorting aln. This line triggers "UFBoot-MP CRASHES WITH SIGNAL ABORTED"
-	cout << "Read user tree...";
+//	cout << "Read user tree... 1st time";
     ptree->readTree(params.user_file, params.is_rooted);
-    cout << "done" << endl;
+
+	ptree->setAlignment(&alignment); // IMPORTANT: Always call setAlignment() after readTree()
+	optimizeAlignment(ptree, params);
+
+//	cout << "Read user tree... 2nd time";
+    ptree->readTree(params.user_file, params.is_rooted);
+
+	ptree->setAlignment(ptree->aln); // IMPORTANT: Always call setAlignment() after readTree()
+    ptree->initializeAllPartialPars();
+    ptree->clearAllPartialLH();
+
+//    cout << "done" << endl;
 	cout << "Parsimony score (by IQTree kernel) is: ";
 	cout << ptree->computeParsimony() << endl;
 
@@ -3492,20 +3499,19 @@ void computeUserTreeParsimomy(Params &params) {
 		iqtree = ptree;
         pllNewickParseDestroy(&pll_tree);
 		_allocateParsimonyDataStructures(ptree->pllInst, ptree->pllPartitions, false);
-
+		ptree->pllInst->bestParsimony = UINT_MAX; // Important because of early termination in evaluateSankoffParsimonyIterativeFastSIMD
 		unsigned int pll_score = evaluateParsimony(ptree->pllInst, ptree->pllPartitions, ptree->pllInst->start, PLL_TRUE, false);
 		cout << "Parsimony score (by PLL kernel) is: " << pll_score << endl;
 
 
-//		// compare pattern order
-//		// => temp problem: order is not sync because in this test func, IQTree aln is not sorted
-//		if(informativePtnWgt){
-//			int diffCount = 0;
-//			for(int i = 0; i < iqtree->aln->getNPattern(); i++){
-//				if(iqtree->aln->at(i).frequency != informativePtnWgt[i]) diffCount++;
-//			}
-//			cout << "diffCount = " << diffCount << endl;
-//		}
+		if(ptree->pllPartitions->partitionData[0]->informativePtnWgt){
+			int diffCount = 0;
+			unsigned int *ptnWgt = (unsigned int*)ptree->pllPartitions->partitionData[0]->informativePtnWgt;
+			for(int i = 0; i < ptree->aln->n_informative_patterns; i++){
+				if(ptree->aln->at(i).frequency != ptnWgt[i]) diffCount++;
+			}
+			assert(diffCount == 0);
+		}
 
 		_pllFreeParsimonyDataStructures(ptree->pllInst, ptree->pllPartitions);
 	}else{
@@ -3517,6 +3523,7 @@ void computeUserTreeParsimomy(Params &params) {
 		iqtree = ptree;
         pllNewickParseDestroy(&pll_tree);
 		_allocateParsimonyDataStructures(ptree->pllInst, ptree->pllPartitions, false);
+		ptree->pllInst->bestParsimony = UINT_MAX; // Important because of early termination in evaluateSankoffParsimonyIterativeFastSIMD
 		unsigned int pll_score = evaluateParsimony(ptree->pllInst, ptree->pllPartitions, ptree->pllInst->start, PLL_TRUE, false);
 		cout << "Parsimony score (by PLL kernel) is: " << pll_score << endl;
 
