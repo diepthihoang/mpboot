@@ -44,6 +44,8 @@ int pllCalcMinParsScorePattern(pllInstance *tr, int dataType, int site);
 void testSiteParsimony(Params &params);
 
 void computeUserTreeParsimomy(Params &params);
+void convertNewickToTnt(Params &params);
+void convertNewickToNexus(Params &params);
 
 // util function
 // act as pllAlignmentRemoveDups of PLL but for sorted alignment of IQTREE

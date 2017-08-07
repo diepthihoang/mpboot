@@ -6,7 +6,7 @@
  */
 #include "sprparsimony.h"
 #include "parstree.h"
-
+#include <string>
 /**
  * PLL (version 1.0.0) a software library for phylogenetic inference
  * Copyright (C) 2013 Tomas Flouri and Alexandros Stamatakis
@@ -3530,6 +3530,122 @@ void computeUserTreeParsimomy(Params &params) {
 
 		_pllFreeParsimonyDataStructures(ptree->pllInst, ptree->pllPartitions);
 	}
+	delete ptree;
+}
+
+// Given an alignment A (-s) and a tree T (-nwtree)
+// Convert T into TNT format (clear all bootstrap supports, use tread syntax)
+// @param: Params
+void convertNewickToTnt(Params &params) {
+    Alignment alignment(params.aln_file, params.sequence_type, params.intype);
+
+    IQTree * ptree;
+
+    ptree = new IQTree(&alignment);
+
+//	cout << "Read user tree... 1st time";
+    ptree->readTree(params.user_file, params.is_rooted);
+
+	ptree->setAlignment(&alignment); // IMPORTANT: Always call setAlignment() after readTree()
+
+//	ptree->printTree(cout, WT_TAXON_ID | WT_SORT_TAXA);
+//	cout << endl;
+
+	ostringstream ss;
+	ptree->printTree(ss, WT_TAXON_ID | WT_SORT_TAXA);
+
+	string treestrboot = ss.str();
+	string treestr = "";
+	int len = treestrboot.length();
+	int j;
+	for(int i = 0; i < len; i++){
+		if(treestrboot[i] == ',')
+			treestr.append(1, ' ');
+		else
+			treestr.append(1, treestrboot[i]);
+
+		if(treestrboot[i] == ')'){
+			j = i;
+			do{
+				j = j + 1;
+			} while(treestrboot[j] >= '0' && treestrboot[j] <= '9');
+			i = j - 1;
+		}
+	}
+
+	string filename = params.user_file;
+	filename += ".tnt";
+	ofstream fout(filename.c_str());
+	fout << "tread" << endl;
+	fout << treestr << endl;
+	fout << "proc /;" << endl;
+	fout.close();
+
+	cout << "Tree in TNT format is outputted to " << filename.c_str() << endl;
+
+	delete ptree;
+}
+
+
+
+// Given an alignment A (-s) and a tree T
+// Convert T into Nexus format (to be used by PAUP*)
+// @param: Params
+void convertNewickToNexus(Params &params) {
+    Alignment alignment(params.aln_file, params.sequence_type, params.intype);
+
+    IQTree * ptree;
+
+    ptree = new IQTree(&alignment);
+
+//	cout << "Read user tree... 1st time";
+    ptree->readTree(params.user_file, params.is_rooted);
+
+	ptree->setAlignment(&alignment); // IMPORTANT: Always call setAlignment() after readTree()
+
+	string filename = params.user_file;
+	filename += ".nex";
+	ofstream fout(filename.c_str());
+	fout << "#NEXUS" << endl << endl;
+	fout << "BEGIN TAXA;" << endl;
+	fout << "\tDIMENSIONS ntax=" << ptree->aln->getNSeq() << ";" << endl;
+	fout << "\tTAXLABELS ";
+	for(int i = 0; i < ptree->aln->getNSeq(); i++)
+		fout << ptree->aln->getSeqName(i) << " ";
+	fout << ";" << endl;
+	fout << "END;" << endl << endl << "BEGIN TREES;" << endl << "\tTREE tree_1=";
+
+	ostringstream ss;
+	ptree->printTree(ss, WT_SORT_TAXA);
+	string treestr = ss.str();
+
+	string wtreestr = "";
+	int len = treestr.length();
+	int j;
+	int count=0;
+	for(int i = 0; i < len; i++){
+		wtreestr.append(1, treestr[i]);
+		if(treestr[i] == ')' && i != len - 2){
+			j = i;
+			do{
+				j = j + 1;
+			} while(treestr[j] >= '0' && treestr[j] <= '9');
+			i = j - 1;
+			wtreestr.append("inode");
+			stringstream ssi;
+			ssi << count++;
+			wtreestr.append(ssi.str());
+		}
+		if(treestr[i] == ')' && i == len - 2) wtreestr.append("root");
+	}
+
+	fout << wtreestr;
+
+	fout << endl << "END;" << endl;
+	fout.close();
+
+	cout << "Tree in NEXUS format is outputted to " << filename.c_str() << endl;
+
 	delete ptree;
 }
 

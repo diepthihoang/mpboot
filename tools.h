@@ -1485,6 +1485,8 @@ struct Params {
 	int ratchet_percent; // 0-100; percent of informative sites to upweight during ratchet
 
     bool compute_parsimony; // to compute parsimony of a user tree
+    bool newick_to_tnt; // to convert a tree in Newick format into TNT syntax
+    bool newick_to_nexus; // to convert a tree in Newick format into TNT syntax
 
     /** TRUE to condense parsimony equivalent sites, default: false */
     bool condense_parsimony_equiv_sites;

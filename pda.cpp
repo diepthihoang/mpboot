@@ -2334,6 +2334,12 @@ int main(int argc, char *argv[])
 	else if (params.compute_parsimony) {
 		computeUserTreeParsimomy(params);
 	}
+	else if (params.newick_to_tnt) {
+		convertNewickToTnt(params);
+	}
+	else if (params.newick_to_nexus) {
+		convertNewickToNexus(params);
+	}
 	else if (params.rf_dist_mode != 0) {
 		computeRFDist(params);
 	} else if (params.test_input != TEST_NONE) {

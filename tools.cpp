@@ -777,6 +777,8 @@ void parseArg(int argc, char *argv[], Params &params) {
     params.ratchet_wgt = 1; // default if just specify -ratchet
     params.ratchet_percent = 50; // default if just specify -ratchet
     params.compute_parsimony = false;
+    params.newick_to_tnt = false;
+    params.newick_to_nexus = false;
     params.sankoff_cost_file = NULL;
     params.sankoff_short_int = false;
     params.condense_parsimony_equiv_sites = false;
@@ -2325,6 +2327,14 @@ void parseArg(int argc, char *argv[], Params &params) {
             	params.compute_parsimony = true;
             	params.nni5 = false;
             	params.nni_type = NNI1;
+            	continue;
+            }
+			if(strcmp(argv[cnt], "-totnt") == 0){
+            	params.newick_to_tnt = true;
+            	continue;
+            }
+			if(strcmp(argv[cnt], "-tonex") == 0){
+            	params.newick_to_nexus = true;
             	continue;
             }
 			if(strcmp(argv[cnt], "-cost") == 0){
