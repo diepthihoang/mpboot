@@ -2740,9 +2740,13 @@ static void compressDNA(pllInstance *tr, partitionList *pr, int *informative, in
         **compressedTips = (parsimonyNumber **)rax_malloc(states * sizeof(parsimonyNumber*)),
         *compressedValues = (parsimonyNumber *)rax_malloc(states * sizeof(parsimonyNumber));
 
+      pr->partitionData[model]->numInformativePatterns = 0; // to fix score bug THAT too many uninformative sites cause out-of-bound array access
+
       for(i = lower; i < upper; i++)
-        if(informative[i])
+        if(informative[i]){
           entries += (size_t)tr->aliaswgt[i];
+          pr->partitionData[model]->numInformativePatterns++;
+        }
 
       compressedEntries = entries / PLL_PCF;
 
@@ -3254,7 +3258,9 @@ void pllComputePatternParsimony(pllInstance * tr, partitionList * pr, unsigned s
 		int partialParsLength = pr->partitionData[i]->parsimonyLength * PLL_PCF;
 		parsimonyNumber * p = &(pr->partitionData[i]->perSitePartialPars[partialParsLength * tr->start->number]);
 
-		for(ptn = pr->partitionData[i]->lower; ptn < pr->partitionData[i]->upper; ptn++){
+		int upperIndex = pr->partitionData[i]->upper;
+		if(globalParam->sort_alignment) upperIndex = pr->partitionData[i]->numInformativePatterns;
+		for(ptn = pr->partitionData[i]->lower; ptn < upperIndex; ptn++){
 //			cout << p[site] << ", ";
 			ptn_pars[ptn] = p[site];
 			sum += ptn_pars[ptn] * tr->aliaswgt[ptn];
