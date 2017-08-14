@@ -780,7 +780,7 @@ void parseArg(int argc, char *argv[], Params &params) {
     params.newick_to_tnt = false;
     params.newick_to_nexus = false;
     params.sankoff_cost_file = NULL;
-    params.sankoff_short_int = false;
+    params.sankoff_short_int = true; // Diep: Revert for MPBoot release
     params.condense_parsimony_equiv_sites = false;
     params.spr_parsimony = true;// Diep: Revert for UFBoot-MP release
     params.spr_mintrav = 1; // same as PLL
@@ -841,7 +841,7 @@ void parseArg(int argc, char *argv[], Params &params) {
             if (strcmp(argv[cnt], "-h") == 0 || strcmp(argv[cnt], "--help") == 0) {
 #ifdef IQ_TREE
 //                usage_iqtree(argv, false);
-				usage_ufbootmp(argv, false);
+				usage_mpboot(argv, false);
 
 #else
                 usage(argv, false);
@@ -850,7 +850,7 @@ void parseArg(int argc, char *argv[], Params &params) {
             }
 			if (strcmp(argv[cnt], "-ho") == 0 || strcmp(argv[cnt], "-?") == 0) {
 //				usage_iqtree(argv, false);
-				usage_ufbootmp(argv, false);
+				usage_mpboot(argv, false);
 				continue;
 			}
 			if (strcmp(argv[cnt], "-hh") == 0
@@ -2349,7 +2349,10 @@ void parseArg(int argc, char *argv[], Params &params) {
                 params.sankoff_short_int = true;
                 continue;
             }
-
+			if(strcmp(argv[cnt], "-short_off") == 0) {
+                params.sankoff_short_int = false; // To turn off using short for pattern parsimony
+                continue;
+            }
 			if(strcmp(argv[cnt], "-mpcondense") == 0){
             	params.condense_parsimony_equiv_sites = true;
             	continue;
@@ -2709,7 +2712,7 @@ void parseArg(int argc, char *argv[], Params &params) {
     if (!params.user_file && !params.aln_file && !params.ngs_file && !params.ngs_mapped_reads && !params.partition_file)
 #ifdef IQ_TREE
 //        usage_iqtree(argv, false);
-//		usage_ufbootmp(argv, false);
+//		usage_mpboot(argv, false);
 		usage(argv, false);
 #else
         usage(argv, false);
@@ -2762,20 +2765,20 @@ void usage(char* argv[], bool full_command) {
 //    printCopyright(cout);
 	printCopyrightMP(cout); // to print UFBoot-MP info
 
-	cout << "Minimal command-line examples (replace 'ufbootmp ...' with actual path to executable):" << endl << endl;
+	cout << "Minimal command-line examples (replace 'mpboot ...' with actual path to executable):" << endl << endl;
 
  	cout << "1. Reconstruct maximum parsimony tree from a sequence alignment" << endl
  		<< "   (example.phy):" << endl
-		<< "     ufbootmp -s example.phy" << endl << endl;
+		<< "     mpboot -s example.phy" << endl << endl;
 
-	cout << "2. Reconstruct MP tree and assess branch supports with the UFBoot-MP method" << endl
+	cout << "2. Reconstruct MP tree and assess branch supports with the MPBoot method" << endl
 		<< "   (1000 replicates):" << endl
-		<< "     ufbootmp -s example.phy -bb 1000" << endl << endl;
+		<< "     mpboot -s example.phy -bb 1000" << endl << endl;
 
-	cout << "To show all available options: run 'ufbootmp -h'" << endl << endl;
+	cout << "To show all available options: run 'mpboot -h'" << endl << endl;
 
 	cout << "Have a look at the tutorial and manual for more information:" << endl
-		<< "     http://www.cibiv.at/software/ufboot-mp" << endl << endl;
+		<< "     http://www.cibiv.at/software/mpboot" << endl << endl;
 
 //    cout << "Usage: " << argv[0] << " [OPTIONS] <file_name> [<output_file>]" << endl;
 //    cout << "GENERAL OPTIONS:" << endl;
@@ -2985,7 +2988,7 @@ void usage_iqtree(char* argv[], bool full_command) {
     exit(0);
 }
 
-void usage_ufbootmp(char* argv[], bool full_command) {
+void usage_mpboot(char* argv[], bool full_command) {
 	printCopyrightMP(cout);
 
     cout << "Usage: " << argv[0] << " -s <alignment> [OPTIONS] [<treefile>] " << endl << endl;
@@ -2998,7 +3001,7 @@ void usage_ufbootmp(char* argv[], bool full_command) {
             << "  -seed <number>       Random seed number, normally used for debugging purpose" << endl
             << "  -v, -vv, -vvv        Verbose mode, printing more messages to screen" << endl
 
-			<< endl << "SPECIFIC TO MAXIMUM PARSIMONY BOOTSTRAP APPROXIMATION:" << endl
+			<< endl << "MPBOOT - MAXIMUM PARSIMONY BOOTSTRAP APPROXIMATION:" << endl
 			<< "  -mulhits                  Store multiple equally parsimonious trees per bootstrap replicate" << endl
 			<< "  -ratchet_iter <number>    Number of non-ratchet iterations before each ratchet iteration (default: 1)" << endl
 			<< "  -ratchet_wgt <number>     Weight to add to each site selected for perturbation during ratchet (default: 1)" << endl

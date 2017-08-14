@@ -239,7 +239,7 @@ void printCopyright(ostream &out) {
 
 void printCopyrightMP(ostream &out) {
 #ifdef IQ_TREE
- 	out << "UFBoot-MP";
+ 	out << "MPBoot";
 	#ifdef _OPENMP
 	out << " multicore";
 	#endif
@@ -267,7 +267,7 @@ void printCopyrightMP(ostream &out) {
 #endif
 
 #ifdef IQ_TREE
-	out << endl << "Copyright (c) 2015 Diep Thi Hoang, Le Sy Vinh, Tomas Flouri, Alexandros Stamatakis, Arndt von Haeseler and Bui Quang Minh." << endl << endl;
+	out << endl << "Copyright (c) 2016 Diep Thi Hoang, Le Sy Vinh, Tomas Flouri, Alexandros Stamatakis, Arndt von Haeseler and Bui Quang Minh." << endl << endl;
 #else
 	out << endl << "Copyright (c) 2006-2014 Olga Chernomor, Arndt von Haeseler and Bui Quang Minh." << endl << endl;
 #endif
@@ -1835,7 +1835,7 @@ extern "C" void funcAbort(int signal_number)
       because abort() was called, your program will exit or crash anyway
       (with a dialog box on Windows).
      */
-	cout << endl << "*** UFBoot-MP CRASHES WITH SIGNAL ";
+	cout << endl << "*** MPBoot CRASHES WITH SIGNAL ";
 	switch (signal_number) {
 		case SIGABRT: cout << "ABORTED"; break;
 		case SIGFPE:  cout << "ERRONEOUS NUMERIC"; break;
@@ -2222,11 +2222,11 @@ int main(int argc, char *argv[])
 
 #ifdef __AVX
 	if (instrset < 7) {
-		outError("Your CPU does not support AVX, please use SSE3 version of UFBoot-MP.");
+		outError("Your CPU does not support AVX, please use SSE3 version of MPBoot.");
 	}
 #else
 	if (instrset >= 7) {
-		outWarning("Your CPU supports AVX but you are using SSE3 version of UFBoot-MP!");
+		outWarning("Your CPU supports AVX but you are using SSE3 version of MPBoot!");
 		outWarning("Please switch to AVX version that is 40% faster than SSE3.");
 		cout << endl;
 	}

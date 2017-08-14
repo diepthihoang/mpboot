@@ -2001,11 +2001,11 @@ void usage_iqtree(char* argv[], bool full_command);
 
 /**
  * Diep:
- * print usage for UFBoot-MP
+ * print usage for MPBoot
  * @param program arguments list
  * @param full_command TRUE to print all available commands, FALSE to print normal usage dialog
  */
-void usage_ufbootmp(char* argv[], bool full_command);
+void usage_mpboot(char* argv[], bool full_command);
 
 /**
         parse area name string, where names are separated by commas

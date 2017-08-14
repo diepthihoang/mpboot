@@ -211,7 +211,7 @@ void IQTree::setParams(Params &params) {
     size_t i;
 
     if (params.online_bootstrap && params.gbo_replicates > 0) {
-        cout << "Generating " << params.gbo_replicates << " samples for ultrafast bootstrap..." << endl;
+        cout << "Generating " << params.gbo_replicates << " samples for bootstrap approximation..." << endl;
         size_t nunit; // either number of patterns or number of sites
         // allocate memory for boot_samples
         if(params.maximum_parsimony)

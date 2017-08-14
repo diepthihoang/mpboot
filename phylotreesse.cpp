@@ -22,7 +22,6 @@
 #include "vectorclass/vectorclass.h"
 #include "vectorclass/vectormath_exp.h"
 
-
 /* BQM: to ignore all-gapp subtree at an alignment site */
 //#define IGNORE_GAP_LH
 

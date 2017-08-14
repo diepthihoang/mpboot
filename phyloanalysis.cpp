@@ -360,7 +360,7 @@ void reportTree(ofstream &out, Params &params, PhyloTree &tree, double tree_lh,
 	computeInformationScores(tree_lh, df, ssize, AIC_score, AICc_score, BIC_score);
 
 	if(params.maximum_parsimony){
-		out << "Parsimony of the tree: " << fixed << int(-tree_lh) << endl;
+		out << "Parsimony score of the tree: " << fixed << int(-tree_lh) << endl;
 	}else{
 		out << "Log-likelihood of the tree: " << fixed << tree_lh << " (s.e. "
 				<< sqrt(lh_variance) << ")" << endl
@@ -436,12 +436,12 @@ void reportPhyloAnalysis(Params &params, string &original_model,
 	string outfile = params.out_prefix;
 
 //	outfile += ".iqtree";
-	outfile += ".ufbootmp";
+	outfile += ".mpboot";
 	try {
 		ofstream out;
 		out.exceptions(ios::failbit | ios::badbit);
 		out.open(outfile.c_str());
-		out << "UFBoot-MP " << iqtree_VERSION_MAJOR << "." << iqtree_VERSION_MINOR
+		out << "MPBoot " << iqtree_VERSION_MAJOR << "." << iqtree_VERSION_MINOR
 				<< "." << iqtree_VERSION_PATCH << " built " << __DATE__ << endl
 				<< endl;
 		if (params.partition_file)
@@ -452,13 +452,27 @@ void reportPhyloAnalysis(Params &params, string &original_model,
 		if (params.user_file)
 			out << "User tree file name: " << params.user_file << endl;
 		out << "Type of analysis: ";
-		if (params.compute_ml_tree)
-			out << "tree reconstruction";
-		if (params.num_bootstrap_samples > 0) {
-			if (params.compute_ml_tree)
+		if(params.maximum_parsimony){
+			out << "Parsimony tree reconstruction";
+			if(params.num_bootstrap_samples > 0) {
 				out << " + ";
-			out << "non-parametric bootstrap (" << params.num_bootstrap_samples
-					<< " replicates)";
+				out << "non-parametric bootstrap (" << params.num_bootstrap_samples
+						<< " replicates)";
+			}
+			if(params.gbo_replicates > 0) {
+				out << " + ";
+				out << "MPBoot bootstrap approximation (" << params.gbo_replicates
+						<< " replicates)";
+			}
+		}else{
+			if (params.compute_ml_tree)
+				out << "tree reconstruction";
+			if (params.num_bootstrap_samples > 0) {
+				if (params.compute_ml_tree)
+					out << " + ";
+				out << "non-parametric bootstrap (" << params.num_bootstrap_samples
+						<< " replicates)";
+			}
 		}
 		out << endl;
 		out << "Random seed number: " << params.ran_seed << endl << endl;
@@ -693,7 +707,10 @@ void reportPhyloAnalysis(Params &params, string &original_model,
 			if (params.split_threshold >= 0.99)
 				out << " (strict consensus)";
 
-			out << endl << "Branch lengths are optimized by maximum likelihood on original alignment" << endl;
+			if(!params.maximum_parsimony)
+				out << endl << "Branch lengths are optimized by maximum likelihood on original alignment" << endl;
+			else
+				out << endl;
 			out << "Numbers in parentheses are bootstrap supports (%)" << endl << endl;
 
 			string con_file = params.out_prefix;
@@ -862,7 +879,7 @@ void reportPhyloAnalysis(Params &params, string &original_model,
 	}
 
 	cout << endl << "Analysis results written to: " << endl
-			<< "  UFBoot-MP report:              " << params.out_prefix << ".ufbootmp"
+			<< "  MPBoot report:                 " << params.out_prefix << ".mpboot"
 			<< endl;
 	if (params.compute_ml_tree) {
 		cout << "  Maximum-" << (params.maximum_parsimony ? "parsimony " : "likelihood") << " tree:       " << params.out_prefix
@@ -903,9 +920,14 @@ void reportPhyloAnalysis(Params &params, string &original_model,
 				<< endl;
 
 	if (params.gbo_replicates) {
-		cout << endl << "Ultrafast bootstrap approximation results written to:" << endl
-			 << "  Split support values:          " << params.out_prefix << ".splits.nex" << endl
-			 << "  Consensus tree:                " << params.out_prefix << ".contree" << endl;
+		if(params.maximum_parsimony)
+			cout << endl << "Maximum parsimony bootstrap approximation results written to:" << endl
+						 << "  Split support values:          " << params.out_prefix << ".splits.nex" << endl
+						 << "  Consensus tree:                " << params.out_prefix << ".contree" << endl;
+		else
+			cout << endl << "Ultrafast bootstrap approximation results written to:" << endl
+				 << "  Split support values:          " << params.out_prefix << ".splits.nex" << endl
+				 << "  Consensus tree:                " << params.out_prefix << ".contree" << endl;
 		if (params.print_ufboot_trees)
 		cout << "  UFBoot trees:                  " << params.out_prefix << ".ufboot" << endl;
 
