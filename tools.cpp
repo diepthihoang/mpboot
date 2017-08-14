@@ -3011,6 +3011,8 @@ void usage_mpboot(char* argv[], bool full_command) {
 			<< "  -cand_cutoff <#s>         Use top #s percentile as cutoff for selecting bootstrap candidates (default: 10)" << endl
 			<< "  -opt_btree_off            Turn off refinement step on the final bootstrap tree set" << endl
 			<< "  -nni_pars                 Hill-climb by NNI instead of SPR" << endl
+			<< "  -cost <file>              Read <file> for the matrix of transition cost between character states" << endl
+			<< "                            Replace <file> by letter e for uniform cost." << endl
 
             << endl << "NEW STOCHASTIC TREE SEARCH ALGORITHM:" << endl
             << "  -numpars <number>    Number of initial parsimony trees (default: 100)" << endl
