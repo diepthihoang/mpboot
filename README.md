@@ -2,7 +2,7 @@
 MPBoot: Fast phylogenetic maximum parsimony tree inference and bootstrap approximation
 
 COMPILING INSTRUCTION
-* Clone the source code, unziping it, and renaming to "source"
+* Clone the source code, unzip it, and rename to "source"
 * Create folder "build" outside folder "source"
 * Change directory to "build"
 * Run cmake with command: cmake ../source -DIQTREE_FLAGS=sse4
