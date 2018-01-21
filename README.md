@@ -1,17 +1,17 @@
 # mpboot
 MPBoot: Fast phylogenetic maximum parsimony tree inference and bootstrap approximation
 
-COMPILING INSTRUCTION
+**COMPILING INSTRUCTION**
 * Clone the source code, unzip it, and rename to **source**
 * Change directory to **source**, run following commands to update the sub-repository
 
-&nbsp;&nbsp;&nbsp;&nbsp;**git submodule init**
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**git submodule init**
 
-&nbsp;&nbsp;&nbsp;&nbsp;**git submodule update**
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**git submodule update**
 
-&nbsp;&nbsp;&nbsp;&nbsp;**cd pllrepo**
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**cd pllrepo**
 
-&nbsp;&nbsp;&nbsp;&nbsp;**git checkout subufbootmp**
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**git checkout subufbootmp**
 
 * Create folder **build** outside folder **source**
 * Change directory to **build**
