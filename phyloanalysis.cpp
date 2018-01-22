@@ -1048,6 +1048,9 @@ void printAnalysisInfo(int model_df, IQTree& iqtree, Params& params) {
             << " / " << PLL_NEWZPERCYCLE << endl;
     cout << "SSE instructions: "
             << ((iqtree.sse) ? "Yes" : "No") << endl;
+    if(params.maximum_parsimony && params.spr_parsimony){
+    	cout << "Hill-climbing using SPR radius: " << params.spr_maxtrav << endl;
+    }
 	cout << endl;
 }
 

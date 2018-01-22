@@ -784,7 +784,7 @@ void parseArg(int argc, char *argv[], Params &params) {
     params.condense_parsimony_equiv_sites = false;
     params.spr_parsimony = true;// Diep: Revert for UFBoot-MP release
     params.spr_mintrav = 1; // same as PLL
-    params.spr_maxtrav = 3; // PLL default is 20
+    params.spr_maxtrav = 6; // PLL default is 20
     params.test_site_pars = false;
     params.auto_vectorize = false;
     params.sort_alignment = true;
