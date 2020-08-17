@@ -3,7 +3,6 @@ MPBoot: Fast phylogenetic maximum parsimony tree inference and bootstrap approxi
 
 ## **COMPILING INSTRUCTION SINCE 2020**
 * Clone the source code, unzip it, and rename to **source**
-* Change directory to **source**, run following commands to update the sub-repository
 * Create folder **build** outside folder **source**
 * Change directory to **build**
 * Run **cmake** command:
