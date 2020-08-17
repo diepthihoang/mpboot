@@ -105,6 +105,12 @@ struct PatternComp{
 
 /**
  * Diep:
+ * To print site parsimony scores for a user input tree
+ */
+void printSiteParsimonyUserTree(Params &params);
+
+/**
+ * Diep:
  * Based on a topology output by PLL Random Addition Sequence method
  * reorder pattern in the alignment by decreasing order of parsimony score
  * By this, uninformative sites will all be shifted to the end of the alignment.

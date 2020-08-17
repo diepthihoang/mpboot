@@ -2330,8 +2330,9 @@ int main(int argc, char *argv[])
 		doParsMultiState(params);
 	} else if(params.test_mode){
 		test(params);
-	}
-	else if (params.compute_parsimony) {
+	} else if(params.print_site_pars_user_tree){
+		printSiteParsimonyUserTree(params);
+	} else if (params.compute_parsimony) {
 		computeUserTreeParsimomy(params);
 	}
 	else if (params.newick_to_tnt) {

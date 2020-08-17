@@ -914,6 +914,9 @@ void reportPhyloAnalysis(Params &params, string &original_model,
 		cout << "  Site log-likelihoods:          " << params.out_prefix << ".sitelh"
 				<< endl;
 
+	if (params.print_site_pars)
+		cout << "  Site parsimony scores:         " << params.out_prefix << ".sitepars"
+				<< endl;
 
 	if (params.write_intermediate_trees)
 		cout << "  All intermediate trees:        " << params.out_prefix << ".treels"
@@ -941,6 +944,9 @@ void reportPhyloAnalysis(Params &params, string &original_model,
 		}
 		if (params.print_site_lh) {
 		cout << "  Site log-likelihoods:          " << params.out_prefix << ".sitelh" << endl;
+		}
+		if (params.print_site_pars) {
+		cout << "  Site parsimony scores:         " << params.out_prefix << ".sitepars" << endl;
 		}
 	}
 	cout << "  Screen log file:               " << params.out_prefix << ".log" << endl;
@@ -1115,6 +1121,9 @@ void computeInitialTree(Params &params, IQTree &iqtree, string &dist_file, int &
         bool myrooted = params.is_rooted;
         iqtree.readTree(params.user_file, myrooted);
         iqtree.setAlignment(iqtree.aln);
+        iqtree.initializeAllPartialPars(); // 2020-08-17: Diep added to fix bug while compute score of user tree
+        iqtree.clearAllPartialLH(); // 2020-08-17: Diep added to fix bug while compute score of user tree
+
         numInitTrees = 1;
         params.numNNITrees = 1;
         // change to old kernel if tree is multifurcating
@@ -1524,11 +1533,16 @@ void runApproximateBranchLengths(Params &params, IQTree &iqtree) {
 
 }
 
+// 2020-08-17: Diep modified this function to allow print site parsimony scores
 void printMiscInfo(Params &params, IQTree &iqtree, double *pattern_lh) {
-	if (params.print_site_lh && !params.pll) {
+	string ext = "";
+	if(params.print_site_lh) ext = ".sitelh";
+	else if(params.maximum_parsimony && params.print_site_pars) ext = ".sitepars";
+
+	if ((params.print_site_lh || params.print_site_pars) && !params.pll) {
 		string site_lh_file = params.out_prefix;
-		site_lh_file += ".sitelh";
-		if (params.print_site_lh == 1)
+		site_lh_file += ext;
+		if (params.print_site_lh == 1 || params.print_site_pars == 1)
 			printSiteLh(site_lh_file.c_str(), &iqtree, pattern_lh);
 		else
 			printSiteLhCategory(site_lh_file.c_str(), &iqtree);
@@ -2242,6 +2256,32 @@ void runPhyloAnalysis(Params &params) {
 	delete alignment;
 }
 
+void printSiteParsimonyUserTree(Params &params) {
+    Alignment alignment(params.aln_file, params.sequence_type, params.intype);
+    IQTree * ptree;
+
+    if(params.sankoff_cost_file){
+    	ptree = new ParsTree(&alignment);
+    	dynamic_cast<ParsTree *>(ptree)->initParsData(&params);
+    }else
+    	ptree = new IQTree(&alignment);
+
+    ptree->readTree(params.user_file, params.is_rooted); // Read user tree
+    ptree->setAlignment(&alignment); // IMPORTANT: Always call setAlignment() after readTree()
+    ptree->params = &params; // Diep: 2020-08-17, there are two variables with identical name as 'params'
+
+    ptree->initializeAllPartialPars();
+    ptree->clearAllPartialLH();
+    ptree->computeParsimony();
+
+    params.print_site_pars = 1;
+    double *pattern_lh = NULL;
+    printMiscInfo(params, *ptree, pattern_lh);
+
+	delete ptree;
+	if(pattern_lh) delete[] pattern_lh;
+}
+
 void assignBranchSupportNew(Params &params) {
 	if (!params.user_file)
 		outError("No trees file provided");
@@ -2652,6 +2692,8 @@ void optimizeAlignment(IQTree * & tree, Params & params){
 //		cout << "FIRST CHECK: Alignment patterns are not created properly!" << endl;
 
 	double start = getCPUTime();
+	tree->params = &params; // Diep: 2020-08-17, there are two variables with identical name as 'params'
+
 //	tree->initTopologyByPLLRandomAdition(params); // this pll version needs further sync to work with the rest
 	tree->computeParsimonyTree(params.out_prefix, tree->aln); // this iqtree version plays nicely with the rest
 	// extract the vector of pattern pars of the initialized tree

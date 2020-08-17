@@ -113,6 +113,7 @@ void printSiteLh(const char*filename, PhyloTree *tree, double *ptn_lh,
 		pattern_lh = ptn_lh;
 
 	try {
+		bool usingParsimony = tree->params->maximum_parsimony;
 		ofstream out;
 		out.exceptions(ios::failbit | ios::badbit);
 		if (append) {
@@ -124,17 +125,23 @@ void printSiteLh(const char*filename, PhyloTree *tree, double *ptn_lh,
 		IntVector pattern_index;
 		tree->aln->getSitePatternIndex(pattern_index);
 		if (!linename)
-			out << "Site_Lh   ";
+			out << "Site_" << (usingParsimony ? "Parsimony   " : "Site_Lh   ");
 		else {
 			out.width(10);
 			out << left << linename;
 		}
-		for (i = 0; i < tree->getAlnNSite(); i++)
-			out << " " << pattern_lh[pattern_index[i]];
+
+		if(usingParsimony){
+			for (i = 0; i < tree->getAlnNSite(); i++)
+				out << " " << -pattern_lh[pattern_index[i]];
+		}else
+			for (i = 0; i < tree->getAlnNSite(); i++)
+				out << " " << pattern_lh[pattern_index[i]];
+
 		out << endl;
 		out.close();
 		if (!append)
-			cout << "Site log-likelihoods printed to " << filename << endl;
+			cout << "Site " << (usingParsimony ? "parsimony scores" : "log-likelihoods") << " printed to " << filename << endl;
 	} catch (ios::failure) {
 		outError(ERR_WRITE_OUTPUT, filename);
 	}

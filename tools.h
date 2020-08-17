@@ -1196,6 +1196,19 @@ struct Params {
      */
     int print_site_lh;
 
+    /**
+     	 	0: do not print anything
+            1: print site parsimony
+            2: print site parsimony per Gamma category // not yet
+     */
+    int print_site_pars; // 2020-08-17 Diep added
+
+    /**
+     	 	true: print site parsimony for user input tree
+     */
+    bool print_site_pars_user_tree; // 2020-08-17 Diep added
+
+
     /** TRUE to print site-specific rates, default: FALSE */
     bool print_site_rate;
 

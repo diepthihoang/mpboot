@@ -689,6 +689,8 @@ void parseArg(int argc, char *argv[], Params &params) {
     params.print_site_lh = 0;
     params.print_site_rate = false;
     params.print_tree_lh = false;
+    params.print_site_pars = 0;
+    params.print_site_pars_user_tree = false;
     params.lambda = 1;
     params.speed_conf = 1.0;
     params.whtest_simulations = 1000;
@@ -1925,6 +1927,10 @@ void parseArg(int argc, char *argv[], Params &params) {
 				params.print_site_lh = 1;
 				continue;
 			}
+			if (strcmp(argv[cnt], "-wspars") == 0) {
+				params.print_site_pars = 1;
+				continue;
+			}
 			if (strcmp(argv[cnt], "-wslg") == 0) {
 				params.print_site_lh = 2;
 				continue;
@@ -2325,6 +2331,12 @@ void parseArg(int argc, char *argv[], Params &params) {
             }
 			if(strcmp(argv[cnt], "-comppars") == 0){
             	params.compute_parsimony = true;
+            	params.nni5 = false;
+            	params.nni_type = NNI1;
+            	continue;
+            }
+			if(strcmp(argv[cnt], "-wspars-user-tree") == 0){
+            	params.print_site_pars_user_tree = true;
             	params.nni5 = false;
             	params.nni_type = NNI1;
             	continue;
@@ -3052,8 +3064,13 @@ void usage_mpboot(char* argv[], bool full_command) {
 			cout << "  -rbal <num_taxa>     Create a random balanced tree." << endl;
 			cout << "  -rcsg <num_taxa>     Create a random circular split network." << endl;
 			cout << "  -rlen <min_len> <mean_len> <max_len>  " << endl;
-			cout << "                       min, mean, and max branch lengths of random trees." << endl;
+			cout << "                       min, mean, and max branch lengths of random trees." << endl
+				<< endl;
 
+			cout << "PRINTING SITE PARSIMONY SCORES:" << endl;
+			cout << "  -wspars              When using together with parsimony tree inference, print site parsimony scores of the best tree found." << endl;
+            cout << "  -wspars-user-tree <treefile> Print site parsimony scores of the user tree in <treefile>" << endl
+            << endl;
 
 			cout << endl;
 

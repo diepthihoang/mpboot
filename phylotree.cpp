@@ -1848,7 +1848,6 @@ void PhyloTree::computePatternParsimony(double *ptn_npars, double *cur_npars){
 
 	if(!params)
 		outError("No params detected!");
-
 //	if(params->snni && params->spr_parsimony){
 //		// Need to call pllComputePatternParsimony of sprparsimony.cpp
 //		pllComputePatternParsimony(dynamic_cast<IQTree*>(this)->pllInst, dynamic_cast<IQTree*>(this)->pllPartitions , ptn_npars, cur_npars);
