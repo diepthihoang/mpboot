@@ -1,7 +1,7 @@
 # mpboot
 MPBoot: Fast phylogenetic maximum parsimony tree inference and bootstrap approximation
 
-**COMPILING INSTRUCTION SINCE 2020**
+## **COMPILING INSTRUCTION SINCE 2020**
 * Clone the source code, unzip it, and rename to **source**
 * Change directory to **source**, run following commands to update the sub-repository
 * Create folder **build** outside folder **source**
@@ -15,7 +15,9 @@ MPBoot: Fast phylogenetic maximum parsimony tree inference and bootstrap approxi
 
 <hr>
 <br><br><br>
-**COMPILING INSTRUCTION PRIOR TO 2020**
+
+
+## **COMPILING INSTRUCTION PRIOR TO 2020**
 * Clone the source code, unzip it, and rename to **source**
 * Change directory to **source**, run following commands to update the sub-repository
 
