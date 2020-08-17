@@ -13,8 +13,8 @@ MPBoot: Fast phylogenetic maximum parsimony tree inference and bootstrap approxi
 * Run **make**
 * You will find the executable named **mpboot** once the **make** command is done.
 
-
-
+<hr>
+<br><br><br>
 **COMPILING INSTRUCTION PRIOR TO 2020**
 * Clone the source code, unzip it, and rename to **source**
 * Change directory to **source**, run following commands to update the sub-repository
