@@ -22,7 +22,7 @@ using namespace std;
 const double ERROR_X = 1.0e-4;
 
 double ran1(long *idum);
-double *vector(long nl, long nh);
+double *vec(long nl, long nh);
 void free_vector(double *v, long nl, long nh);
 double **matrix(long nrl, long nrh, long ncl, long nch);
 void free_matrix(double **m, long nrl, long nrh, long ncl, long nch);
@@ -96,7 +96,7 @@ void nrerror(const char *error_text)
 	throw error_text;
 }
 
-double *vector(long nl, long nh)
+double *vec(long nl, long nh)
 /* allocate a double vector with subscript range v[nl..nh] */
 {
 	double *v;
@@ -635,12 +635,12 @@ void Optimization::dfpmin(double p[], int n, double lower[], double upper[], dou
 	double den,fac,fad,fae,fp,stpmax,sum=0.0,sumdg,sumxi,temp,test;
 	double *dg,*g,*hdg,**hessin,*pnew,*xi;
 
-	dg=vector(1,n);
-	g=vector(1,n);
-	hdg=vector(1,n);
+	dg=vec(1,n);
+	g=vec(1,n);
+	hdg=vec(1,n);
 	hessin=matrix(1,n,1,n);
-	pnew=vector(1,n);
-	xi=vector(1,n);
+	pnew=vec(1,n);
+	xi=vec(1,n);
 	fp = derivativeFunk(p,g);
 	for (i=1;i<=n;i++) {
 		for (j=1;j<=n;j++) hessin[i][j]=0.0;
