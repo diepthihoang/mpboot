@@ -28,6 +28,17 @@
  SPRMoves class
  ****************************************************************************/
 
+string PhyloTree::padTreeString(string treeString, int MAX_SIZE) {
+    treeString += string(MAX_SIZE, '#');
+    return treeString;
+}
+
+void PhyloTree::unpadTreeString(string &treeString) {
+    int new_sz = treeString.size();
+    while(treeString[new_sz - 1] == '#') new_sz -= 1;
+    treeString = treeString.substr(0, new_sz);
+}
+
 void SPRMoves::add(PhyloNode *prune_node, PhyloNode *prune_dad, PhyloNode *regraft_node, PhyloNode *regraft_dad,
         double score) {
     if (size() >= MAX_SPR_MOVES && score <= rbegin()->score)
@@ -223,7 +234,7 @@ void PhyloTree::setRootNode(char *my_root) {
 }
 
 void PhyloTree::readTreeString(const string &tree_string) {
-	stringstream str;
+    stringstream str;
 	str << tree_string;
 	str.seekg(0, ios::beg);
 	freeNode();

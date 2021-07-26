@@ -1528,7 +1528,9 @@ protected:
     virtual void saveCurrentTree(double logl) {
     } // save current tree
 
+    virtual string padTreeString(string treeString, int MAX_SIZE);
 
+	virtual void unpadTreeString(string &treeString);
 };
 
 #endif

@@ -25,6 +25,7 @@
 #include "mexttree.h"
 #include "phylotesting.h"
 #include "nnisearch.h"
+#include <mpi.h>
 
 class PhyloTree;
 class IQTree;
@@ -36,6 +37,7 @@ class IQTree;
 void runPhyloAnalysis(Params &params);
 
 void runTreeReconstruction(Params &params, string &original_model,
+
 		IQTree &tree, vector<ModelInfo> &model_info);
 
 /**

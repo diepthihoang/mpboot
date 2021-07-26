@@ -663,7 +663,6 @@ protected:
     int k_represent;
 
 public:
-
     /**
      *  @brief: optimize model parameters on the current tree
      *  either IQ-TREE or PLL
@@ -739,6 +738,7 @@ public:
 
     /** newick string of corresponding bootstrap trees */
     IntVector boot_trees;
+    vector<string> boot_tree_strings;
 
 	/** number of multiple optimal trees per replicate */
 	IntVector boot_counts;
@@ -943,6 +943,17 @@ protected:
 
     void estDeltaMin();
 
+    bool gotReplied;
+    bool syncTrees(double cur_correlation);
+    vector<int> workersProgress;
+    void updateBestTreeFromCandidateSet(string &best_tree_topo);
+    void syncBootTrees();
+    void updateBootTree(int bootId, double score, string tree_str);
+    vector<tuple<int, int, string>> scatterBootstrapTrees();
+
+    int stopped_workers;
+
+    vector<tuple<int, int, string>> convertStringToBootTrees(string message);
 };
 
 void estimateNNICutoff(Params &params);

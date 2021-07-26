@@ -251,6 +251,7 @@ void IQTree::setParams(Params &params) {
 
         boot_trees.resize(params.gbo_replicates, -1);
         boot_counts.resize(params.gbo_replicates, 0);
+        boot_tree_strings.resize(params.gbo_replicates, "");
         if(params.cutoff_from_btrees) boot_tree_orig_logl.resize(params.gbo_replicates, 0); // Diep
 
         if(params.maximum_parsimony && params.multiple_hits){
@@ -282,35 +283,68 @@ void IQTree::setParams(Params &params) {
 
         nunit = getAlnNPattern();
 
-        for (i = 0; i < params.gbo_replicates; i++) {
-        	if (params.print_bootaln) {
-    			Alignment* bootstrap_alignment;
-    			if (aln->isSuperAlignment())
-    				bootstrap_alignment = new SuperAlignment;
-    			else
-    				bootstrap_alignment = new Alignment;
-    			IntVector this_sample;
-    			bootstrap_alignment->createBootstrapAlignment(aln, &this_sample, params.bootstrap_spec);
 
-    			for (size_t j = 0; j < nunit; j++){
-    				if(params.maximum_parsimony)
-    					boot_samples_pars[i][j] = this_sample[j];
-    				else
-    					boot_samples[i][j] = this_sample[j];
-    			}
-				bootstrap_alignment->printPhylip(bootaln_name.c_str(), true);
-				delete bootstrap_alignment;
-        	} else {
-    			IntVector this_sample;
-        		aln->createBootstrapAlignment(this_sample, params.bootstrap_spec);
-    			for (size_t j = 0; j < nunit; j++){
-    				if(params.maximum_parsimony)
-    					boot_samples_pars[i][j] = this_sample[j];
-    				else
-    					boot_samples[i][j] = this_sample[j];
-    			}
-       		}
-       	}
+        if (MPIHelper::getInstance().isMaster()) {
+            for (i = 0; i < params.gbo_replicates; i++) {
+                if (params.print_bootaln) {
+                    Alignment* bootstrap_alignment;
+                    if (aln->isSuperAlignment())
+                        bootstrap_alignment = new SuperAlignment;
+                    else
+                        bootstrap_alignment = new Alignment;
+                    IntVector this_sample;
+                    bootstrap_alignment->createBootstrapAlignment(aln, &this_sample, params.bootstrap_spec);
+
+                    for (size_t j = 0; j < nunit; j++){
+                        if(params.maximum_parsimony)
+                            boot_samples_pars[i][j] = this_sample[j];
+                        else
+                            boot_samples[i][j] = this_sample[j];
+                    }
+                    bootstrap_alignment->printPhylip(bootaln_name.c_str(), true);
+                    delete bootstrap_alignment;
+                } else {
+                    IntVector this_sample;
+                    aln->createBootstrapAlignment(this_sample, params.bootstrap_spec);
+                    for (size_t j = 0; j < nunit; j++){
+                        if(params.maximum_parsimony)
+                            boot_samples_pars[i][j] = this_sample[j];
+                        else
+                            boot_samples[i][j] = this_sample[j];
+                    }
+                }
+            }
+            int p = 0;
+            unsigned short *buf = new unsigned short [params.gbo_replicates * nunit];
+            for(int i = 0; i < params.gbo_replicates; ++i) {
+                for(int j = 0; j < nunit; ++j) {
+                    buf[p++] = boot_samples_pars[i][j];
+                }
+            }
+            // MPI_Bcast(buf, p, MPI_UNSIGNED_SHORT, PROC_MASTER, MPI_COMM_WORLD);
+
+            for(int i = 0; i < MPIHelper::getInstance().getNumProcesses(); ++i) if (i != PROC_MASTER) {
+                MPI_Send(buf, p, MPI_UNSIGNED_SHORT, i, BOOT_TAG, MPI_COMM_WORLD);
+            }
+
+            delete [] buf;
+        } else {
+            MPI_Status status;
+            MPI_Probe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+            int msgCount;
+            MPI_Get_count(&status, MPI_UNSIGNED_SHORT, &msgCount);
+            unsigned short* recvBuffer = new unsigned short [msgCount];
+            MPI_Recv(recvBuffer, msgCount, MPI_UNSIGNED_SHORT, status.MPI_SOURCE, status.MPI_TAG, MPI_COMM_WORLD, &status);
+            for(int i = 0, p = 0; i < params.gbo_replicates; ++i) {
+                for(int j = 0; j < nunit; ++j) {
+                    boot_samples_pars[i][j] = recvBuffer[p++];
+                }
+            }
+            delete [] recvBuffer;
+        }
+
+        MPI_Barrier(MPI_COMM_WORLD);
+
         verbose_mode = saved_mode;
         if (params.print_bootaln) {
         	cout << "Bootstrap alignments printed to " << bootaln_name << endl;
@@ -1566,7 +1600,23 @@ string IQTree::optimizeBranches(int maxTraversal) {
 }
 
 double IQTree::doTreeSearch() {
-	cout << "Time: " << convert_time(getRealTime() - params->start_real_time) << endl; // Diep added
+    int world_rank = MPIHelper::getInstance().getProcessID();
+    int world_size = MPIHelper::getInstance().getNumProcesses();
+
+    if (world_rank == PROC_MASTER) {
+        workersProgress.resize(world_size, 0);
+        string message, topo;
+        for(int i = 0; i < world_size - 1; ++i) {
+            int worker = MPIHelper::getInstance().recvString(message);
+            cout << "Receiving candidate trees from process " << worker << "." << endl;
+            candidateTrees.updateSyncTrees(message);
+        }
+        updateBestTreeFromCandidateSet(topo);
+    } else {
+        gotReplied = true;
+        string message = candidateTrees.getSyncTrees(5);
+        MPIHelper::getInstance().sendString(message, PROC_MASTER, TREE_TAG);
+    }
 
 //    double begin_real_time, cur_real_time;
 //    begin_real_time = getRealTime();
@@ -1613,6 +1663,10 @@ double IQTree::doTreeSearch() {
 	/*====================================================
 	 * MAIN LOOP OF THE IQ-TREE ALGORITHM
 	 *====================================================*/
+
+    stopped_workers = 0;
+    MPI_Barrier(MPI_COMM_WORLD);
+
     for ( ; !stop_rule.meetStopCondition(curIt, cur_correlation); curIt++) {
         searchinfo.curIter = curIt;
 		if(params->cutoff_percent > 100){
@@ -1676,6 +1730,7 @@ double IQTree::doTreeSearch() {
          * -------------------------------------------------------------------------*/
 //		long tmp_num_ratchet_trees = treels_logl.size();
 //		long tmp_num_ratchet_bootcands = treels.size();
+
         if(params->ratchet_iter >= 0){
         	if(params->ratchet_iter == ratchet_iter_count){
 //				string candidateTree = candidateTrees.getRandCandVecTree(); // Diep: to pick from vector-stored candidates
@@ -1824,7 +1879,6 @@ double IQTree::doTreeSearch() {
 			initializeAllPartialLh();
 			clearAllPartialLH();
 			curScore = optimizeAllBranches();
-
 		}
 
 		/*
@@ -1843,7 +1897,7 @@ double IQTree::doTreeSearch() {
         double realtime_remaining = stop_rule.getRemainingTime(curIt, cur_correlation);
         cout.setf(ios::fixed, ios::floatfield);
 
-        if (curIt % 10 == 0 || verbose_mode >= VB_MED) {
+        if (world_rank == 0 && (curIt % 10 == 0 || verbose_mode >= VB_MED)) {
             if(on_ratchet_hclimb2){
                 cout << "RATCHET ";
             }
@@ -1918,7 +1972,7 @@ double IQTree::doTreeSearch() {
 		*/
 
 		// Diep: This is old code for updating best tree
-		if (curScore > bestScore) {
+		if (curScore > bestScore && world_rank == 0) {
              stringstream cur_tree_topo_ss;
              setRootNode(params->root);
              printTree(cur_tree_topo_ss, WT_TAXON_ID | WT_SORT_TAXA);
@@ -1945,6 +1999,9 @@ double IQTree::doTreeSearch() {
              printResultTree();
         }
 
+        
+
+
         // check whether the tree can be put into the reference set
         if (params->snni) {
         	candidateTrees.update(imd_tree, curScore);
@@ -1955,6 +2012,7 @@ double IQTree::doTreeSearch() {
             // The IQPNNI algorithm
             readTreeString(bestTreeString);
         }
+
 
         // DTH: make pllUFBootData usable in summarizeBootstrap
         if((!params->maximum_parsimony) && (params->pll) && (params->online_bootstrap) && (params->gbo_replicates > 0))
@@ -1991,15 +2049,40 @@ double IQTree::doTreeSearch() {
 	            }
 	        }
         } // end of bootstrap convergence test
+        if (world_rank == 0) workersProgress[0]++;
+        if (MPIHelper::getInstance().isWorker() || MPIHelper::getInstance().gotMessage()) {
+            if(syncTrees(cur_correlation)) {
+                break;
+            }
+            if (world_rank == PROC_MASTER) updateBestTreeFromCandidateSet(best_tree_topo);
+        }
     }
+
+    // The worker that makes 
+
+    // Redundent messages
+    if (MPIHelper::getInstance().isMaster()) {
+        while(stopped_workers < MPIHelper::getInstance().getNumProcesses() - 1) {
+            string message;
+            int worker = MPIHelper::getInstance().recvString(message);
+            message = "1 ";
+            MPIHelper::getInstance().sendString(message, worker, TREE_TAG);
+            stopped_workers += 1;
+        }
+    }
+
+    MPI_Barrier(MPI_COMM_WORLD);
+
 
 	// Diep: optimize bootstrap trees if -opt_btree is specified along with -bb -mpars
 	if(params->gbo_replicates && params->maximum_parsimony){
 		if(params->optimize_boot_trees){
 			double otime = getCPUTime();
-			cout << "Optimizing bootstrap trees ..." << endl;
+            if (MPIHelper::getInstance().isMaster()) cout << "Syncing bootstrap trees" << endl;
+            syncBootTrees();
+			if (MPIHelper::getInstance().isMaster()) cout << "Optimizing bootstrap trees ..." << endl;
 			optimizeBootTrees();
-			cout << "CPU Time used:  " << getCPUTime() - otime << " sec." << endl;
+			if (MPIHelper::getInstance().isMaster()) cout << "CPU Time used:  " << getCPUTime() - otime << " sec." << endl;
 		}
 	}
 
@@ -2007,7 +2090,7 @@ double IQTree::doTreeSearch() {
     if(params->gbo_replicates && ((curIt - 1) % (params->step_iterations / 2) != 0)){
     	cout << "NOTE: At the end, " << treels_logl.size() << " bootstrap candidate trees evaluated." << endl;
     }
-
+    MPI_Barrier(MPI_COMM_WORLD);
     readTreeString(bestTreeString);
 
     if (testNNI)
@@ -2045,6 +2128,7 @@ double IQTree::doTreeSearch() {
    		<< "NOTE: last_update_it = " << last_update_it
    		<< " , last it = " << curIt - 1 << endl;
 */
+
     return bestScore;
 }
 
@@ -2455,6 +2539,50 @@ void IQTree::pllDestroyUFBootData(){
     pllUFBootDataPtr = NULL;
 }
 
+vector<tuple<int, int, string>> IQTree::convertStringToBootTrees(string message) {
+    int pter = 0;
+    vector<tuple<int, int, string>> bTrees;
+    cout << message << endl;
+    while (pter < message.size()) {
+        int id = 0;
+        int score = 0;
+        string tree;
+        while(message[pter] != ' ') id = id * 10 + message[pter++] - '0';
+        pter++;
+        while(message[pter] != ' ') score = score * 10 + message[pter++] - '0';
+        pter++;
+        while(message[pter] != '#') tree += message[pter++];
+        pter++;
+        bTrees.emplace_back(score, id, tree);
+    }
+    return bTrees;
+}
+
+vector<tuple<int, int, string>> IQTree::scatterBootstrapTrees() {
+    vector<vector<tuple<int, int, string>>> bTrees;
+    if (MPIHelper::getInstance().isMaster()) {
+        int nProcess = MPIHelper::getInstance().getNumProcesses();
+        int alignment_per_process = boot_tree_strings.size() / nProcess;
+        int remainder = boot_tree_strings.size() % nProcess;
+
+        cout << alignment_per_process << endl;
+        cout << remainder << endl;
+
+        int pter = 0;
+        bTrees.resize(nProcess);
+        for(int pid = 0; pid < nProcess; ++pid) {
+            int nTree = alignment_per_process + (pid < remainder);
+            for(int i = 0; i < nTree; ++i) {
+                int bootId = pter + i;
+                bTrees[pid].push_back(make_tuple(boot_trees[bootId], -boot_logl[bootId], boot_tree_strings[bootId]));
+            }
+            pter += nTree;
+        }
+    }
+
+    string message = MPIHelper::getInstance().scatterBootstrapTrees(bTrees);
+    return convertStringToBootTrees(message);
+}
 
 void IQTree::optimizeBootTrees(){
 	if(params->save_trees_off){
@@ -2494,6 +2622,11 @@ void IQTree::optimizeBootTrees(){
 	string btree_file = params->out_prefix;
 	btree_file += ".sampletree";
 
+    MPI_Barrier(MPI_COMM_WORLD);
+    vector<tuple<int, int, string>> bTrees = scatterBootstrapTrees();
+    cout << bTrees.size() << endl;
+
+    exit(0);
 
 	int nmultifurcate = 0;
 	for(int sample = 0; sample < num_boot_rep; sample++){
@@ -2508,8 +2641,6 @@ void IQTree::optimizeBootTrees(){
 		if(params->multiple_hits){ // process a few trees in boot_trees_parsimony[sample]
 			IntegerSet result;
 			int best_boot_score = -INT_MAX;
-
-
 			for(IntegerSet::iterator it = boot_trees_parsimony[sample].begin();
 					it != boot_trees_parsimony[sample].end(); ++it){
 				StringIntMap::iterator mit;
@@ -2580,7 +2711,7 @@ void IQTree::optimizeBootTrees(){
 
 
 		if(params->distinct_iter_top_boot >= 1 && (!params->multiple_hits)){
-			// process a few trees in boot_trees_parsimony_top[sample]
+            // process a few trees in boot_trees_parsimony_top[sample]
 			string all_btree_str;
 			string best_btree_str;
 			int best_boot_score = -INT_MAX;
@@ -2777,9 +2908,9 @@ void IQTree::optimizeBootTrees(){
 //    		out << endl;
 		}
 
-
+        // DEFAULT
 		if((!params->multiple_hits) && (params->distinct_iter_top_boot < 1)){ // process one tree in boot_trees[sample]
-			StringIntMap::iterator mit;
+            StringIntMap::iterator mit;
 			for(mit = treels.begin(); mit != treels.end(); ++mit){
 				if(mit->second == boot_trees[sample]){
 					tree = mit->first;
@@ -3604,6 +3735,7 @@ void IQTree::saveCurrentTree(double cur_logl) {
 
 					boot_trees[sample] = tree_index; // this will be lastly updated in refinement step
 					boot_logl[sample] = max(boot_logl[sample], rell);
+                    boot_tree_strings[sample] = tree_str; 
 
 					int t = min((int)params->distinct_iter_top_boot, (int)boot_trees_parsimony_top_iter[sample].size());
 					int c;
@@ -3703,6 +3835,7 @@ void IQTree::saveCurrentTree(double cur_logl) {
 
 					boot_logl[sample] = max(boot_logl[sample], rell);
 					boot_trees[sample] = tree_index;
+                    boot_tree_strings[sample] = tree_str;
 					updated++;
 
 				} /*else if (verbose_mode >= VB_MED && rell > boot_logl[sample] - 0.01) {
@@ -4520,4 +4653,153 @@ void IQTree::reinsertIdenticalSeqs(Alignment *orig_aln, StrVector &removed_seqs,
     // delete all partial_lh, which will be automatically recreated later
     deleteAllPartialLh();
     clearAllPartialLH();
+}
+
+// should returns if the doTreeSearch should stop
+bool IQTree::syncTrees(double cur_correlation) {
+    int nProcess = MPIHelper::getInstance().getNumProcesses();
+    int processId = MPIHelper::getInstance().getProcessID();
+
+    if (MPIHelper::getInstance().isMaster()) {
+        while(MPIHelper::getInstance().gotMessage()) {
+            string message;
+            int worker = MPIHelper::getInstance().recvString(message);
+            int progress = 0;
+
+            for(int i = 0; i < message.size(); ++i) {
+                if (message[i] == ' ') {
+                    message = message.substr(i + 1, message.size() - 1 - i);
+                    break;
+                }
+                progress = progress * 10 + (message[i] - '0');
+            }
+
+            // update progress
+            workersProgress[worker] = progress;
+            curIt = 0;
+            for(int i = 0; i < workersProgress.size(); ++i) {
+                curIt += workersProgress[i];
+            }
+
+            // update candidatSet
+            candidateTrees.updateSyncTrees(message);
+
+            // send sync trees back
+            int shouldStop = stop_rule.meetStopCondition(curIt, cur_correlation);
+            message = to_string(shouldStop) + ' ' + candidateTrees.getSyncTrees();
+            if (!shouldStop) {
+                MPIHelper::getInstance().sendString(message, worker, TREE_TAG);
+            } else {
+                stopped_workers = 1;
+                MPIHelper::getInstance().sendString(message, worker, TREE_TAG);
+                return true;
+            }
+            return shouldStop;
+        }
+    } else {
+        if (gotReplied && rand() % nProcess == processId) {
+            string message = to_string(curIt) + ' ' + candidateTrees.getSyncTrees();
+            MPIHelper::getInstance().sendString(message, PROC_MASTER, TREE_TAG);
+            gotReplied = false;
+        }
+        if (MPIHelper::getInstance().gotMessage()) {
+            string message;
+            int master = MPIHelper::getInstance().recvString(message);
+            int shouldStop = 0;
+            shouldStop = message[0] - '0';
+            if (shouldStop == 1) return true;
+            message = message.substr(2, message.size() - 2);
+            candidateTrees.updateSyncTrees(message);
+            gotReplied = true;
+        }
+        return false;
+    }
+}
+
+void IQTree::updateBestTreeFromCandidateSet(string &best_tree_topo) {
+    if (candidateTrees.rbegin()->first > bestScore) {
+        string imd_tree = candidateTrees.rbegin()->second.tree;
+        readTreeString(candidateTrees.rbegin()->second.tree);
+        curScore = candidateTrees.rbegin()->first;
+
+        stringstream cur_tree_topo_ss;
+        setRootNode(params->root);
+        printTree(cur_tree_topo_ss, WT_TAXON_ID | WT_SORT_TAXA);
+        if (cur_tree_topo_ss.str() != best_tree_topo) {
+            best_tree_topo = cur_tree_topo_ss.str();
+            // Diep: fix Minh's old if which wrongly set imd_tree = best_tree_topo for mpars
+            if (!params->maximum_parsimony)
+                imd_tree = optimizeModelParameters();
+            stop_rule.addImprovedIteration(curIt);
+            cout << "BETTER TREE FOUND at iteration " << curIt << ": " << -curScore;
+            cout << " / CPU time: " << (int) round(getCPUTime() - params->startCPUTime) << "s" << endl << endl;
+            if (curScore > bestScore) {
+                searchinfo.curPerStrength = params->initPerStrength;
+            }
+        } else {
+            cout << "UPDATE BEST LOG-LIKELIHOOD: " << curScore << endl;
+        }
+        setBestTree(imd_tree, curScore);
+        if (params->write_best_trees) {
+            ostringstream iter_string;
+            iter_string << curIt;
+            printResultTree(iter_string.str());
+        }
+        printResultTree();
+    }
+}
+
+void IQTree::updateBootTree(int bootId, double score, string tree_str) {
+    if (boot_logl[bootId] < score) {
+        int tree_index;
+        auto iterator = treels.find(tree_str);
+        if (iterator != treels.end()) {
+            tree_index = iterator->second;
+        } else {
+            treels_logl.push_back(score);
+            tree_index = treels_logl.size() - 1;
+            treels[tree_str] = tree_index;
+
+            boot_logl[bootId] = score;
+            boot_trees[bootId] = tree_index;
+            boot_tree_strings[bootId] = tree_str;
+        }
+    }
+}
+
+void IQTree::syncBootTrees() {
+    if (MPIHelper::getInstance().isWorker()) {
+        string message;
+        for(int bootId = 0; bootId < boot_logl.size(); ++bootId) {
+            int score = -boot_logl[bootId];
+            string tree = boot_tree_strings[bootId];
+            assert(tree.size() > 0);
+            message += to_string(score) + " " + tree + "#";
+        }
+        MPIHelper::getInstance().sendString(message, PROC_MASTER, BOOT_TREE_TAG);
+    } else {
+        for(int it = 0; it < MPIHelper::getInstance().getNumProcesses() - 1; ++it) {
+            string message;
+            int worker = MPIHelper::getInstance().recvString(message);
+            int pter = 0;
+
+            for(int bootId = 0; bootId < boot_logl.size(); ++bootId) {
+                int score = 0;
+                string tree_str;
+                // cout << message << endl;
+                while(message[pter] != ' ') {
+                    score = score * 10 + message[pter++] - '0';
+                }
+                pter++;
+                while(message[pter] != '#') {
+                    tree_str += message[pter++];
+                }
+                pter++;
+                score = -score;
+                updateBootTree(bootId, score, tree_str);
+            }
+            cout << "Synced bootstrap trees from process: " << worker << endl;
+        }
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
 }

@@ -2140,7 +2140,7 @@ int main(){
 
 int main(int argc, char *argv[])
 {
-
+	MPIHelper::getInstance().init(argc, argv);
 	/*************************/
 	{ /* local scope */
 		int found=FALSE;              /* "click" found in cmd name? */

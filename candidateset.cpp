@@ -220,3 +220,49 @@ string CandidateSet::getRandCandVecTree(){
 	assert(0);
 	return "";
 }
+
+string CandidateSet::getSyncTrees(int forWorker) {
+	string syncTrees;
+	int sz = min((int) size(), popSize);
+
+	if (MPIHelper::getInstance().isWorker()) {
+		sz = min(sz, forWorker);
+	}
+
+	auto it = rbegin();
+	for(int i = 0; i < sz; ++it, ++i) {
+		syncTrees += to_string((int) -(it->first));
+		syncTrees += ' ';
+		syncTrees += (it->second).tree;
+		syncTrees += '#';
+	}
+	return syncTrees;
+}
+
+void CandidateSet::updateSingleSyncTree(string singleTree) {
+	double score = 0;
+	string sscore;
+	string tree;
+	for(int i = 0; i < singleTree.size(); ++i) {
+		if (singleTree[i] == ' ') {
+			tree = singleTree.substr(i + 1, singleTree.size() - 1 - i);
+			break;
+		} else {
+			score = score * 10 + singleTree[i] - '0';
+		}
+	}
+	score = -score;
+	update(tree, score);
+}
+
+
+void CandidateSet::updateSyncTrees(string syncString) {
+	int startPos = 0;
+	for(int i = 0; i < syncString.size(); ++i) {
+		if (syncString[i] == '#') {
+			string curTree = syncString.substr(startPos, i - startPos);
+			updateSingleSyncTree(curTree);
+			startPos = i + 1;
+		}
+	}
+}

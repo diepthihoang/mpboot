@@ -3481,3 +3481,122 @@ double computePValueChiSquare(double x, int df) /* x: obtained chi-square value,
 }
 
 
+MPIHelper& MPIHelper::getInstance() {
+    static MPIHelper instance;
+    return instance;
+}
+
+void MPIHelper::init(int argc, char *argv[]) {
+    int n_tasks, task_id;
+    if (MPI_Init(&argc, &argv) != MPI_SUCCESS) {
+        outError("MPI initialization failed!");
+    }
+    MPI_Comm_size(MPI_COMM_WORLD, &n_tasks);
+    MPI_Comm_rank(MPI_COMM_WORLD, &task_id);
+    setNumProcesses(n_tasks);
+    setProcessID(task_id);
+    setNumTreeReceived(0);
+    setNumTreeSent(0);
+    setNumNNISearch(0);
+}
+
+void MPIHelper::finalize() {
+    MPI_Finalize();
+}
+
+void MPIHelper::syncRandomSeed() {
+    unsigned int rndSeed;
+    if (MPIHelper::getInstance().isMaster()) {
+        // rndSeed = Params::getInstance().ran_seed;
+		rndSeed = 1;
+	}
+    // Broadcast random seed
+    MPI_Bcast(&rndSeed, 1, MPI_INT, PROC_MASTER, MPI_COMM_WORLD);
+    if (MPIHelper::getInstance().isWorker()) {
+        //        Params::getInstance().ran_seed = rndSeed + task_id * 100000;
+        //        printf("Process %d: random_seed = %d\n", task_id, Params::getInstance().ran_seed);
+    }
+}
+
+int MPIHelper::countSameHost() {
+    // detect if processes are in the same host
+    char host_name[MPI_MAX_PROCESSOR_NAME];
+    int resultlen;
+    /*int pID =*/ (void) MPIHelper::getInstance().getProcessID();
+    MPI_Get_processor_name(host_name, &resultlen);
+    char *host_names;
+    host_names = new char[MPI_MAX_PROCESSOR_NAME * MPIHelper::getInstance().getNumProcesses()];
+    
+    MPI_Allgather(host_name, resultlen+1, MPI_CHAR, host_names, MPI_MAX_PROCESSOR_NAME, MPI_CHAR,
+               MPI_COMM_WORLD);
+    
+    int count = 0;
+    for (int i = 0; i < MPIHelper::getInstance().getNumProcesses(); i++)
+        if (strcmp(&host_names[i*MPI_MAX_PROCESSOR_NAME], host_name) == 0)
+            count++;
+    delete [] host_names;
+    if (count>1)
+        cout << "NOTE: " << count << " processes are running on the same host " << host_name << endl; 
+    return count;
+}
+
+bool MPIHelper::gotMessage() {
+    // Check for incoming messages
+    if (getNumProcesses() == 1)
+        return false;
+    int flag = 0;
+    MPI_Status status;
+    MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &flag, &status);
+    if (flag)
+        return true;
+    else
+        return false;
+}
+
+void MPIHelper::sendString(string &str, int dest, int tag) {
+    char *buf = (char*)str.c_str();
+    MPI_Send(buf, str.length()+1, MPI_CHAR, dest, tag, MPI_COMM_WORLD);
+}
+
+int MPIHelper::recvString(string &str, int src, int tag) {
+    MPI_Status status;
+    MPI_Probe(src, tag, MPI_COMM_WORLD, &status);
+    int msgCount;
+    MPI_Get_count(&status, MPI_CHAR, &msgCount);
+    // receive the message
+    char *recvBuffer = new char[msgCount];
+    MPI_Recv(recvBuffer, msgCount, MPI_CHAR, status.MPI_SOURCE, status.MPI_TAG, MPI_COMM_WORLD, &status);
+    str = recvBuffer;
+    delete [] recvBuffer;
+    return status.MPI_SOURCE;
+}
+
+string MPIHelper::scatterBootstrapTrees(vector<vector<tuple<int, int, string>>> &bTrees) {
+	vector<int> cnt_vt, offset_vt;
+	string messageToSend;
+
+	if (isMaster()) {
+		for(int processID = 0; processID < bTrees.size(); ++processID) {
+			offset_vt.push_back(messageToSend.size());
+			for(auto tree: bTrees[processID]) {
+				messageToSend += to_string(get<0>(tree)) + ' ' + to_string(get<1>(tree)) + ' ' + get<2>(tree) + '#';
+			}
+			cnt_vt.push_back(messageToSend.size() - offset_vt.back());
+		}
+	}
+
+	int out_cnt;
+	MPI_Scatter(cnt_vt.data(), 1, MPI_INT, &out_cnt, 1, MPI_INT, PROC_MASTER, MPI_COMM_WORLD);
+
+	char *recv_buf = new char[out_cnt];
+	MPI_Scatterv(messageToSend.c_str(), cnt_vt.data(), offset_vt.data(), MPI_CHAR, recv_buf, out_cnt, MPI_CHAR, PROC_MASTER, MPI_COMM_WORLD);
+	
+	cout << "Done scattering" << endl;
+
+	return (string) recv_buf;
+}
+
+
+MPIHelper::~MPIHelper() {
+//    cleanUpMessages();
+}

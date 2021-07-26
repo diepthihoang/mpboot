@@ -54,6 +54,7 @@
 #include "tinatree.h"
 #include "sprparsimony.h"
 #include <algorithm>
+#include <mpi.h>
 
 void reportReferences(Params &params, ofstream &out, string &original_model) {
 	out << "To cite IQ-TREE please use:" << endl << endl
@@ -417,6 +418,7 @@ extern StringIntMap pllTreeCounter;
 void reportPhyloAnalysis(Params &params, string &original_model,
 		Alignment &alignment, IQTree &tree, vector<ModelInfo> &model_info,
 		StrVector &removed_seqs, StrVector &twin_seqs) {
+	exit(0);
 	if (params.count_trees) {
 		// addon: print #distinct trees
 		cout << endl << "NOTE: " << pllTreeCounter.size() << " distinct trees evaluated during whole tree search" << endl;
@@ -1248,10 +1250,15 @@ void initializeParams(Params &params, IQTree &iqtree, vector<ModelInfo> &model_i
  *  @return number of duplicated trees
  */
 int initCandidateTreeSet(Params &params, IQTree &iqtree, int numInitTrees) {
+    // if (MPIHelper::getInstance().isWorker()) return 0; 
     int nni_count = 0;
     int nni_steps = 0;
     int numDup = 0;
-    cout << "Generating " << numInitTrees - 1 << " parsimony trees... ";
+	int numProc = MPIHelper::getInstance().getNumProcesses();
+
+	numInitTrees = (numInitTrees + numProc - 1) / numProc + 1;
+
+	cout << "Generating " << numInitTrees - 1 << " parsimony trees... ";
     cout.flush();
     double startTime = getCPUTime();
     int numDupPars = 0;
@@ -1259,7 +1266,7 @@ int initCandidateTreeSet(Params &params, IQTree &iqtree, int numInitTrees) {
     for (int treeNr = 1; treeNr < numInitTrees; treeNr++) {
         string curParsTree;
         if (params.start_tree == STT_PLL_PARSIMONY) {
-			iqtree.pllInst->randomNumberSeed = params.ran_seed + treeNr * 12345;
+			iqtree.pllInst->randomNumberSeed = params.ran_seed + treeNr * 12345 * MPIHelper::getInstance().getProcessID();
 
 			if(params.maximum_parsimony){
 				_pllComputeRandomizedStepwiseAdditionParsimonyTree(iqtree.pllInst, iqtree.pllPartitions, params.sprDist, &iqtree);
@@ -1647,8 +1654,7 @@ void printFinalSearchInfo(Params &params, IQTree &iqtree, double search_cpu_time
  *  MAIN TREE RECONSTRUCTION
  ***********************************************************/
 void runTreeReconstruction(Params &params, string &original_model, IQTree &iqtree, vector<ModelInfo> &model_info) {
-
-    string dist_file;
+	string dist_file;
     params.startCPUTime = getCPUTime();
     params.start_real_time = getRealTime();
 
@@ -1896,11 +1902,11 @@ void runTreeReconstruction(Params &params, string &original_model, IQTree &iqtre
 	if (params.gbo_replicates > 0) {
 		if (!params.online_bootstrap)
 			runGuidedBootstrap(params, iqtree.aln, iqtree);
-		else
+		else if (MPIHelper::getInstance().isMaster())
 			iqtree.summarizeBootstrap(params);
 	}
 
-	printFinalSearchInfo(params, iqtree, search_cpu_time, search_real_time);
+	if (MPIHelper::getInstance().isMaster()) printFinalSearchInfo(params, iqtree, search_cpu_time, search_real_time);
 
 	// BUG FIX: readTreeString(bestTreeString) not needed before this line
 	iqtree.printResultTree();
@@ -2184,14 +2190,14 @@ void runPhyloAnalysis(Params &params) {
 
 		// call main tree reconstruction
 		runTreeReconstruction(params, original_model, *tree, model_info);
-		if (params.gbo_replicates && params.online_bootstrap) {
+		if (MPIHelper::getInstance().isMaster() && params.gbo_replicates && params.online_bootstrap) {
 			if (params.print_ufboot_trees)
 				tree->writeUFBootTrees(params, removed_seqs, twin_seqs);
 
 			cout << endl << "Computing bootstrap consensus tree..." << endl;
 			string splitsfile = params.out_prefix;
 			splitsfile += ".splits.nex";
-			computeConsensusTree(splitsfile.c_str(), 0, 1e6, params.split_threshold,
+			if (MPIHelper::getInstance().isMaster()) computeConsensusTree(splitsfile.c_str(), 0, 1e6, params.split_threshold,
 					params.split_weight_threshold, NULL, params.out_prefix, NULL, &params);
 			// now optimize branch lengths of the consensus tree
 			string current_tree = tree->getTreeString();
@@ -2224,6 +2230,8 @@ void runPhyloAnalysis(Params &params) {
 //	        	tree->fixNegativeBranch(true);
 //	    	}
 
+			
+
 			double conScore = tree->optimizeAllBranches();
 			if(params.maximum_parsimony)
 				cout << "Parsimony score of consensus tree: " << -conScore << endl;
@@ -2232,7 +2240,7 @@ void runPhyloAnalysis(Params &params) {
 		    tree->setRootNode(params.root);
 		    tree->insertTaxa(removed_seqs, twin_seqs);
 //			tree->printTree(splitsfile.c_str(), WT_BR_LEN | WT_BR_LEN_FIXED_WIDTH | WT_SORT_TAXA | WT_NEWLINE); // for ML
-			tree->printTree(splitsfile.c_str(), WT_SORT_TAXA | WT_NEWLINE); // Diep: for MP
+			if (MPIHelper::getInstance().isMaster()) tree->printTree(splitsfile.c_str(), WT_SORT_TAXA | WT_NEWLINE); // Diep: for MP
 			// revert the best tree
 			tree->readTreeString(current_tree);
 //			if (tree->isSuperTree()) {
@@ -2244,14 +2252,14 @@ void runPhyloAnalysis(Params &params) {
 		if (removed_seqs.size() > 0) {
 			delete tree->aln;
 			tree->reinsertIdenticalSeqs(alignment, removed_seqs, twin_seqs);
-			tree->printResultTree();
+			if (MPIHelper::getInstance().isMaster()) tree->printResultTree();
 		}
-		reportPhyloAnalysis(params, original_model, *alignment, *tree, model_info, removed_seqs, twin_seqs);
-	} else {
+		if (MPIHelper::getInstance().isMaster()) reportPhyloAnalysis(params, original_model, *alignment, *tree, model_info, removed_seqs, twin_seqs);
+	} else if (MPIHelper::getInstance().isMaster()) {
 		// the classical non-parameter bootstrap (SBS)
 		runStandardBootstrap(params, original_model, alignment, tree);
 	}
-
+	exit(0);
 	delete tree;
 	delete alignment;
 }
