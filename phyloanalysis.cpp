@@ -418,7 +418,6 @@ extern StringIntMap pllTreeCounter;
 void reportPhyloAnalysis(Params &params, string &original_model,
 		Alignment &alignment, IQTree &tree, vector<ModelInfo> &model_info,
 		StrVector &removed_seqs, StrVector &twin_seqs) {
-	exit(0);
 	if (params.count_trees) {
 		// addon: print #distinct trees
 		cout << endl << "NOTE: " << pllTreeCounter.size() << " distinct trees evaluated during whole tree search" << endl;
@@ -2259,7 +2258,6 @@ void runPhyloAnalysis(Params &params) {
 		// the classical non-parameter bootstrap (SBS)
 		runStandardBootstrap(params, original_model, alignment, tree);
 	}
-	exit(0);
 	delete tree;
 	delete alignment;
 }
@@ -2703,7 +2701,22 @@ void optimizeAlignment(IQTree * & tree, Params & params){
 	tree->params = &params; // Diep: 2020-08-17, there are two variables with identical name as 'params'
 
 //	tree->initTopologyByPLLRandomAdition(params); // this pll version needs further sync to work with the rest
-	tree->computeParsimonyTree(params.out_prefix, tree->aln); // this iqtree version plays nicely with the rest
+	
+	if (MPIHelper::getInstance().isMaster()){
+		cout << "Creating starting tree and send it to workers..." << endl;
+		tree->computeParsimonyTree(params.out_prefix, tree->aln); // this iqtree version plays nicely with the rest
+		string message = tree->getTreeString();
+		for(int i = 0; i < MPIHelper::getInstance().getNumProcesses(); ++i) {
+			if (i != PROC_MASTER) {
+				MPIHelper::getInstance().sendString(message, i, TREE_TAG);
+			}
+		}
+	}
+	else {
+		string message;
+		int master = MPIHelper::getInstance().recvString(message);
+		tree->readTreeString(message);
+	}
 	// extract the vector of pattern pars of the initialized tree
 	tree->initializeAllPartialPars();
 	tree->clearAllPartialLH();

@@ -4783,6 +4783,7 @@ void IQTree::updateBestTreeFromCandidateSet(string &best_tree_topo) {
 }
 
 void IQTree::updateBootTree(int bootId, double score, string tree_str) {
+    cout << "Received tree with score: " << score << endl;
     if (boot_logl[bootId] < score) {
         int tree_index;
         auto iterator = treels.find(tree_str);
