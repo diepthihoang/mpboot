@@ -1666,7 +1666,6 @@ double IQTree::doTreeSearch() {
 
     stopped_workers = 0;
     MPI_Barrier(MPI_COMM_WORLD);
-
     for ( ; !stop_rule.meetStopCondition(curIt, cur_correlation); curIt++) {
         searchinfo.curIter = curIt;
 		if(params->cutoff_percent > 100){
@@ -1703,8 +1702,8 @@ double IQTree::doTreeSearch() {
 				if (params->avoid_duplicated_trees && treels_logl.size() > 1000) {
 					DoubleVector logl = treels_logl;
 					nth_element(logl.begin(), logl.begin() + logl.size() * params->cutoff_percent / 100 , logl.end(), std::greater<double>());
-					if(params->minimize_iter1_candidates){
-						if(curIt == 2){
+					if(params->minimize_iter1_candidates) {
+						if(curIt == 2 || workersProgress[0] == 2) {
 							int iter1_num_best = min(int(aln->getNSeq()), int(logl.size() * params->cutoff_percent / 100));
 							DoubleVector tmplogl (logl.begin(), logl.begin() + iter1_num_best);
 							logl = tmplogl;
@@ -1716,7 +1715,8 @@ double IQTree::doTreeSearch() {
 			}
 //			cout << "***TEST: logl_cutoff = " << logl_cutoff << endl;
 		}
-
+        int saved_treels_logl_size = treels_logl.size();
+        
 
         if (estimate_nni_cutoff && nni_info.size() >= 500) {
             estimate_nni_cutoff = false;
@@ -2051,7 +2051,15 @@ double IQTree::doTreeSearch() {
         } // end of bootstrap convergence test
         if (world_rank == 0) workersProgress[0]++;
         if (MPIHelper::getInstance().isWorker() || MPIHelper::getInstance().gotMessage()) {
-            if(syncTrees(cur_correlation)) {
+            vector<int> logl_to_send;
+            if (MPIHelper::getInstance().isWorker() && params->cutoff_percent <= 100 && curIt >= 2) {
+                // cout << "Sending " << (int)treels_logl.size() - saved_treels_logl_size << " from worker: " << world_rank << " " << (int)treels_logl.size() <<endl;
+                logl_to_send.resize(treels_logl.size() - saved_treels_logl_size);
+                for(int i = 0; i < logl_to_send.size(); ++i) {
+                    logl_to_send[i] = treels_logl[treels_logl.size() - saved_treels_logl_size + i];
+                }
+            }
+            if(syncTrees(cur_correlation, logl_to_send)) {
                 break;
             }
             if (world_rank == PROC_MASTER) updateBestTreeFromCandidateSet(best_tree_topo);
@@ -2088,7 +2096,7 @@ double IQTree::doTreeSearch() {
 
     // Diep: added the text to output to observe the # of candidate trees
     if(params->gbo_replicates && ((curIt - 1) % (params->step_iterations / 2) != 0)){
-    	cout << "NOTE: At the end, " << treels_logl.size() << " bootstrap candidate trees evaluated." << endl;
+    	if (MPIHelper::getInstance().isMaster()) cout << "NOTE: At the end, " << treels_logl.size() << " bootstrap candidate trees evaluated." << endl;
     }
     MPI_Barrier(MPI_COMM_WORLD);
     readTreeString(bestTreeString);
@@ -2542,20 +2550,22 @@ void IQTree::pllDestroyUFBootData(){
 vector<tuple<int, int, string>> IQTree::convertStringToBootTrees(string message) {
     int pter = 0;
     vector<tuple<int, int, string>> bTrees;
-    cout << message << endl;
-    while (pter < message.size()) {
-        int id = 0;
-        int score = 0;
-        string tree;
-        while(message[pter] != ' ') id = id * 10 + message[pter++] - '0';
-        pter++;
-        while(message[pter] != ' ') score = score * 10 + message[pter++] - '0';
-        pter++;
-        while(message[pter] != '#') tree += message[pter++];
-        pter++;
-        bTrees.emplace_back(score, id, tree);
+    int sz = getNumber(message);
+    for(int i = 0; i < sz; ++i) {
+        int id = getNumber(message);
+        int score = -getNumber(message);
+        string tree = getTree(message);
+        bTrees.emplace_back(id, score, tree);
     }
     return bTrees;
+}
+
+string IQTree::convertBootTreeToString(vector<tuple<int, int, string>> bTree) {
+    string message = to_string(bTree.size()) + ' ';
+    for(auto treeInfo: bTree) {
+        message += to_string(get<0>(treeInfo)) + ' ' + to_string(-get<1>(treeInfo)) + ' ' + get<2>(treeInfo) + '#';
+    }
+    return message;
 }
 
 vector<tuple<int, int, string>> IQTree::scatterBootstrapTrees() {
@@ -2565,23 +2575,28 @@ vector<tuple<int, int, string>> IQTree::scatterBootstrapTrees() {
         int alignment_per_process = boot_tree_strings.size() / nProcess;
         int remainder = boot_tree_strings.size() % nProcess;
 
-        cout << alignment_per_process << endl;
-        cout << remainder << endl;
-
         int pter = 0;
         bTrees.resize(nProcess);
         for(int pid = 0; pid < nProcess; ++pid) {
             int nTree = alignment_per_process + (pid < remainder);
             for(int i = 0; i < nTree; ++i) {
-                int bootId = pter + i;
-                bTrees[pid].push_back(make_tuple(boot_trees[bootId], -boot_logl[bootId], boot_tree_strings[bootId]));
+                int bootId = pter++;
+                bTrees[pid].push_back(make_tuple(bootId, -boot_logl[bootId], boot_tree_strings[bootId]));
             }
-            pter += nTree;
         }
-    }
 
-    string message = MPIHelper::getInstance().scatterBootstrapTrees(bTrees);
-    return convertStringToBootTrees(message);
+        for(int i = 0; i < nProcess; ++i) {
+            if (i != PROC_MASTER) {
+                string message = convertBootTreeToString(bTrees[i]);
+                MPIHelper::getInstance().sendString(message, i, BOOT_TREE_TAG);
+            }
+        }
+        return bTrees[PROC_MASTER];
+    } else {
+        string message;
+        int master = MPIHelper::getInstance().recvString(message);
+        return convertStringToBootTrees(message);
+    }
 }
 
 void IQTree::optimizeBootTrees(){
@@ -2624,307 +2639,302 @@ void IQTree::optimizeBootTrees(){
 
     MPI_Barrier(MPI_COMM_WORLD);
     vector<tuple<int, int, string>> bTrees = scatterBootstrapTrees();
-    cout << bTrees.size() << endl;
-
-    exit(0);
 
 	int nmultifurcate = 0;
-	for(int sample = 0; sample < num_boot_rep; sample++){
-        if ((sample+1) % 100 == 0)
-            cout << sample+1 << " replicates done" << endl;
+	for(auto &treeInfo: bTrees){
+        int sample = get<0>(treeInfo);
+        // if ((sample+1) % 100 == 0)
+        //     cout << sample+1 << " replicates done" << endl;
 //		out << sample << "\t" << boot_update_iter[sample] << "\t" << boot_trees[sample] << endl;
 		bootstrap_aln = new Alignment;
 		bootstrap_aln->modifyPatternFreq(*saved_aln_on_opt_btree, boot_samples_pars[sample], nptn);
 
 		setAlignment(bootstrap_aln);
 
-		if(params->multiple_hits){ // process a few trees in boot_trees_parsimony[sample]
-			IntegerSet result;
-			int best_boot_score = -INT_MAX;
-			for(IntegerSet::iterator it = boot_trees_parsimony[sample].begin();
-					it != boot_trees_parsimony[sample].end(); ++it){
-				StringIntMap::iterator mit;
-				for(mit = treels.begin(); mit != treels.end(); ++mit){
-					if(mit->second == *it){
-						tree = mit->first;
-						break;
-					}
-				}
+// 		if(params->multiple_hits){ // process a few trees in boot_trees_parsimony[sample]
+// 			IntegerSet result;
+// 			int best_boot_score = -INT_MAX;
+// 			for(IntegerSet::iterator it = boot_trees_parsimony[sample].begin();
+// 					it != boot_trees_parsimony[sample].end(); ++it){
+// 				StringIntMap::iterator mit;
+// 				for(mit = treels.begin(); mit != treels.end(); ++mit){
+// 					if(mit->second == *it){
+// 						tree = mit->first;
+// 						break;
+// 					}
+// 				}
 
-				// Read the bootstrap tree
-				stringstream str(tree);
-				freeNode();
-				readTree(str, rooted);
-				NodeVector taxai;
-				getTaxa(taxai);
-				for (NodeVector::iterator taxit = taxai.begin(); taxit != taxai.end(); taxit++){
-					(*taxit)->id = atoi((*taxit)->name.c_str());
-				}
+// 				// Read the bootstrap tree
+// 				stringstream str(tree);
+// 				freeNode();
+// 				readTree(str, rooted);
+// 				NodeVector taxai;
+// 				getTaxa(taxai);
+// 				for (NodeVector::iterator taxit = taxai.begin(); taxit != taxai.end(); taxit++){
+// 					(*taxit)->id = atoi((*taxit)->name.c_str());
+// 				}
 
-				NodeVector taxa;
-				// change the taxa name from ID to real name
-				getOrderedTaxa(taxa);
-				for (int j = 0; j < taxa.size(); j++)
-					taxa[j]->name = saved_aln_on_opt_btree->getSeqName(taxa[j]->id);
+// 				NodeVector taxa;
+// 				// change the taxa name from ID to real name
+// 				getOrderedTaxa(taxa);
+// 				for (int j = 0; j < taxa.size(); j++)
+// 					taxa[j]->name = saved_aln_on_opt_btree->getSeqName(taxa[j]->id);
 
-				initializeAllPartialLh();
-				clearAllPartialLH();
+// 				initializeAllPartialLh();
+// 				clearAllPartialLH();
 
-				curScore = -computeParsimony();
-//				cout << "before: " << curScore << ", ";
+// 				curScore = -computeParsimony();
+// //				cout << "before: " << curScore << ", ";
 
-				int count, step;
-				doNNISearch(count, step);
+// 				int count, step;
+// 				doNNISearch(count, step);
 
-				curScore = -computeParsimony();
-//				cout << "after: " << curScore << endl;
+// 				curScore = -computeParsimony();
+// //				cout << "after: " << curScore << endl;
 
-				stringstream ostr;
-				printTree(ostr, WT_TAXON_ID | WT_SORT_TAXA);
-				tree = ostr.str();
-				mit = treels.find(tree);
-				if (mit != treels.end()) {
-					tree_index = mit->second;
-				} else {
-					treels_logl.push_back(curScore); // TEMPORARILY
-					tree_index = treels_logl.size() - 1;
-					treels[tree] = tree_index;
-				}
+// 				stringstream ostr;
+// 				printTree(ostr, WT_TAXON_ID | WT_SORT_TAXA);
+// 				tree = ostr.str();
+// 				mit = treels.find(tree);
+// 				if (mit != treels.end()) {
+// 					tree_index = mit->second;
+// 				} else {
+// 					treels_logl.push_back(curScore); // TEMPORARILY
+// 					tree_index = treels_logl.size() - 1;
+// 					treels[tree] = tree_index;
+// 				}
 
-				if(result.empty() || curScore == best_boot_score){
-					result.insert(tree_index);
-					best_boot_score = curScore;
-				} else{
-					if(curScore > best_boot_score){
-						result.clear();
-						result.insert(tree_index);
-						best_boot_score = curScore;
-					}
-				}
-			}
-			boot_trees_parsimony[sample].clear();
-			boot_trees_parsimony[sample] = result;
-			boot_logl[sample] = best_boot_score;
-//			out << boot_trees_parsimony[sample].size() << " ;" << endl;
-		}
-
-
-
-		if(params->distinct_iter_top_boot >= 1 && (!params->multiple_hits)){
-            // process a few trees in boot_trees_parsimony_top[sample]
-			string all_btree_str;
-			string best_btree_str;
-			int best_boot_score = -INT_MAX;
-			int id = 0;
-//			out << "sample#" << sample << ", boot_count = " << boot_counts[sample]
-//				<<", boot_threshold = " << boot_threshold[sample] << endl;
-
-			bool do_concensus;
-			bool do_find_best;
-
-			if(params->top_boot_concensus){
-				do_concensus = true;
-				do_find_best = false;
-			}else{
-				do_concensus = false;
-				do_find_best = true;
-			}
-
-			if(do_concensus){
-//				out << "do_concensus" << endl;
-				do_find_best = false;
-				StringIntMap sample_treels;
-				IntVector sample_tree_weight;
-				sample_tree_weight.resize(boot_trees_parsimony_top[sample].size(), 0);
-				id = 0;
-				ofstream btout(btree_file.c_str());
-				for(IntPairVector::iterator it = boot_trees_parsimony_top[sample].begin();
-						it != boot_trees_parsimony_top[sample].end(); ++it, ++id){
-					StringIntMap::iterator mit;
-					for(mit = treels.begin(); mit != treels.end(); ++mit){
-						if(mit->second == it->first){
-							tree = mit->first;
-							break;
-						}
-					}
-					sample_treels[tree] = id;
-//					out << tree << endl;
-					btout << tree << endl;
-					sample_tree_weight[id] = 1;
-				}
-				btout.close();
-				string sample_cons;
-//				params->split_weight_summary = SW_COUNT;
-//				sample_cons = computeConsensusTreeNoFileIO(sample_treels,
-//					sample_tree_weight, params->tree_max_count,
-//					params->split_threshold,params->split_weight_threshold,params);
-				string contree_file = btree_file + ".contree";
-
-				computeConsensusTree(btree_file.c_str(),0,params->tree_max_count,
-					params->split_threshold,params->split_weight_threshold,
-					contree_file.c_str(), params->out_prefix, params->tree_weight_file, params);
+// 				if(result.empty() || curScore == best_boot_score){
+// 					result.insert(tree_index);
+// 					best_boot_score = curScore;
+// 				} else{
+// 					if(curScore > best_boot_score){
+// 						result.clear();
+// 						result.insert(tree_index);
+// 						best_boot_score = curScore;
+// 					}
+// 				}
+// 			}
+// 			boot_trees_parsimony[sample].clear();
+// 			boot_trees_parsimony[sample] = result;
+// 			boot_logl[sample] = best_boot_score;
+// //			out << boot_trees_parsimony[sample].size() << " ;" << endl;
+// 		}
 
 
-				ifstream fin(contree_file.c_str());
-				fin >> sample_cons;
-				fin.close();
 
-//				out << "concensus: " << sample_cons << endl;
-				// Read the concensus tree
-				stringstream str(sample_cons);
-				freeNode();
-				readTree(str, rooted);
-				NodeVector taxai;
-				getTaxa(taxai);
-				for (NodeVector::iterator taxit = taxai.begin(); taxit != taxai.end(); taxit++){
-					(*taxit)->id = atoi((*taxit)->name.c_str());
-				}
+// 		if(params->distinct_iter_top_boot >= 1 && (!params->multiple_hits)){
+//             // process a few trees in boot_trees_parsimony_top[sample]
+// 			string all_btree_str;
+// 			string best_btree_str;
+// 			int best_boot_score = -INT_MAX;
+// 			int id = 0;
+// //			out << "sample#" << sample << ", boot_count = " << boot_counts[sample]
+// //				<<", boot_threshold = " << boot_threshold[sample] << endl;
 
-				NodeVector taxa;
-				// change the taxa name from ID to real name
-				getOrderedTaxa(taxa);
-				for (int j = 0; j < taxa.size(); j++)
-					taxa[j]->name = saved_aln_on_opt_btree->getSeqName(taxa[j]->id);
+// 			bool do_concensus;
+// 			bool do_find_best;
 
-				initializeAllPartialLh();
-				clearAllPartialLH();
+// 			if(params->top_boot_concensus){
+// 				do_concensus = true;
+// 				do_find_best = false;
+// 			}else{
+// 				do_concensus = false;
+// 				do_find_best = true;
+// 			}
 
-				bool is_bifurcating = isBifurcating();
+// 			if(do_concensus){
+// //				out << "do_concensus" << endl;
+// 				do_find_best = false;
+// 				StringIntMap sample_treels;
+// 				IntVector sample_tree_weight;
+// 				sample_tree_weight.resize(boot_trees_parsimony_top[sample].size(), 0);
+// 				id = 0;
+// 				ofstream btout(btree_file.c_str());
+// 				for(IntPairVector::iterator it = boot_trees_parsimony_top[sample].begin();
+// 						it != boot_trees_parsimony_top[sample].end(); ++it, ++id){
+// 					StringIntMap::iterator mit;
+// 					for(mit = treels.begin(); mit != treels.end(); ++mit){
+// 						if(mit->second == it->first){
+// 							tree = mit->first;
+// 							break;
+// 						}
+// 					}
+// 					sample_treels[tree] = id;
+// //					out << tree << endl;
+// 					btout << tree << endl;
+// 					sample_tree_weight[id] = 1;
+// 				}
+// 				btout.close();
+// 				string sample_cons;
+// //				params->split_weight_summary = SW_COUNT;
+// //				sample_cons = computeConsensusTreeNoFileIO(sample_treels,
+// //					sample_tree_weight, params->tree_max_count,
+// //					params->split_threshold,params->split_weight_threshold,params);
+// 				string contree_file = btree_file + ".contree";
 
-				if(is_bifurcating){
-					curScore = -computeParsimony();
-//					cout << "before: " << curScore << ", ";
-//					out << curScore << "\t";
+// 				computeConsensusTree(btree_file.c_str(),0,params->tree_max_count,
+// 					params->split_threshold,params->split_weight_threshold,
+// 					contree_file.c_str(), params->out_prefix, params->tree_weight_file, params);
 
-					int count, step;
-					doNNISearch(count, step);
 
-					curScore = -computeParsimony();
-//					cout << "after: " << curScore << endl;
+// 				ifstream fin(contree_file.c_str());
+// 				fin >> sample_cons;
+// 				fin.close();
 
-//					out << curScore << endl;
+// //				out << "concensus: " << sample_cons << endl;
+// 				// Read the concensus tree
+// 				stringstream str(sample_cons);
+// 				freeNode();
+// 				readTree(str, rooted);
+// 				NodeVector taxai;
+// 				getTaxa(taxai);
+// 				for (NodeVector::iterator taxit = taxai.begin(); taxit != taxai.end(); taxit++){
+// 					(*taxit)->id = atoi((*taxit)->name.c_str());
+// 				}
 
-					stringstream ostr;
-					printTree(ostr, WT_TAXON_ID | WT_SORT_TAXA);
-					tree = ostr.str();
-					StringIntMap::iterator mit = treels.find(tree);
-					if (mit != treels.end()) {
-						tree_index = mit->second;
-					} else {
-						treels_logl.push_back(curScore); // TEMPORARILY
-						tree_index = treels_logl.size() - 1;
-						treels[tree] = tree_index;
-					}
+// 				NodeVector taxa;
+// 				// change the taxa name from ID to real name
+// 				getOrderedTaxa(taxa);
+// 				for (int j = 0; j < taxa.size(); j++)
+// 					taxa[j]->name = saved_aln_on_opt_btree->getSeqName(taxa[j]->id);
 
-					boot_logl[sample] = curScore;
-					boot_trees[sample] = tree_index;
-				}else{
-					do_find_best = true;
-					nmultifurcate++;
-				}
-			}
+// 				initializeAllPartialLh();
+// 				clearAllPartialLH();
 
-			if(do_find_best){
-//				out << "do_find_best" << endl;
-				id = 0;
-				for(IntPairVector::iterator it = boot_trees_parsimony_top[sample].begin();
-						it != boot_trees_parsimony_top[sample].end(); ++it, ++id){
-					StringIntMap::iterator mit;
-					for(mit = treels.begin(); mit != treels.end(); ++mit){
-						if(mit->second == it->first){
-							tree = mit->first;
-							break;
-						}
-					}
+// 				bool is_bifurcating = isBifurcating();
 
-//					out << it->first << "\t" << boot_trees_parsimony_top_iter[sample][id]
-//						<< "\t" << it->second << "\t";
-					// Read the bootstrap tree
-					stringstream str(tree);
-					freeNode();
-					readTree(str, rooted);
-					NodeVector taxai;
-					getTaxa(taxai);
-					for (NodeVector::iterator taxit = taxai.begin(); taxit != taxai.end(); taxit++){
-						(*taxit)->id = atoi((*taxit)->name.c_str());
-					}
+// 				if(is_bifurcating){
+// 					curScore = -computeParsimony();
+// //					cout << "before: " << curScore << ", ";
+// //					out << curScore << "\t";
 
-					NodeVector taxa;
-					// change the taxa name from ID to real name
-					getOrderedTaxa(taxa);
-					for (int j = 0; j < taxa.size(); j++)
-						taxa[j]->name = saved_aln_on_opt_btree->getSeqName(taxa[j]->id);
+// 					int count, step;
+// 					doNNISearch(count, step);
 
-					initializeAllPartialLh();
-					clearAllPartialLH();
+// 					curScore = -computeParsimony();
+// //					cout << "after: " << curScore << endl;
 
-					curScore = -computeParsimony();
-	////				cout << "before: " << curScore << ", ";
-//					out << curScore << "\t";
+// //					out << curScore << endl;
 
-					int count, step;
-					doNNISearch(count, step);
+// 					stringstream ostr;
+// 					printTree(ostr, WT_TAXON_ID | WT_SORT_TAXA);
+// 					tree = ostr.str();
+// 					StringIntMap::iterator mit = treels.find(tree);
+// 					if (mit != treels.end()) {
+// 						tree_index = mit->second;
+// 					} else {
+// 						treels_logl.push_back(curScore); // TEMPORARILY
+// 						tree_index = treels_logl.size() - 1;
+// 						treels[tree] = tree_index;
+// 					}
 
-					curScore = -computeParsimony();
-	//				cout << "after: " << curScore << endl;
+// 					boot_logl[sample] = curScore;
+// 					boot_trees[sample] = tree_index;
+// 				}else{
+// 					do_find_best = true;
+// 					nmultifurcate++;
+// 				}
+// 			}
 
-//					out << curScore << endl;
+// 			if(do_find_best){
+// //				out << "do_find_best" << endl;
+// 				id = 0;
+// 				for(IntPairVector::iterator it = boot_trees_parsimony_top[sample].begin();
+// 						it != boot_trees_parsimony_top[sample].end(); ++it, ++id){
+// 					StringIntMap::iterator mit;
+// 					for(mit = treels.begin(); mit != treels.end(); ++mit){
+// 						if(mit->second == it->first){
+// 							tree = mit->first;
+// 							break;
+// 						}
+// 					}
 
-					stringstream ostr;
-					printTree(ostr, WT_TAXON_ID | WT_SORT_TAXA);
-					tree = ostr.str();
-					all_btree_str += tree + "\n"; // tmp, for debug
+// //					out << it->first << "\t" << boot_trees_parsimony_top_iter[sample][id]
+// //						<< "\t" << it->second << "\t";
+// 					// Read the bootstrap tree
+// 					stringstream str(tree);
+// 					freeNode();
+// 					readTree(str, rooted);
+// 					NodeVector taxai;
+// 					getTaxa(taxai);
+// 					for (NodeVector::iterator taxit = taxai.begin(); taxit != taxai.end(); taxit++){
+// 						(*taxit)->id = atoi((*taxit)->name.c_str());
+// 					}
 
-					mit = treels.find(tree);
-					if (mit != treels.end()) {
-						tree_index = mit->second;
-					} else {
-						treels_logl.push_back(curScore); // TEMPORARILY
-						tree_index = treels_logl.size() - 1;
-						treels[tree] = tree_index;
-					}
+// 					NodeVector taxa;
+// 					// change the taxa name from ID to real name
+// 					getOrderedTaxa(taxa);
+// 					for (int j = 0; j < taxa.size(); j++)
+// 						taxa[j]->name = saved_aln_on_opt_btree->getSeqName(taxa[j]->id);
 
-					if(curScore >= best_boot_score){
-						best_boot_score = curScore;
-						best_btree_str = tree;
-						boot_logl[sample] = curScore;
-						boot_trees[sample] = tree_index;
-					}
-				}
-			}
+// 					initializeAllPartialLh();
+// 					clearAllPartialLH();
 
-//			// tmp, for debug
-//			MTree btree;
-//    		bool is_rooted = false;
-//    		istringstream iss_best(best_btree_str);
-//    		istringstream iss_all(all_btree_str);
-//    		btree.readTree(iss_best, is_rooted);
-//    		IntVector dist;
-//    		btree.computeRFDist(iss_all, dist);
-//    		out << "d(best,...) = ";
-//    		for(int c = 0; c < dist.size(); c++){
-//				out << dist[c] << ", ";
-//    		}
-//    		out << endl;
-		}
+// 					curScore = -computeParsimony();
+// 	////				cout << "before: " << curScore << ", ";
+// //					out << curScore << "\t";
+
+// 					int count, step;
+// 					doNNISearch(count, step);
+
+// 					curScore = -computeParsimony();
+// 	//				cout << "after: " << curScore << endl;
+
+// //					out << curScore << endl;
+
+// 					stringstream ostr;
+// 					printTree(ostr, WT_TAXON_ID | WT_SORT_TAXA);
+// 					tree = ostr.str();
+// 					all_btree_str += tree + "\n"; // tmp, for debug
+
+// 					mit = treels.find(tree);
+// 					if (mit != treels.end()) {
+// 						tree_index = mit->second;
+// 					} else {
+// 						treels_logl.push_back(curScore); // TEMPORARILY
+// 						tree_index = treels_logl.size() - 1;
+// 						treels[tree] = tree_index;
+// 					}
+
+// 					if(curScore >= best_boot_score){
+// 						best_boot_score = curScore;
+// 						best_btree_str = tree;
+// 						boot_logl[sample] = curScore;
+// 						boot_trees[sample] = tree_index;
+// 					}
+// 				}
+// 			}
+
+// //			// tmp, for debug
+// //			MTree btree;
+// //    		bool is_rooted = false;
+// //    		istringstream iss_best(best_btree_str);
+// //    		istringstream iss_all(all_btree_str);
+// //    		btree.readTree(iss_best, is_rooted);
+// //    		IntVector dist;
+// //    		btree.computeRFDist(iss_all, dist);
+// //    		out << "d(best,...) = ";
+// //    		for(int c = 0; c < dist.size(); c++){
+// //				out << dist[c] << ", ";
+// //    		}
+// //    		out << endl;
+// 		}
 
         // DEFAULT
 		if((!params->multiple_hits) && (params->distinct_iter_top_boot < 1)){ // process one tree in boot_trees[sample]
-            StringIntMap::iterator mit;
-			for(mit = treels.begin(); mit != treels.end(); ++mit){
-				if(mit->second == boot_trees[sample]){
-					tree = mit->first;
-					break;
-				}
-			}
+            tree = get<2>(treeInfo);
 //			out << "sample#" << sample << ", boot_count = " << boot_counts[sample] << endl;
 //			out << mit->second << "\t" << boot_logl[sample] << "\t";
 			// Read the bootstrap tree
+
 			stringstream str(tree);
 			freeNode();
 			readTree(str, rooted);
 			NodeVector taxai;
 			getTaxa(taxai);
+
+
 			for (NodeVector::iterator taxit = taxai.begin(); taxit != taxai.end(); taxit++){
 				(*taxit)->id = atoi((*taxit)->name.c_str());
 			}
@@ -2938,7 +2948,6 @@ void IQTree::optimizeBootTrees(){
 
 			initializeAllPartialLh();
 			clearAllPartialLH();
-
 //			// tmp, to-be-removed #############################################
 //			stringstream ostr1;
 //			printTree(ostr1, WT_SORT_TAXA);
@@ -2950,7 +2959,6 @@ void IQTree::optimizeBootTrees(){
 
 			int count, step;
 			doNNISearch(count, step);
-
 			curScore = -computeParsimony();
 //			out << curScore << endl;
 
@@ -2963,22 +2971,45 @@ void IQTree::optimizeBootTrees(){
 			stringstream ostr;
 			printTree(ostr, WT_TAXON_ID | WT_SORT_TAXA);
 			tree = ostr.str();
-			mit = treels.find(tree);
-			if (mit != treels.end()) {
-				tree_index = mit->second;
-			} else {
-				treels_logl.push_back(curScore); // TEMPORARILY
-				tree_index = treels_logl.size() - 1;
-				treels[tree] = tree_index;
-			}
+			// mit = treels.find(tree);
+			// if (mit != treels.end()) {
+			// 	tree_index = mit->second;
+			// } else {
+			// 	treels_logl.push_back(curScore); // TEMPORARILY
+			// 	tree_index = treels_logl.size() - 1;
+			// 	treels[tree] = tree_index;
+			// }
 
-			boot_trees[sample] = tree_index;
-			boot_logl[sample] = curScore;
+			// boot_trees[sample] = tree_index;
+			// boot_logl[sample] = curScore;
+            treeInfo = make_tuple(get<0>(treeInfo), curScore, tree);
 		}
 		delete aln;
-
 //		out << -boot_logl[sample] << endl; // to examine score after refinement
 	}
+
+    if (MPIHelper::getInstance().isMaster()) {
+        // update samples assigned to master
+        for(auto treeInfo: bTrees) {
+            updateBootTree(get<0>(treeInfo), get<1>(treeInfo), get<2>(treeInfo));
+        }
+
+        // Receiving trees from workers
+        for(int i = 0; i < MPIHelper::getInstance().getNumProcesses() - 1; ++i) {
+            string message;
+            int worker = MPIHelper::getInstance().recvString(message);
+            auto workerTrees = convertStringToBootTrees(message);
+            for(auto treeInfo: workerTrees) {
+                updateBootTree(get<0>(treeInfo), -get<1>(treeInfo), get<2>(treeInfo));
+            }
+        }
+    } else {
+        string message = to_string(bTrees.size()) + ' ';
+        for(auto treeInfo: bTrees) {
+            message += to_string(get<0>(treeInfo)) + ' ' + to_string(-get<1>(treeInfo)) + ' ' + get<2>(treeInfo) + '#';
+        }
+        MPIHelper::getInstance().sendString(message, PROC_MASTER, BOOT_TREE_TAG);
+    }
 
 
 //	cout << "# of multifurcating = " << nmultifurcate << endl;
@@ -4656,7 +4687,7 @@ void IQTree::reinsertIdenticalSeqs(Alignment *orig_aln, StrVector &removed_seqs,
 }
 
 // should returns if the doTreeSearch should stop
-bool IQTree::syncTrees(double cur_correlation) {
+bool IQTree::syncTrees(double cur_correlation, vector<int> logl_to_send) {
     int nProcess = MPIHelper::getInstance().getNumProcesses();
     int processId = MPIHelper::getInstance().getProcessID();
 
@@ -4664,15 +4695,14 @@ bool IQTree::syncTrees(double cur_correlation) {
         while(MPIHelper::getInstance().gotMessage()) {
             string message;
             int worker = MPIHelper::getInstance().recvString(message);
-            int progress = 0;
 
-            for(int i = 0; i < message.size(); ++i) {
-                if (message[i] == ' ') {
-                    message = message.substr(i + 1, message.size() - 1 - i);
-                    break;
-                }
-                progress = progress * 10 + (message[i] - '0');
+            int logl_received = getNumber(message);
+            for(int i = 0; i < logl_received; ++i) {
+                treels_logl.push_back(-getNumber(message));
             }
+
+
+            int progress = getNumber(message);
 
             // update progress
             workersProgress[worker] = progress;
@@ -4686,7 +4716,8 @@ bool IQTree::syncTrees(double cur_correlation) {
 
             // send sync trees back
             int shouldStop = stop_rule.meetStopCondition(curIt, cur_correlation);
-            message = to_string(shouldStop) + ' ' + candidateTrees.getSyncTrees();
+
+            message = to_string(shouldStop) + ' ' + to_string((int)-logl_cutoff) + ' ' + candidateTrees.getSyncTrees();
             if (!shouldStop) {
                 MPIHelper::getInstance().sendString(message, worker, TREE_TAG);
             } else {
@@ -4698,17 +4729,19 @@ bool IQTree::syncTrees(double cur_correlation) {
         }
     } else {
         if (gotReplied && rand() % nProcess == processId) {
-            string message = to_string(curIt) + ' ' + candidateTrees.getSyncTrees();
+            string message = "";
+            message += to_string(logl_to_send.size()) + ' ';
+            for(int x: logl_to_send) message += to_string(-x) + ' ';
+            message += to_string(curIt) + ' ' + candidateTrees.getSyncTrees();
             MPIHelper::getInstance().sendString(message, PROC_MASTER, TREE_TAG);
             gotReplied = false;
         }
         if (MPIHelper::getInstance().gotMessage()) {
             string message;
             int master = MPIHelper::getInstance().recvString(message);
-            int shouldStop = 0;
-            shouldStop = message[0] - '0';
+            int shouldStop = getNumber(message);
             if (shouldStop == 1) return true;
-            message = message.substr(2, message.size() - 2);
+            logl_cutoff = -getNumber(message);
             candidateTrees.updateSyncTrees(message);
             gotReplied = true;
         }
@@ -4781,25 +4814,32 @@ void IQTree::syncBootTrees() {
         for(int it = 0; it < MPIHelper::getInstance().getNumProcesses() - 1; ++it) {
             string message;
             int worker = MPIHelper::getInstance().recvString(message);
-            int pter = 0;
-
             for(int bootId = 0; bootId < boot_logl.size(); ++bootId) {
-                int score = 0;
-                string tree_str;
-                // cout << message << endl;
-                while(message[pter] != ' ') {
-                    score = score * 10 + message[pter++] - '0';
-                }
-                pter++;
-                while(message[pter] != '#') {
-                    tree_str += message[pter++];
-                }
-                pter++;
-                score = -score;
+                int score = -getNumber(message);
+                string tree_str = getTree(message);
                 updateBootTree(bootId, score, tree_str);
             }
             cout << "Synced bootstrap trees from process: " << worker << endl;
         }
     }
     MPI_Barrier(MPI_COMM_WORLD);
+}
+
+int IQTree::getNumber(string &message) {
+    int number = 0, pter = 0;
+    while(message[pter] != ' ') {
+        number = number * 10 + message[pter++] - '0';
+    }
+    pter++;
+    message = message.substr(pter, message.size() - pter);
+    return number;
+}
+
+string IQTree::getTree(string &message) {
+    int pter = 0;
+    string tree;
+    while(message[pter] != '#') tree += message[pter++];
+    pter++;
+    message = message.substr(pter, message.size() - pter);
+    return tree;
 }

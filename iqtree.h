@@ -944,16 +944,17 @@ protected:
     void estDeltaMin();
 
     bool gotReplied;
-    bool syncTrees(double cur_correlation);
+    bool syncTrees(double cur_correlation, vector<int> logl_to_send);
     vector<int> workersProgress;
     void updateBestTreeFromCandidateSet(string &best_tree_topo);
     void syncBootTrees();
     void updateBootTree(int bootId, double score, string tree_str);
     vector<tuple<int, int, string>> scatterBootstrapTrees();
-
     int stopped_workers;
-
     vector<tuple<int, int, string>> convertStringToBootTrees(string message);
+    int getNumber(string &message);
+    string getTree(string &message);
+    string convertBootTreeToString(vector<tuple<int, int, string>> bTree);
 };
 
 void estimateNNICutoff(Params &params);

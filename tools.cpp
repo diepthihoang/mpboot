@@ -2108,8 +2108,8 @@ void parseArg(int argc, char *argv[], Params &params) {
 					throw "Use -bb <#replicates>";
 				params.gbo_replicates = convert_int(argv[cnt]);
 				params.avoid_duplicated_trees = true;
-				if (params.gbo_replicates < 1000)
-					throw "#replicates must be >= 1000";
+				// if (params.gbo_replicates < 1000)
+				// 	throw "#replicates must be >= 1000";
 				params.consensus_type = CT_CONSENSUS_TREE;
 //				params.stop_condition = SC_BOOTSTRAP_CORRELATION;
 				params.stop_condition = SC_UNSUCCESS_ITERATION; // Diep: because MP already has refinement
@@ -3574,25 +3574,26 @@ int MPIHelper::recvString(string &str, int src, int tag) {
 string MPIHelper::scatterBootstrapTrees(vector<vector<tuple<int, int, string>>> &bTrees) {
 	vector<int> cnt_vt, offset_vt;
 	string messageToSend;
+	char *buf;
 
 	if (isMaster()) {
 		for(int processID = 0; processID < bTrees.size(); ++processID) {
 			offset_vt.push_back(messageToSend.size());
+			messageToSend += to_string(bTrees[processID].size()) + ' ';
 			for(auto tree: bTrees[processID]) {
 				messageToSend += to_string(get<0>(tree)) + ' ' + to_string(get<1>(tree)) + ' ' + get<2>(tree) + '#';
 			}
 			cnt_vt.push_back(messageToSend.size() - offset_vt.back());
 		}
+		buf = new char[messageToSend.size() + 10];
+		for(int i = 0; i < messageToSend.size(); ++i) buf[i] = messageToSend[i];
 	}
 
 	int out_cnt;
 	MPI_Scatter(cnt_vt.data(), 1, MPI_INT, &out_cnt, 1, MPI_INT, PROC_MASTER, MPI_COMM_WORLD);
 
-	char *recv_buf = new char[out_cnt];
-	MPI_Scatterv(messageToSend.c_str(), cnt_vt.data(), offset_vt.data(), MPI_CHAR, recv_buf, out_cnt, MPI_CHAR, PROC_MASTER, MPI_COMM_WORLD);
-	
-	cout << "Done scattering" << endl;
-
+	char *recv_buf = new char[out_cnt + 10];
+	MPI_Scatterv(buf, cnt_vt.data(), offset_vt.data(), MPI_CHAR, recv_buf, out_cnt, MPI_CHAR, PROC_MASTER, MPI_COMM_WORLD);
 	return (string) recv_buf;
 }
 

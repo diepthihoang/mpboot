@@ -1,0 +1,15 @@
+{
+    "settings": {
+        "files.associations": {
+            "ostream": "cpp",
+            "array": "cpp",
+            "tuple": "cpp",
+            "utility": "cpp"
+        }
+    },
+    "folders": [
+        {
+            "path": "."
+        }
+    ]
+}
