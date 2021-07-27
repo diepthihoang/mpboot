@@ -3000,7 +3000,7 @@ void IQTree::optimizeBootTrees(){
             int worker = MPIHelper::getInstance().recvString(message);
             auto workerTrees = convertStringToBootTrees(message);
             for(auto treeInfo: workerTrees) {
-                updateBootTree(get<0>(treeInfo), -get<1>(treeInfo), get<2>(treeInfo));
+                updateBootTree(get<0>(treeInfo), get<1>(treeInfo), get<2>(treeInfo));
             }
         }
     } else {
