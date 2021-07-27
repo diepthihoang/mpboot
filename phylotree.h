@@ -1327,6 +1327,8 @@ public:
 
     void approxAllBranches(PhyloNode *node = NULL, PhyloNode *dad = NULL);
 
+
+
 protected:
 
     /**

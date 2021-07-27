@@ -200,7 +200,7 @@ void Alignment::checkSeqName() {
         }
     }
     if (!ok) outError("Please rename sequences listed above!");
-    /*if (verbose_mode >= VB_MIN)*/ {
+    /*if (verbose_mode >= VB_MIN)*/ if (isAllowedToPrint) {
         int max_len = getMaxSeqNameLength()+1;
         cout << "ID   ";
         cout.width(max_len);
@@ -352,19 +352,19 @@ Alignment::Alignment(char *filename, char *sequence_type, InputType &intype) : v
     non_stop_codon = NULL;
     seq_type = SEQ_UNKNOWN;
     STATE_UNKNOWN = 126;
-    cout << "Reading alignment file " << filename << " ... ";
+    if (isAllowedToPrint) cout << "Reading alignment file " << filename << " ... ";
     intype = detectInputFile(filename);
 
     try {
 
         if (intype == IN_NEXUS) {
-            cout << "Nexus format detected" << endl;
+            if (isAllowedToPrint) cout << "Nexus format detected" << endl;
             readNexus(filename);
         } else if (intype == IN_FASTA) {
-            cout << "Fasta format detected" << endl;
+            if (isAllowedToPrint) cout << "Fasta format detected" << endl;
             readFasta(filename, sequence_type);
         } else if (intype == IN_PHYLIP) {
-            cout << "Phylip format detected" << endl;
+            if (isAllowedToPrint) cout << "Phylip format detected" << endl;
             readPhylip(filename, sequence_type);
         } else {
             outError("Unknown sequence format, please use PHYLIP, FASTA, or NEXUS format");
@@ -380,7 +380,7 @@ Alignment::Alignment(char *filename, char *sequence_type, InputType &intype) : v
     if (getNSeq() < 3)
         outError("Alignment must have at least 3 sequences");
 
-    cout << "Alignment has " << getNSeq() << " sequences with " << getNSite() <<
+    if (isAllowedToPrint) cout << "Alignment has " << getNSeq() << " sequences with " << getNSite() <<
          " columns and " << getNPattern() << " patterns"<< endl;
     buildSeqStates();
     checkSeqName();
@@ -1068,20 +1068,20 @@ int Alignment::buildPattern(StrVector &sequences, char *sequence_type, int nseq,
     switch (seq_type) {
     case SEQ_BINARY:
         num_states = 2;
-        cout << "Alignment most likely contains binary sequences" << endl;
+        if (isAllowedToPrint) cout << "Alignment most likely contains binary sequences" << endl;
         break;
     case SEQ_DNA:
         num_states = 4;
-        cout << "Alignment most likely contains DNA/RNA sequences" << endl;
+        if (isAllowedToPrint) cout << "Alignment most likely contains DNA/RNA sequences" << endl;
         break;
     case SEQ_PROTEIN:
         num_states = 20;
-        cout << "Alignment most likely contains protein sequences" << endl;
+        if (isAllowedToPrint) cout << "Alignment most likely contains protein sequences" << endl;
         break;
     case SEQ_MORPH:
         num_states = getMaxObservedStates(sequences);
         if (num_states < 2 || num_states > 32) throw "Invalid number of states.";
-        cout << "Alignment most likely contains " << num_states << "-state morphological data" << endl;
+        if (isAllowedToPrint) cout << "Alignment most likely contains " << num_states << "-state morphological data" << endl;
         break;
     default:
         if (!sequence_type)

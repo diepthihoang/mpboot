@@ -442,7 +442,7 @@ void reportPhyloAnalysis(Params &params, string &original_model,
 		ofstream out;
 		out.exceptions(ios::failbit | ios::badbit);
 		out.open(outfile.c_str());
-		out << "MPBoot " << iqtree_VERSION_MAJOR << "." << iqtree_VERSION_MINOR
+		if (isAllowedToPrint) out << "MPBoot " << iqtree_VERSION_MAJOR << "." << iqtree_VERSION_MINOR
 				<< "." << iqtree_VERSION_PATCH << " built " << __DATE__ << endl
 				<< endl;
 		if (params.partition_file)
@@ -866,7 +866,7 @@ void reportPhyloAnalysis(Params &params, string &original_model,
 		char *date_str;
 		date_str = ctime(&cur_time);
 		out.unsetf(ios_base::fixed);
-		out << "TIME STAMP" << endl << "----------" << endl << endl
+		if (isAllowedToPrint) out << "TIME STAMP" << endl << "----------" << endl << endl
 				<< "Date and time: " << date_str << "Total CPU time used: "
 				<< (double) params.run_time << " seconds (" << convert_time(params.run_time) << ")" << endl
 				<< "Total wall-clock time used: " << getRealTime() - params.start_real_time
@@ -1147,7 +1147,7 @@ void computeInitialTree(Params &params, IQTree &iqtree, string &dist_file, int &
 		break;
 	case STT_PLL_PARSIMONY:
 		cout << endl;
-		cout << "Create initial parsimony tree by phylogenetic likelihood library (PLL)... ";
+		if (isAllowedToPrint) cout << "Create initial parsimony tree by phylogenetic likelihood library (PLL)... ";
 		// generate a parsimony tree for model optimization
 		iqtree.pllInst->randomNumberSeed = params.ran_seed;
 
@@ -1257,9 +1257,12 @@ int initCandidateTreeSet(Params &params, IQTree &iqtree, int numInitTrees) {
 
 	numInitTrees = (numInitTrees + numProc - 1) / numProc + 1;
 
-	cout << "Generating " << numInitTrees - 1 << " parsimony trees... ";
+	MPI_Barrier(MPI_COMM_WORLD);
+
+	if (isAllowedToPrint) cout << "Generating " << numInitTrees - 1 << " parsimony trees... ";
     cout.flush();
     double startTime = getCPUTime();
+
     int numDupPars = 0;
 //    if(params.maximum_parsimony) iqtree.candidateTrees.clear(); // Diep: added this to fix the bug of sorted aln <> orig aln
     for (int treeNr = 1; treeNr < numInitTrees; treeNr++) {
@@ -1310,9 +1313,12 @@ int initCandidateTreeSet(Params &params, IQTree &iqtree, int numInitTrees) {
             	iqtree.candidateTrees.update(curParsTree, -DBL_MAX);
         }
     }
+	MPI_Barrier(MPI_COMM_WORLD);
     double parsTime = getCPUTime() - startTime;
-    cout << "(" << numDupPars << " duplicated parsimony trees)" << endl;
-    cout << "CPU time: " << parsTime << endl;
+    if (isAllowedToPrint){
+		cout << "(" << numDupPars << " duplicated parsimony trees)" << endl;
+    	cout << "Wall used for tree generating time: " << parsTime << endl;
+	}
 
 	// do not do anything for parsimony because tree was already optimized by SPR
 	if (params.maximum_parsimony){
@@ -1581,7 +1587,7 @@ void printMiscInfo(Params &params, IQTree &iqtree, double *pattern_lh) {
 		cout << endl << "Computing site-specific rates by "
 				<< rate_mvh->full_name << "..." << endl;
 		rate_mvh->runIterativeProc(params, iqtree);
-		cout << endl << "BEST SCORE FOUND : " << (params.maximum_parsimony ? -iqtree.getBestScore() : iqtree.getBestScore()) << endl;
+		if (isAllowedToPrint) cout << endl << "BEST SCORE FOUND : " << (params.maximum_parsimony ? -iqtree.getBestScore() : iqtree.getBestScore()) << endl;
 		string mhrate_file = params.out_prefix;
 		mhrate_file += ".mhrate";
 		iqtree.getRate()->writeSiteRates(mhrate_file.c_str());
@@ -1708,7 +1714,7 @@ void runTreeReconstruction(Params &params, string &original_model, IQTree &iqtre
     	printAnalysisInfo(model_df, iqtree, params);
     }
 
-    if (!params.pll) {
+    if (!params.pll && isAllowedToPrint) {
         uint64_t mem_size = iqtree.getMemoryRequired();
 #if defined __APPLE__ || defined __MACH__
         cout << "NOTE: " << ((double) mem_size * sizeof(double) / 1024.0) / 1024 << " MB RAM is required!" << endl;
@@ -1735,7 +1741,7 @@ void runTreeReconstruction(Params &params, string &original_model, IQTree &iqtre
     // Update best tree
     iqtree.candidateTrees.clear(); // Diep added
     iqtree.setBestTree(initTree, iqtree.curScore);
-    cout << "Current best tree score: " << (params.maximum_parsimony ? -iqtree.bestScore : iqtree.bestScore) << endl << endl;
+    if (isAllowedToPrint) cout << "Current best tree score: " << (params.maximum_parsimony ? -iqtree.bestScore : iqtree.bestScore) << endl << endl;
     iqtree.candidateTrees.update(initTree, iqtree.curScore);
 
     // Compute maximum likelihood distance
@@ -1756,9 +1762,11 @@ void runTreeReconstruction(Params &params, string &original_model, IQTree &iqtre
         if (!params.user_file && (params.start_tree == STT_PARSIMONY || params.start_tree == STT_PLL_PARSIMONY)) {
         	int numDup = initCandidateTreeSet(params, iqtree, numInitTrees);
         	assert(iqtree.candidateTrees.size() != 0);
-        	cout << "Finish initializing candidate tree set. ";
-        	cout << "Number of distinct locally optimal trees: " << iqtree.candidateTrees.size() << endl;
-        } else {
+        	if (isAllowedToPrint) { 
+				cout << "Finish initializing candidate tree set. ";
+        		cout << "Number of distinct locally optimal trees: " << iqtree.candidateTrees.size() << endl;
+			}
+		} else {
             int nni_count = 0;
             int nni_steps = 0;
             cout << "Doing NNI on the initial tree ... " << endl;
@@ -1781,7 +1789,7 @@ void runTreeReconstruction(Params &params, string &original_model, IQTree &iqtre
 
         }
 
-        cout << "Current best score: " << (params.maximum_parsimony ? -iqtree.bestScore : iqtree.bestScore) << " / CPU time: "
+        if(isAllowedToPrint) cout << "Current best score: " << (params.maximum_parsimony ? -iqtree.bestScore : iqtree.bestScore) << " / CPU time: "
                 << getCPUTime() - initTime << endl << endl;
 	}
 
@@ -1838,7 +1846,7 @@ void runTreeReconstruction(Params &params, string &original_model, IQTree &iqtre
 
 	if (iqtree.isSuperTree())
 			((PhyloSuperTree*) &iqtree)->mapTrees();
-	if (params.snni && params.min_iterations) {
+	if (params.snni && params.min_iterations && isAllowedToPrint) {
 		cout << (params.maximum_parsimony ? "Scores" : "Log-likelihoods") << " of best " << params.popSize << " trees: " << endl;
 		iqtree.printBestScores(iqtree.candidateTrees.popSize);
 	}
@@ -1859,7 +1867,7 @@ void runTreeReconstruction(Params &params, string &original_model, IQTree &iqtre
 	if (iqtree.isSuperTree())
 		((PhyloSuperTree*) &iqtree)->computeBranchLengths();
 
-	cout << "BEST SCORE FOUND : " << (params.maximum_parsimony ? -iqtree.getBestScore() : iqtree.getBestScore()) << endl;
+	if (isAllowedToPrint) cout << "BEST SCORE FOUND : " << (params.maximum_parsimony ? -iqtree.getBestScore() : iqtree.getBestScore()) << endl;
 
 	if (params.write_local_optimal_trees) {
 		vector<string> trees = iqtree.candidateTrees.getHighestScoringTrees();
@@ -2723,15 +2731,17 @@ void optimizeAlignment(IQTree * & tree, Params & params){
 //	tree->fixNegativeBranch(true);
 	int pars_before = tree->computeParsimony();
     tree->curScore = pars_before;
-    cout << "Time for parsimony tree construction: " << getCPUTime() - start << " seconds" << endl;
-    cout << "Parsimony score: " << pars_before << endl;
+    if (isAllowedToPrint) {
+		cout << "Time for parsimony tree construction: " << getCPUTime() - start << " seconds" << endl;
+    	cout << "Parsimony score: " << pars_before << endl;
+	}
 	BootValTypePars * tmpPatternPars = tree->getPatternPars();
 	for(int i = 0; i < tree->getAlnNPattern(); i++){
 		(tree->aln)->at(i).ras_pars_score = tmpPatternPars[i];
 	}
 
 	if(params.sort_alignment){
-		cout << "Reordering patterns in alignment by decreasing order of pattern parsimony... ";
+		if (isAllowedToPrint) cout << "Reordering patterns in alignment by decreasing order of pattern parsimony... ";
         start = getCPUTime();
 		// reordering patterns
 		PatternComp pcomp;
@@ -2742,7 +2752,7 @@ void optimizeAlignment(IQTree * & tree, Params & params){
 		tree->clearAllPartialLH();
 		int pars_after = tree->computeParsimony();
 		if(pars_after != pars_before) outError("Reordering alignment has bug.");
-		cout << getCPUTime() - start << " seconds" << endl;
+		if (isAllowedToPrint) cout << getCPUTime() - start << " seconds" << endl;
 	}else{
 		tree->aln->updateSitePatternAfterOptimized();
 	}

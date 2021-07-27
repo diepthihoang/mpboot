@@ -211,7 +211,7 @@ void IQTree::setParams(Params &params) {
     size_t i;
 
     if (params.online_bootstrap && params.gbo_replicates > 0) {
-        cout << "Generating " << params.gbo_replicates << " samples for bootstrap approximation..." << endl;
+        if (isAllowedToPrint) cout << "Generating " << params.gbo_replicates << " samples for bootstrap approximation..." << endl;
         size_t nunit; // either number of patterns or number of sites
         // allocate memory for boot_samples
         if(params.maximum_parsimony)
@@ -1666,6 +1666,8 @@ double IQTree::doTreeSearch() {
 
     stopped_workers = 0;
     MPI_Barrier(MPI_COMM_WORLD);
+
+    checkpointTime = getCPUTime();
     for ( ; !stop_rule.meetStopCondition(curIt, cur_correlation); curIt++) {
         searchinfo.curIter = curIt;
 		if(params->cutoff_percent > 100){
@@ -2079,6 +2081,7 @@ double IQTree::doTreeSearch() {
         }
     }
 
+    if (isAllowedToPrint) cout << "CPU time used for tree search (MPI): " << getCPUTime() - checkpointTime << endl;
     MPI_Barrier(MPI_COMM_WORLD);
 
 
@@ -2638,7 +2641,9 @@ void IQTree::optimizeBootTrees(){
 	btree_file += ".sampletree";
 
     MPI_Barrier(MPI_COMM_WORLD);
+    checkpointTime = getCPUTime();
     vector<tuple<int, int, string>> bTrees = scatterBootstrapTrees();
+
 
 	int nmultifurcate = 0;
 	for(auto &treeInfo: bTrees){
@@ -3010,6 +3015,8 @@ void IQTree::optimizeBootTrees(){
         }
         MPIHelper::getInstance().sendString(message, PROC_MASTER, BOOT_TREE_TAG);
     }
+    MPI_Barrier(MPI_COMM_WORLD);
+    cout << "Wall clock time used for boot-optimizing: " << getCPUTime() - checkpointTime << endl;
 
 
 //	cout << "# of multifurcating = " << nmultifurcate << endl;
@@ -3515,14 +3522,16 @@ void IQTree::saveCurrentTree(double cur_logl) {
 
 		if(!params->auto_vectorize && reps_segments > 1 && boot_samples_pars_remain_bounds[0] == NULL){ // do this once
 			double starts = getCPUTime();
-			cout << "NOTE: REPS computation is segmented into " << reps_segments << " parts for speed..." << endl;
-			for(int s = 0; s < reps_segments; s++){
-				cout << "segment#" << s + 1 << " ends at " << segment_upper[s] << endl;
-			}
+			if (isAllowedToPrint) {
+                cout << "NOTE: REPS computation is segmented into " << reps_segments << " parts for speed..." << endl;
+                for(int s = 0; s < reps_segments; s++){
+                    cout << "segment#" << s + 1 << " ends at " << segment_upper[s] << endl;
+                }
+            }
 
 			if(params->do_first_rell) pllComputeRellRemainBound(nptn / 2);
 			else pllComputeRellRemainBound(nptn);
-			cout << getCPUTime() - starts << " seconds." << endl;
+			if (isAllowedToPrint) cout << getCPUTime() - starts << " seconds." << endl;
 
 		}
 	}else{
@@ -4783,7 +4792,6 @@ void IQTree::updateBestTreeFromCandidateSet(string &best_tree_topo) {
 }
 
 void IQTree::updateBootTree(int bootId, double score, string tree_str) {
-    cout << "Received tree with score: " << score << endl;
     if (boot_logl[bootId] < score) {
         int tree_index;
         auto iterator = treels.find(tree_str);

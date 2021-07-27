@@ -955,6 +955,8 @@ protected:
     int getNumber(string &message);
     string getTree(string &message);
     string convertBootTreeToString(vector<tuple<int, int, string>> bTree);
+	double checkpointTime;
+
 };
 
 void estimateNNICutoff(Params &params);

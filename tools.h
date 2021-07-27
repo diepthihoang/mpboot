@@ -2174,6 +2174,7 @@ void summarizeFooter(ostream &out, Params &params);
 #define BOOT_TAG 3 // Message to please send bootstrap trees
 #define BOOT_TREE_TAG 4 // bootstrap tree tag
 #define LOGL_CUTOFF_TAG 5 // send logl_cutoff for ultrafast bootstrap
+#define isAllowedToPrint MPIHelper::getInstance().isMaster()
 
 using namespace std;
 
