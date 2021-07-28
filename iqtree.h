@@ -952,8 +952,8 @@ protected:
     vector<tuple<int, int, string>> scatterBootstrapTrees();
     int stopped_workers;
     vector<tuple<int, int, string>> convertStringToBootTrees(string message);
-    int getNumber(string &message);
-    string getTree(string &message);
+    int getNumber(string &message, int &pter);
+    string getTree(string &message, int &pter);
     string convertBootTreeToString(vector<tuple<int, int, string>> bTree);
 	double checkpointTime;
 

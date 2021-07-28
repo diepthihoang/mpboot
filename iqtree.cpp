@@ -2553,11 +2553,11 @@ void IQTree::pllDestroyUFBootData(){
 vector<tuple<int, int, string>> IQTree::convertStringToBootTrees(string message) {
     int pter = 0;
     vector<tuple<int, int, string>> bTrees;
-    int sz = getNumber(message);
+    int sz = getNumber(message, pter);
     for(int i = 0; i < sz; ++i) {
-        int id = getNumber(message);
-        int score = -getNumber(message);
-        string tree = getTree(message);
+        int id = getNumber(message, pter);
+        int score = -getNumber(message, pter);
+        string tree = getTree(message, pter);
         bTrees.emplace_back(id, score, tree);
     }
     return bTrees;
@@ -3016,7 +3016,7 @@ void IQTree::optimizeBootTrees(){
         MPIHelper::getInstance().sendString(message, PROC_MASTER, BOOT_TREE_TAG);
     }
     MPI_Barrier(MPI_COMM_WORLD);
-    cout << "Wall clock time used for boot-optimizing: " << getCPUTime() - checkpointTime << endl;
+    if (isAllowedToPrint) cout << "Wall clock time used for boot-optimizing: " << getCPUTime() - checkpointTime << endl;
 
 
 //	cout << "# of multifurcating = " << nmultifurcate << endl;
@@ -4705,13 +4705,14 @@ bool IQTree::syncTrees(double cur_correlation, vector<int> logl_to_send) {
             string message;
             int worker = MPIHelper::getInstance().recvString(message);
 
-            int logl_received = getNumber(message);
+            int pter = 0;
+            int logl_received = getNumber(message, pter);
             for(int i = 0; i < logl_received; ++i) {
-                treels_logl.push_back(-getNumber(message));
+                treels_logl.push_back(-getNumber(message, pter));
             }
 
 
-            int progress = getNumber(message);
+            int progress = getNumber(message, pter);
 
             // update progress
             workersProgress[worker] = progress;
@@ -4721,7 +4722,7 @@ bool IQTree::syncTrees(double cur_correlation, vector<int> logl_to_send) {
             }
 
             // update candidatSet
-            candidateTrees.updateSyncTrees(message);
+            candidateTrees.updateSyncTrees(message.substr(pter, message.size() - pter));
 
             // send sync trees back
             int shouldStop = stop_rule.meetStopCondition(curIt, cur_correlation);
@@ -4738,7 +4739,7 @@ bool IQTree::syncTrees(double cur_correlation, vector<int> logl_to_send) {
         }
     } else {
         if (gotReplied && rand() % nProcess == processId) {
-            string message = "";
+            string message;
             message += to_string(logl_to_send.size()) + ' ';
             for(int x: logl_to_send) message += to_string(-x) + ' ';
             message += to_string(curIt) + ' ' + candidateTrees.getSyncTrees();
@@ -4746,12 +4747,13 @@ bool IQTree::syncTrees(double cur_correlation, vector<int> logl_to_send) {
             gotReplied = false;
         }
         if (MPIHelper::getInstance().gotMessage()) {
+            int pter = 0;
             string message;
             int master = MPIHelper::getInstance().recvString(message);
-            int shouldStop = getNumber(message);
+            int shouldStop = getNumber(message, pter);
             if (shouldStop == 1) return true;
-            logl_cutoff = -getNumber(message);
-            candidateTrees.updateSyncTrees(message);
+            logl_cutoff = -getNumber(message, pter);
+            candidateTrees.updateSyncTrees(message.substr(pter, message.size() - pter));
             gotReplied = true;
         }
         return false;
@@ -4822,10 +4824,11 @@ void IQTree::syncBootTrees() {
     } else {
         for(int it = 0; it < MPIHelper::getInstance().getNumProcesses() - 1; ++it) {
             string message;
+            int pter = 0;
             int worker = MPIHelper::getInstance().recvString(message);
             for(int bootId = 0; bootId < boot_logl.size(); ++bootId) {
-                int score = -getNumber(message);
-                string tree_str = getTree(message);
+                int score = -getNumber(message, pter);
+                string tree_str = getTree(message, pter);
                 updateBootTree(bootId, score, tree_str);
             }
             cout << "Synced bootstrap trees from process: " << worker << endl;
@@ -4834,21 +4837,16 @@ void IQTree::syncBootTrees() {
     MPI_Barrier(MPI_COMM_WORLD);
 }
 
-int IQTree::getNumber(string &message) {
-    int number = 0, pter = 0;
-    while(message[pter] != ' ') {
-        number = number * 10 + message[pter++] - '0';
-    }
+int IQTree::getNumber(string &message, int &pter) {
+    int number = 0;
+    while(message[pter] != ' ') number = number * 10 + message[pter++] - '0';
     pter++;
-    message = message.substr(pter, message.size() - pter);
     return number;
 }
 
-string IQTree::getTree(string &message) {
-    int pter = 0;
+string IQTree::getTree(string &message, int &pter) {
     string tree;
     while(message[pter] != '#') tree += message[pter++];
     pter++;
-    message = message.substr(pter, message.size() - pter);
     return tree;
 }
