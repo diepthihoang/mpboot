@@ -2437,5 +2437,6 @@ int main(int argc, char *argv[])
 	if (isAllowedToPrint) cout << "Date and Time: " << ctime(&cur_time);
 
 	finish_random();
+    MPIHelper::getInstance().finalize(); // Diep 2021.8.03
 	return EXIT_SUCCESS;
 }
