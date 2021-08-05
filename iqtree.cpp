@@ -1665,10 +1665,15 @@ double IQTree::doTreeSearch() {
 	 *====================================================*/
 
     stopped_workers = 0;
+    stopped_processes_vec.resize(MPIHelper::getInstance().getNumProcesses(), 0);
     MPI_Barrier(MPI_COMM_WORLD);
 
     checkpointTime = getCPUTime();
-    for ( ; !stop_rule.meetStopCondition(curIt, cur_correlation); curIt++) {
+
+    // Diep: Worker cannot not decide to stop by its own #unsuccessful_iter
+    // for ( ; !stop_rule.meetStopCondition(curIt, cur_correlation); curIt++) {
+    for ( ; MPIHelper::getInstance().isWorker() || !stop_rule.meetStopCondition(curIt, cur_correlation); curIt++) { 
+        if(stopped_workers > 0) break; // Diep: Without this, program might run for quite long time
         searchinfo.curIter = curIt;
 		if(params->cutoff_percent > 100){
 			// old way of updating logl_cutoff
@@ -2071,15 +2076,47 @@ double IQTree::doTreeSearch() {
     // The worker that makes 
 
     // Redundent messages
+    // if (MPIHelper::getInstance().isMaster()) {
+    //     while(stopped_workers < MPIHelper::getInstance().getNumProcesses() - 1) {
+    //         string message;
+    //         int worker = MPIHelper::getInstance().recvString(message);
+    //         message = "1 ";
+    //         MPIHelper::getInstance().sendString(message, worker, TREE_TAG);
+    //         stopped_workers += 1;
+    //     }
+    // }
+
+    cout << "$$$$$START cleaning" << endl;
     if (MPIHelper::getInstance().isMaster()) {
-        while(stopped_workers < MPIHelper::getInstance().getNumProcesses() - 1) {
+        cout << "stopped_workers = " << stopped_workers << endl;
+
+
+        while(MPIHelper::getInstance().gotMessage()) {
             string message;
             int worker = MPIHelper::getInstance().recvString(message);
-            message = "1 ";
-            MPIHelper::getInstance().sendString(message, worker, TREE_TAG);
-            stopped_workers += 1;
+            cout << "$$$$ Message received from process # " << worker << endl;
+            if(!stopped_processes_vec[worker]){
+                cout << "$$$$ Process " << worker << " did not getting stop message" << endl;
+            }
         }
+
+        for(int w = 1; w <= MPIHelper::getInstance().getNumProcesses() - 1; w++){
+            if(!stopped_processes_vec[w]){
+                string stop_message = "1 ";
+                MPIHelper::getInstance().sendString(stop_message, w, TREE_TAG);
+                stopped_workers += 1;
+                stopped_processes_vec[w] = true;                
+                cout << "$$$$ Sent STOP to process # " << w << endl;
+            }
+        }     
+    } else {
+        while(MPIHelper::getInstance().gotMessage()) {
+            string message;
+            int worker = MPIHelper::getInstance().recvString(message);
+            cout << "$$$$$FOUND leftover in" << worker << endl;
+        }        
     }
+    cout << "$$$$$END cleaning" << endl;
 
     if (isAllowedToPrint) cout << "CPU time used for tree search (MPI): " << getCPUTime() - checkpointTime << endl;
     MPI_Barrier(MPI_COMM_WORLD);
@@ -4697,10 +4734,13 @@ void IQTree::reinsertIdenticalSeqs(Alignment *orig_aln, StrVector &removed_seqs,
 
 // should returns if the doTreeSearch should stop
 bool IQTree::syncTrees(double cur_correlation, vector<int> logl_to_send) {
+    // cout << "Syncing tree on ";
     int nProcess = MPIHelper::getInstance().getNumProcesses();
     int processId = MPIHelper::getInstance().getProcessID();
 
     if (MPIHelper::getInstance().isMaster()) {
+        // cout << "master " << endl;
+        int shouldStop = false;
         while(MPIHelper::getInstance().gotMessage()) {
             string message;
             int worker = MPIHelper::getInstance().recvString(message);
@@ -4725,37 +4765,54 @@ bool IQTree::syncTrees(double cur_correlation, vector<int> logl_to_send) {
             candidateTrees.updateSyncTrees(message.substr(pter, message.size() - pter));
 
             // send sync trees back
-            int shouldStop = stop_rule.meetStopCondition(curIt, cur_correlation);
+            shouldStop = stop_rule.meetStopCondition(curIt, cur_correlation);
 
-            message = to_string(shouldStop) + ' ' + to_string((int)-logl_cutoff) + ' ' + candidateTrees.getSyncTrees();
+            message = (shouldStop ? "1 " : "0 ") +  to_string((int)-logl_cutoff) + " " + candidateTrees.getSyncTrees();
+
+            // message = to_string(shouldStop) + ' ' + to_string((int)-logl_cutoff) + ' ' + candidateTrees.getSyncTrees();
             if (!shouldStop) {
                 MPIHelper::getInstance().sendString(message, worker, TREE_TAG);
             } else {
-                stopped_workers = 1;
                 MPIHelper::getInstance().sendString(message, worker, TREE_TAG);
+                stopped_workers += 1;                
+                stopped_processes_vec[worker] = true;
                 return true;
             }
-            return shouldStop;
         }
+        return shouldStop; // Diep: Messages in the inbox should be processed until shouldStop == true
     } else {
-        if (gotReplied && rand() % nProcess == processId) {
-            string message;
-            message += to_string(logl_to_send.size()) + ' ';
-            for(int x: logl_to_send) message += to_string(-x) + ' ';
-            message += to_string(curIt) + ' ' + candidateTrees.getSyncTrees();
-            MPIHelper::getInstance().sendString(message, PROC_MASTER, TREE_TAG);
-            gotReplied = false;
-        }
-        if (MPIHelper::getInstance().gotMessage()) {
-            int pter = 0;
-            string message;
-            int master = MPIHelper::getInstance().recvString(message);
-            int shouldStop = getNumber(message, pter);
+        // cout << "worker#" << MPIHelper::getInstance().getProcessID();
+        bool gotNewMessage = MPIHelper::getInstance().gotMessage();
+        int master;
+        int shouldStop = false;
+        int pter = 0;
+        string message;
+
+        if (gotNewMessage) {    
+            pter = 0;
+            master = MPIHelper::getInstance().recvString(message);
+            shouldStop = getNumber(message, pter);
             if (shouldStop == 1) return true;
+        }
+
+        // Diep: I'm changing the logic here. The worker sends if and only if not receiving stop signal
+        if (gotReplied && rand() % nProcess == processId) {
+            // cout << " sending ..." << endl;
+            string wmessage;
+            wmessage += to_string(logl_to_send.size()) + ' ';
+            for(int x: logl_to_send) wmessage += to_string(-x) + ' ';
+            wmessage += to_string(curIt) + ' ' + candidateTrees.getSyncTrees();
+            MPIHelper::getInstance().sendString(wmessage, PROC_MASTER, TREE_TAG);
+            gotReplied = false;
+            // cout << " .... done";
+        }
+
+        if (gotNewMessage) { // Diep continue with processing received msg
             logl_cutoff = -getNumber(message, pter);
             candidateTrees.updateSyncTrees(message.substr(pter, message.size() - pter));
             gotReplied = true;
         }
+        // cout << endl;
         return false;
     }
 }
