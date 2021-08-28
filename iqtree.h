@@ -951,6 +951,7 @@ protected:
     void updateBootTree(int bootId, double score, string tree_str);
     vector<tuple<int, int, string>> scatterBootstrapTrees();
     int stopped_workers;
+    vector<bool> stopped_processes_vec;
     vector<tuple<int, int, string>> convertStringToBootTrees(string message);
     int getNumber(string &message, int &pter);
     string getTree(string &message, int &pter);

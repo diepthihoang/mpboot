@@ -2758,6 +2758,7 @@ void optimizeAlignment(IQTree * & tree, Params & params){
 	}
 
 	tree->doSegmenting();
+    MPI_Barrier(MPI_COMM_WORLD);
 
 
 //	if(checkDuplicatePattern(tree))
