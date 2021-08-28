@@ -2176,11 +2176,11 @@ void summarizeFooter(ostream &out, Params &params);
 #define LOGL_CUTOFF_TAG 5 // send logl_cutoff for ultrafast bootstrap
 #define isAllowedToPrint MPIHelper::getInstance().isMaster()
 
+
 using namespace std;
 
 class MPIHelper {
 public:
-	MPI_Request req[200];
     /**
     *  Singleton method: get one and only one getInstance of the class
     */
@@ -2238,6 +2238,7 @@ public:
     */
 
     void sendString(string &str, int dest, int tag);
+    void asyncSendString(string &str, int dest, int tag, MPI_Request *req);
 
     /** wrapper for MPI_Recv a string
         @param[out] str string received

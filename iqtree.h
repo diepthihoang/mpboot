@@ -957,6 +957,10 @@ protected:
     string convertBootTreeToString(vector<tuple<int, int, string>> bTree);
 	double checkpointTime;
 
+    vector<MPI_Request> reqs;
+    vector<int> sentTo;
+
+    MPI_Status status;
 };
 
 void estimateNNICutoff(Params &params);

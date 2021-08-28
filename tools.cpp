@@ -3558,6 +3558,11 @@ void MPIHelper::sendString(string &str, int dest, int tag) {
     MPI_Send(buf, str.length()+1, MPI_CHAR, dest, tag, MPI_COMM_WORLD);
 }
 
+void MPIHelper::asyncSendString(string &str, int dest, int tag, MPI_Request *req) {
+	char *buf = (char*)str.c_str();
+	MPI_Isend(buf, str.length()+1, MPI_CHAR, dest, tag, MPI_COMM_WORLD, req);
+}
+
 int MPIHelper::recvString(string &str, int src, int tag) {
     MPI_Status status;
     MPI_Probe(src, tag, MPI_COMM_WORLD, &status);

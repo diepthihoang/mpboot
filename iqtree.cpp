@@ -4701,10 +4701,10 @@ bool IQTree::syncTrees(double cur_correlation, vector<int> logl_to_send) {
     int processId = MPIHelper::getInstance().getProcessID();
 
     if (MPIHelper::getInstance().isMaster()) {
-        while(MPIHelper::getInstance().gotMessage()) {
+        if(MPIHelper::getInstance().gotMessage()) {
             string message;
             int worker = MPIHelper::getInstance().recvString(message);
-
+            // if (sentTo[worker]) MPI_Wait(&reqs[worker], &status);
             int pter = 0;
             int logl_received = getNumber(message, pter);
             for(int i = 0; i < logl_received; ++i) {
@@ -4729,7 +4729,7 @@ bool IQTree::syncTrees(double cur_correlation, vector<int> logl_to_send) {
 
             message = to_string(shouldStop) + ' ' + to_string((int)-logl_cutoff) + ' ' + candidateTrees.getSyncTrees();
             if (!shouldStop) {
-                MPIHelper::getInstance().sendString(message, worker, TREE_TAG);
+                MPIHelper::getInstance().asyncSendString(message, worker, TREE_TAG, &reqs.back());
             } else {
                 stopped_workers = 1;
                 MPIHelper::getInstance().sendString(message, worker, TREE_TAG);
@@ -4743,7 +4743,7 @@ bool IQTree::syncTrees(double cur_correlation, vector<int> logl_to_send) {
             message += to_string(logl_to_send.size()) + ' ';
             for(int x: logl_to_send) message += to_string(-x) + ' ';
             message += to_string(curIt) + ' ' + candidateTrees.getSyncTrees();
-            MPIHelper::getInstance().sendString(message, PROC_MASTER, TREE_TAG);
+            MPIHelper::getInstance().asyncSendString(message, PROC_MASTER, TREE_TAG, &reqs.back());
             gotReplied = false;
         }
         if (MPIHelper::getInstance().gotMessage()) {
