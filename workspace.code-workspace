@@ -4,8 +4,7 @@
             "ostream": "cpp",
             "array": "cpp",
             "tuple": "cpp",
-            "utility": "cpp",
-            "fstream": "cpp"
+            "utility": "cpp"
         }
     },
     "folders": [

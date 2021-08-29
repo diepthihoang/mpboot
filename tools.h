@@ -2201,8 +2201,6 @@ public:
         return numProcesses;
     }
 
-    void wait(MPI_Request *req);
-
     void setNumProcesses(int numProcesses) {
         MPIHelper::numProcesses = numProcesses;
     }
