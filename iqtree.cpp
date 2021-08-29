@@ -1603,6 +1603,8 @@ double IQTree::doTreeSearch() {
     int world_rank = MPIHelper::getInstance().getProcessID();
     int world_size = MPIHelper::getInstance().getNumProcesses();
 
+    reqs.resize(world_size);
+
     if (world_rank == PROC_MASTER) {
         workersProgress.resize(world_size, 0);
         string message, topo;
@@ -2061,9 +2063,11 @@ double IQTree::doTreeSearch() {
             vector<int> logl_to_send;
             if (MPIHelper::getInstance().isWorker() && params->cutoff_percent <= 100 && curIt >= 2) {
                 // cout << "Sending " << (int)treels_logl.size() - saved_treels_logl_size << " from worker: " << world_rank << " " << (int)treels_logl.size() <<endl;
+                assert(treels_logl.size() >= saved_treels_logl_size);
                 logl_to_send.resize(treels_logl.size() - saved_treels_logl_size);
                 for(int i = 0; i < logl_to_send.size(); ++i) {
                     logl_to_send[i] = treels_logl[treels_logl.size() - saved_treels_logl_size + i];
+                    assert(logl_to_send[i] <= 0);
                 }
             }
             if(syncTrees(cur_correlation, logl_to_send)) {
@@ -4734,6 +4738,18 @@ void IQTree::reinsertIdenticalSeqs(Alignment *orig_aln, StrVector &removed_seqs,
 
 // should returns if the doTreeSearch should stop
 bool IQTree::syncTrees(double cur_correlation, vector<int> logl_to_send) {
+    auto to_string = [&](int number) {
+        assert(number >= 0);
+        if (number == 0) return string("0");
+        string res = "";
+        while (number > 0) {
+            res += char(number % 10 + '0');
+            number /= 10;
+        }
+        reverse(res.begin(), res.end());
+        return res;
+    };
+
     // cout << "Syncing tree on ";
     int nProcess = MPIHelper::getInstance().getNumProcesses();
     int processId = MPIHelper::getInstance().getProcessID();
@@ -4741,9 +4757,13 @@ bool IQTree::syncTrees(double cur_correlation, vector<int> logl_to_send) {
     if (MPIHelper::getInstance().isMaster()) {
         // cout << "master " << endl;
         int shouldStop = false;
-        while(MPIHelper::getInstance().gotMessage()) {
+        if(MPIHelper::getInstance().gotMessage()) {
             string message;
+
+            cout << "=============================RECEIVE=================================" << endl;
             int worker = MPIHelper::getInstance().recvString(message);
+
+            cout << worker << " " << message << endl;
             // if (sentTo[worker]) MPI_Wait(&reqs[worker], &status);
             int pter = 0;
             int logl_received = getNumber(message, pter);
@@ -4771,9 +4791,9 @@ bool IQTree::syncTrees(double cur_correlation, vector<int> logl_to_send) {
 
             // message = to_string(shouldStop) + ' ' + to_string((int)-logl_cutoff) + ' ' + candidateTrees.getSyncTrees();
             if (!shouldStop) {
-                MPIHelper::getInstance().sendString(message, worker, TREE_TAG, &reqs.back());
+                MPIHelper::getInstance().asyncSendString(message, worker, TREE_TAG, &reqs[worker]);
             } else {
-                MPIHelper::getInstance().sendString(message, worker, TREE_TAG);
+                MPIHelper::getInstance().asyncSendString(message, worker, TREE_TAG, &reqs[worker]);
                 stopped_workers += 1;                
                 stopped_processes_vec[worker] = true;
                 return true;
@@ -4788,23 +4808,29 @@ bool IQTree::syncTrees(double cur_correlation, vector<int> logl_to_send) {
         int pter = 0;
         string message;
 
+
         if (gotNewMessage) {    
+            // MPIHelper::getInstance().wait(&reqs[PROC_MASTER]);
             pter = 0;
             master = MPIHelper::getInstance().recvString(message);
             shouldStop = getNumber(message, pter);
             if (shouldStop == 1) return true;
         }
 
+
+
         // Diep: I'm changing the logic here. The worker sends if and only if not receiving stop signal
         if (gotReplied && rand() % nProcess == processId) {
-            // cout << " sending ..." << endl;
+            cout << "Sending..." << " " << logl_to_send.size() << endl;
             string wmessage;
-            wmessage += to_string(logl_to_send.size()) + ' ';
-            for(int x: logl_to_send) wmessage += to_string(-x) + ' ';
-            wmessage += to_string(curIt) + ' ' + candidateTrees.getSyncTrees();
-            MPIHelper::getInstance().sendString(wmessage, PROC_MASTER, TREE_TAG);
+            wmessage += to_string(logl_to_send.size()) + " ";
+            for(int x: logl_to_send) wmessage += to_string(-x) + " ";
+            wmessage += to_string(curIt) + " " + candidateTrees.getSyncTrees();
+
+            cout << wmessage << endl;
+
+            MPIHelper::getInstance().asyncSendString(wmessage, PROC_MASTER, TREE_TAG, &reqs[PROC_MASTER]);
             gotReplied = false;
-            // cout << " .... done";
         }
 
         if (gotNewMessage) { // Diep continue with processing received msg
