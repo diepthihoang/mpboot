@@ -3564,8 +3564,10 @@ void MPIHelper::sendString(string &str, int dest, int tag) {
 }
 
 void MPIHelper::asyncSendString(string &str, int dest, int tag, MPI_Request *req) {
-	char *buf = (char*)str.c_str();
-	MPI_Isend(buf, str.length()+1, MPI_CHAR, dest, tag, MPI_COMM_WORLD, req);
+	if (async_buf != nullptr) delete [] async_buf;
+	async_buf = new char[str.length()+1];
+	strcpy(async_buf, str.c_str());
+	MPI_Isend(async_buf, str.length()+1, MPI_CHAR, dest, tag, MPI_COMM_WORLD, req);
 }
 
 int MPIHelper::recvString(string &str, int src, int tag) {
@@ -3576,12 +3578,6 @@ int MPIHelper::recvString(string &str, int src, int tag) {
     // receive the message
     char *recvBuffer = new char[msgCount];
     MPI_Recv(recvBuffer, msgCount, MPI_CHAR, status.MPI_SOURCE, status.MPI_TAG, MPI_COMM_WORLD, &status);
-
-	cout << "WTF" << endl;
-	for(int i = 0; i < msgCount; ++i) {
-		cout << recvBuffer[i];
-	}
-	cout << endl;
 
     str = recvBuffer;
     delete [] recvBuffer;
