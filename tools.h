@@ -2314,6 +2314,8 @@ public:
     }
 
 private:
+	char* async_buf;
+
     int numTreeSent;
 
     int numTreeReceived;

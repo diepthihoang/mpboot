@@ -4797,12 +4797,11 @@ bool IQTree::syncTrees(double cur_correlation, vector<int> logl_to_send) {
 
         // Diep: I'm changing the logic here. The worker sends if and only if not receiving stop signal
         if (gotReplied && rand() % nProcess == processId) {
-            // cout << " sending ..." << endl;
             string wmessage;
-            wmessage += to_string(logl_to_send.size()) + ' ';
-            for(int x: logl_to_send) wmessage += to_string(-x) + ' ';
-            wmessage += to_string(curIt) + ' ' + candidateTrees.getSyncTrees();
-            MPIHelper::getInstance().sendString(wmessage, PROC_MASTER, TREE_TAG);
+            wmessage += to_string(logl_to_send.size()) + " ";
+            for(int x: logl_to_send) wmessage += to_string(-x) + " ";
+            wmessage += to_string(curIt) + " " + candidateTrees.getSyncTrees();
+            MPIHelper::getInstance().asyncSendString(wmessage, PROC_MASTER, TREE_TAG, &reqs[PROC_MASTER]);
             gotReplied = false;
             // cout << " .... done";
         }
