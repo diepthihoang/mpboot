@@ -2337,6 +2337,7 @@ class MPIOut {
 	public:
 		template<class TArg>
 		MPIOut &operator<<(TArg arg) {
+			if (isAllowedToPrint) cout << arg;
 			return (*this);
 		}
 
