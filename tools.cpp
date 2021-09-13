@@ -3317,14 +3317,14 @@ int init_random(int seed) {
     if (seed < 0)
         seed = make_sprng_seed();
 #ifndef PARALLEL
-    if (isAllowedToPrint) cout << "(Using SPRNG - Scalable Parallel Random Number Generator)" << endl;
+    mpiout << "(Using SPRNG - Scalable Parallel Random Number Generator)" << endl;
     randstream = init_sprng(0, 1, seed, SPRNG_DEFAULT); /*init stream*/
     if (verbose_mode >= VB_MED) {
         print_sprng(randstream);
     }
 #else /* PARALLEL */
     if (PP_IamMaster) {
-        if (isAllowedToPrint) cout << "(Using SPRNG - Scalable Parallel Random Number Generator)" << endl;
+        mpiout << "(Using SPRNG - Scalable Parallel Random Number Generator)" << endl;
     }
     /* MPI_Bcast(&seed, 1, MPI_UNSIGNED, PP_MyMaster, MPI_COMM_WORLD); */
     randstream = init_sprng(PP_Myid, PP_NumProcs, seed, SPRNG_DEFAULT); /*initialize stream*/

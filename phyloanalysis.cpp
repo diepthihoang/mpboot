@@ -1147,7 +1147,7 @@ void computeInitialTree(Params &params, IQTree &iqtree, string &dist_file, int &
 		break;
 	case STT_PLL_PARSIMONY:
 		cout << endl;
-		if (isAllowedToPrint) cout << "Create initial parsimony tree by phylogenetic likelihood library (PLL)... ";
+		mpiout << "Create initial parsimony tree by phylogenetic likelihood library (PLL)... ";
 		// generate a parsimony tree for model optimization
 		iqtree.pllInst->randomNumberSeed = params.ran_seed;
 
@@ -1169,7 +1169,7 @@ void computeInitialTree(Params &params, IQTree &iqtree, string &dist_file, int &
         }
 		iqtree.fixNegativeBranch(true);
 
-		cout << getCPUTime() - start << " seconds" << endl;
+		mpiout << getCPUTime() - start << " seconds" << endl;
 		numInitTrees = params.numParsTrees;
         if (numInitTrees > params.min_iterations && params.stop_condition == SC_FIXED_ITERATION)
             numInitTrees = params.min_iterations;
@@ -1259,7 +1259,7 @@ int initCandidateTreeSet(Params &params, IQTree &iqtree, int numInitTrees) {
 
 	MPI_Barrier(MPI_COMM_WORLD);
 
-	if (isAllowedToPrint) cout << "Generating " << numInitTrees - 1 << " parsimony trees... ";
+	mpiout << "Generating " << numInitTrees - 1 << " parsimony trees... ";
     cout.flush();
     double startTime = getCPUTime();
 
@@ -1587,7 +1587,7 @@ void printMiscInfo(Params &params, IQTree &iqtree, double *pattern_lh) {
 		cout << endl << "Computing site-specific rates by "
 				<< rate_mvh->full_name << "..." << endl;
 		rate_mvh->runIterativeProc(params, iqtree);
-		if (isAllowedToPrint) cout << endl << "BEST SCORE FOUND : " << (params.maximum_parsimony ? -iqtree.getBestScore() : iqtree.getBestScore()) << endl;
+		mpiout << endl << "BEST SCORE FOUND : " << (params.maximum_parsimony ? -iqtree.getBestScore() : iqtree.getBestScore()) << endl;
 		string mhrate_file = params.out_prefix;
 		mhrate_file += ".mhrate";
 		iqtree.getRate()->writeSiteRates(mhrate_file.c_str());
@@ -1741,7 +1741,7 @@ void runTreeReconstruction(Params &params, string &original_model, IQTree &iqtre
     // Update best tree
     iqtree.candidateTrees.clear(); // Diep added
     iqtree.setBestTree(initTree, iqtree.curScore);
-    if (isAllowedToPrint) cout << "Current best tree score: " << (params.maximum_parsimony ? -iqtree.bestScore : iqtree.bestScore) << endl << endl;
+    mpiout << "Current best tree score: " << (params.maximum_parsimony ? -iqtree.bestScore : iqtree.bestScore) << endl << endl;
     iqtree.candidateTrees.update(initTree, iqtree.curScore);
 
     // Compute maximum likelihood distance
@@ -1789,7 +1789,7 @@ void runTreeReconstruction(Params &params, string &original_model, IQTree &iqtre
 
         }
 
-        if(isAllowedToPrint) cout << "Current best score: " << (params.maximum_parsimony ? -iqtree.bestScore : iqtree.bestScore) << " / CPU time: "
+        mpiout << "Current best score: " << (params.maximum_parsimony ? -iqtree.bestScore : iqtree.bestScore) << " / CPU time: "
                 << getCPUTime() - initTime << endl << endl;
 	}
 
@@ -1867,7 +1867,7 @@ void runTreeReconstruction(Params &params, string &original_model, IQTree &iqtre
 	if (iqtree.isSuperTree())
 		((PhyloSuperTree*) &iqtree)->computeBranchLengths();
 
-	if (isAllowedToPrint) cout << "BEST SCORE FOUND : " << (params.maximum_parsimony ? -iqtree.getBestScore() : iqtree.getBestScore()) << endl;
+	mpiout << "BEST SCORE FOUND : " << (params.maximum_parsimony ? -iqtree.getBestScore() : iqtree.getBestScore()) << endl;
 
 	if (params.write_local_optimal_trees) {
 		vector<string> trees = iqtree.candidateTrees.getHighestScoringTrees();
@@ -2741,7 +2741,7 @@ void optimizeAlignment(IQTree * & tree, Params & params){
 	}
 
 	if(params.sort_alignment){
-		if (isAllowedToPrint) cout << "Reordering patterns in alignment by decreasing order of pattern parsimony... ";
+		mpiout << "Reordering patterns in alignment by decreasing order of pattern parsimony... ";
         start = getCPUTime();
 		// reordering patterns
 		PatternComp pcomp;
@@ -2752,7 +2752,7 @@ void optimizeAlignment(IQTree * & tree, Params & params){
 		tree->clearAllPartialLH();
 		int pars_after = tree->computeParsimony();
 		if(pars_after != pars_before) outError("Reordering alignment has bug.");
-		if (isAllowedToPrint) cout << getCPUTime() - start << " seconds" << endl;
+		mpiout << getCPUTime() - start << " seconds" << endl;
 	}else{
 		tree->aln->updateSitePatternAfterOptimized();
 	}

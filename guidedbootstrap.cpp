@@ -936,7 +936,7 @@ void runGuidedBootstrapReal(Params &params, Alignment *alignment, IQTree &tree) 
 
     double end_time = getCPUTime();
 
-    cout << "Time for guided bootstrap: " << (end_time-begin_time) << " seconds" << endl << endl;
+    mpiout << "Time for guided bootstrap: " << (end_time-begin_time) << " seconds" << endl << endl;
     //delete [] rfdist;
 }
 

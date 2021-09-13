@@ -2333,5 +2333,20 @@ private:
     int numNNISearch;
 };
 
+class MPIOut {
+	public:
+		template<class TArg>
+		MPIOut &operator<<(TArg arg) {
+			return (*this);
+		}
+
+		static MPIOut &getInstance() {
+			static MPIOut instance;
+			return instance;
+		}
+};
+
+#define endl '\n'
+#define mpiout MPIOut::getInstance()
 
 #endif

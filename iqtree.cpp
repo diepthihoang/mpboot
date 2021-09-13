@@ -211,7 +211,7 @@ void IQTree::setParams(Params &params) {
     size_t i;
 
     if (params.online_bootstrap && params.gbo_replicates > 0) {
-        if (isAllowedToPrint) cout << "Generating " << params.gbo_replicates << " samples for bootstrap approximation..." << endl;
+        mpiout << "Generating " << params.gbo_replicates << " samples for bootstrap approximation..." << endl;
         size_t nunit; // either number of patterns or number of sites
         // allocate memory for boot_samples
         if(params.maximum_parsimony)
@@ -1515,7 +1515,7 @@ string IQTree::optimizeModelParameters(bool printInfo) {
 		pllOptimizeModelParameters(pllInst, pllPartitions, params->modeps);
 		curScore = pllInst->likelihood;
 		double etime = getCPUTime();
-		cout << etime - stime << " seconds (logl: " << curScore << ")" << endl;
+		mpiout << etime - stime << " seconds (logl: " << curScore << ")" << endl;
 		pllTreeToNewick(pllInst->tree_string, pllInst, pllPartitions,
 				pllInst->start->back, PLL_TRUE,
 				PLL_TRUE, PLL_FALSE, PLL_FALSE, PLL_FALSE, PLL_SUMMARIZE_LH,
@@ -1604,6 +1604,7 @@ double IQTree::doTreeSearch() {
     int world_size = MPIHelper::getInstance().getNumProcesses();
 
     if (world_rank == PROC_MASTER) {
+        reqs.resize(world_size);
         workersProgress.resize(world_size, 0);
         string message, topo;
         for(int i = 0; i < world_size - 1; ++i) {
@@ -1613,6 +1614,7 @@ double IQTree::doTreeSearch() {
         }
         updateBestTreeFromCandidateSet(topo);
     } else {
+        reqs.resize(1);
         gotReplied = true;
         string message = candidateTrees.getSyncTrees(5);
         MPIHelper::getInstance().sendString(message, PROC_MASTER, TREE_TAG);
@@ -2086,7 +2088,7 @@ double IQTree::doTreeSearch() {
     //     }
     // }
 
-    cout << "$$$$$START cleaning" << endl;
+    mpiout << "$$$$$START cleaning" << endl;
     if (MPIHelper::getInstance().isMaster()) {
         cout << "stopped_workers = " << stopped_workers << endl;
 
@@ -2113,12 +2115,12 @@ double IQTree::doTreeSearch() {
         while(MPIHelper::getInstance().gotMessage()) {
             string message;
             int worker = MPIHelper::getInstance().recvString(message);
-            cout << "$$$$$FOUND leftover in" << worker << endl;
+            // cout << "$$$$$FOUND leftover in" << worker << endl;
         }        
     }
-    cout << "$$$$$END cleaning" << endl;
+    mpiout << "$$$$$END cleaning" << endl;
 
-    if (isAllowedToPrint) cout << "CPU time used for tree search (MPI): " << getCPUTime() - checkpointTime << endl;
+    mpiout << "CPU time used for tree search (MPI): " << getCPUTime() - checkpointTime << endl;
     MPI_Barrier(MPI_COMM_WORLD);
 
 
@@ -3053,7 +3055,7 @@ void IQTree::optimizeBootTrees(){
         MPIHelper::getInstance().sendString(message, PROC_MASTER, BOOT_TREE_TAG);
     }
     MPI_Barrier(MPI_COMM_WORLD);
-    if (isAllowedToPrint) cout << "Wall clock time used for boot-optimizing: " << getCPUTime() - checkpointTime << endl;
+    mpiout << "Wall clock time used for boot-optimizing: " << getCPUTime() - checkpointTime << endl;
 
 
 //	cout << "# of multifurcating = " << nmultifurcate << endl;
@@ -3568,7 +3570,7 @@ void IQTree::saveCurrentTree(double cur_logl) {
 
 			if(params->do_first_rell) pllComputeRellRemainBound(nptn / 2);
 			else pllComputeRellRemainBound(nptn);
-			if (isAllowedToPrint) cout << getCPUTime() - starts << " seconds." << endl;
+			mpiout << getCPUTime() - starts << " seconds." << endl;
 
 		}
 	}else{
@@ -4771,9 +4773,9 @@ bool IQTree::syncTrees(double cur_correlation, vector<int> logl_to_send) {
 
             // message = to_string(shouldStop) + ' ' + to_string((int)-logl_cutoff) + ' ' + candidateTrees.getSyncTrees();
             if (!shouldStop) {
-                MPIHelper::getInstance().sendString(message, worker, TREE_TAG, &reqs.back());
+                MPIHelper::getInstance().asyncSendString(message, worker, TREE_TAG, &reqs[worker]);
             } else {
-                MPIHelper::getInstance().sendString(message, worker, TREE_TAG);
+                MPIHelper::getInstance().asyncSendString(message, worker, TREE_TAG, &reqs[worker]);
                 stopped_workers += 1;                
                 stopped_processes_vec[worker] = true;
                 return true;
