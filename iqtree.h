@@ -960,8 +960,17 @@ protected:
 
     vector<MPI_Request> reqs;
     vector<int> sentTo;
-
     MPI_Status status;
+
+    void MPITreeSearch_Initialize();
+    void recalculateLoglValue();
+    bool afterSearchIteration(double cur_correlation, string &best_tree_topo);
+
+    int saved_treels_logl_size;
+    void setLoglCheckpoint();
+
+    void afterTreeSearch();
+    void syncBootstrapArray(Params &params, int nunit);
 };
 
 void estimateNNICutoff(Params &params);

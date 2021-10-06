@@ -314,36 +314,9 @@ void IQTree::setParams(Params &params) {
                     }
                 }
             }
-            int p = 0;
-            unsigned short *buf = new unsigned short [params.gbo_replicates * nunit];
-            for(int i = 0; i < params.gbo_replicates; ++i) {
-                for(int j = 0; j < nunit; ++j) {
-                    buf[p++] = boot_samples_pars[i][j];
-                }
-            }
-            // MPI_Bcast(buf, p, MPI_UNSIGNED_SHORT, PROC_MASTER, MPI_COMM_WORLD);
+        } 
 
-            for(int i = 0; i < MPIHelper::getInstance().getNumProcesses(); ++i) if (i != PROC_MASTER) {
-                MPI_Send(buf, p, MPI_UNSIGNED_SHORT, i, BOOT_TAG, MPI_COMM_WORLD);
-            }
-
-            delete [] buf;
-        } else {
-            MPI_Status status;
-            MPI_Probe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
-            int msgCount;
-            MPI_Get_count(&status, MPI_UNSIGNED_SHORT, &msgCount);
-            unsigned short* recvBuffer = new unsigned short [msgCount];
-            MPI_Recv(recvBuffer, msgCount, MPI_UNSIGNED_SHORT, status.MPI_SOURCE, status.MPI_TAG, MPI_COMM_WORLD, &status);
-            for(int i = 0, p = 0; i < params.gbo_replicates; ++i) {
-                for(int j = 0; j < nunit; ++j) {
-                    boot_samples_pars[i][j] = recvBuffer[p++];
-                }
-            }
-            delete [] recvBuffer;
-        }
-
-        MPI_Barrier(MPI_COMM_WORLD);
+        syncBootstrapArray(params, nunit);
 
         verbose_mode = saved_mode;
         if (params.print_bootaln) {
@@ -375,6 +348,40 @@ void IQTree::setParams(Params &params) {
         if (root_state < 0 || root_state >= aln->num_states)
             outError("Invalid root state");
     }
+}
+
+void IQTree::syncBootstrapArray(Params &params, int nunit) {
+    if (MPIHelper::getInstance().isMaster()){
+        int p = 0;
+        unsigned short *buf = new unsigned short [params.gbo_replicates * nunit];
+        for(int i = 0; i < params.gbo_replicates; ++i) {
+            for(int j = 0; j < nunit; ++j) {
+                buf[p++] = boot_samples_pars[i][j];
+            }
+        }
+        // MPI_Bcast(buf, p, MPI_UNSIGNED_SHORT, PROC_MASTER, MPI_COMM_WORLD);
+
+        for(int i = 0; i < MPIHelper::getInstance().getNumProcesses(); ++i) if (i != PROC_MASTER) {
+            MPI_Send(buf, p, MPI_UNSIGNED_SHORT, i, BOOT_TAG, MPI_COMM_WORLD);
+        }
+
+        delete [] buf;
+    } else {
+        MPI_Status status;
+        MPI_Probe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+        int msgCount;
+        MPI_Get_count(&status, MPI_UNSIGNED_SHORT, &msgCount);
+        unsigned short* recvBuffer = new unsigned short [msgCount];
+        MPI_Recv(recvBuffer, msgCount, MPI_UNSIGNED_SHORT, status.MPI_SOURCE, status.MPI_TAG, MPI_COMM_WORLD, &status);
+        for(int i = 0, p = 0; i < params.gbo_replicates; ++i) {
+            for(int j = 0; j < nunit; ++j) {
+                boot_samples_pars[i][j] = recvBuffer[p++];
+            }
+        }
+        delete [] recvBuffer;
+    }
+
+    MPI_Barrier(MPI_COMM_WORLD);
 }
 
 void myPartitionsDestroy(partitionList *pl) {
@@ -1599,7 +1606,7 @@ string IQTree::optimizeBranches(int maxTraversal) {
     return tree;
 }
 
-double IQTree::doTreeSearch() {
+void IQTree::MPITreeSearch_Initialize() {
     int world_rank = MPIHelper::getInstance().getProcessID();
     int world_size = MPIHelper::getInstance().getNumProcesses();
 
@@ -1619,7 +1626,86 @@ double IQTree::doTreeSearch() {
         string message = candidateTrees.getSyncTrees(5);
         MPIHelper::getInstance().sendString(message, PROC_MASTER, TREE_TAG);
     }
+    stopped_workers = 0;
+    stopped_processes_vec.resize(MPIHelper::getInstance().getNumProcesses(), 0);
+    MPI_Barrier(MPI_COMM_WORLD);
+}
 
+void IQTree::recalculateLoglValue() {
+    DoubleVector logl = treels_logl;
+    nth_element(logl.begin(), logl.begin() + logl.size() * params->cutoff_percent / 100 , logl.end(), std::greater<double>());
+    if(params->minimize_iter1_candidates) {
+        if(curIt == 2 || workersProgress[0] == 2) {
+            int iter1_num_best = min(int(aln->getNSeq()), int(logl.size() * params->cutoff_percent / 100));
+            DoubleVector tmplogl (logl.begin(), logl.begin() + iter1_num_best);
+            logl = tmplogl;
+            treels_logl = tmplogl;
+        }
+    }
+    logl_cutoff = logl[logl.size() * params->cutoff_percent / 100];
+}
+
+void IQTree::setLoglCheckpoint() {
+    saved_treels_logl_size = treels_logl.size();
+}
+
+bool IQTree::afterSearchIteration(double cur_correlation, string &best_tree_topo) {
+    if (MPIHelper::getInstance().isMaster()) workersProgress[0]++;
+    if (MPIHelper::getInstance().isWorker() || MPIHelper::getInstance().gotMessage()) {
+        vector<int> logl_to_send;
+        if (MPIHelper::getInstance().isWorker() && params->cutoff_percent <= 100 && curIt >= 2) {
+            logl_to_send.resize(treels_logl.size() - saved_treels_logl_size);
+            for(int i = 0; i < logl_to_send.size(); ++i) {
+                logl_to_send[i] = treels_logl[treels_logl.size() - saved_treels_logl_size + i];
+            }
+        }
+        if(syncTrees(cur_correlation, logl_to_send)) {
+            return true;
+        }
+        if (MPIHelper::getInstance().isWorker()) updateBestTreeFromCandidateSet(best_tree_topo);
+    }
+    return false;
+}
+
+void IQTree::afterTreeSearch() {
+    mpiout << "$$$$$START cleaning" << endl;
+    if (MPIHelper::getInstance().isMaster()) {
+        cout << "stopped_workers = " << stopped_workers << endl;
+
+
+        while(MPIHelper::getInstance().gotMessage()) {
+            string message;
+            int worker = MPIHelper::getInstance().recvString(message);
+            cout << "$$$$ Message received from process # " << worker << endl;
+            if(!stopped_processes_vec[worker]){
+                cout << "$$$$ Process " << worker << " did not getting stop message" << endl;
+            }
+        }
+
+        for(int w = 1; w <= MPIHelper::getInstance().getNumProcesses() - 1; w++){
+            if(!stopped_processes_vec[w]){
+                string stop_message = "1 ";
+                MPIHelper::getInstance().sendString(stop_message, w, TREE_TAG);
+                stopped_workers += 1;
+                stopped_processes_vec[w] = true;                
+                cout << "$$$$ Sent STOP to process # " << w << endl;
+            }
+        }     
+    } else {
+        while(MPIHelper::getInstance().gotMessage()) {
+            string message;
+            int worker = MPIHelper::getInstance().recvString(message);
+            // cout << "$$$$$FOUND leftover in" << worker << endl;
+        }        
+    }
+    mpiout << "$$$$$END cleaning" << endl;
+
+    mpiout << "CPU time used for tree search (MPI): " << getCPUTime() - checkpointTime << endl;
+    MPI_Barrier(MPI_COMM_WORLD);
+}
+
+double IQTree::doTreeSearch() {
+    MPITreeSearch_Initialize();
 //    double begin_real_time, cur_real_time;
 //    begin_real_time = getRealTime();
     string tree_file_name = params->out_prefix;
@@ -1666,9 +1752,6 @@ double IQTree::doTreeSearch() {
 	 * MAIN LOOP OF THE IQ-TREE ALGORITHM
 	 *====================================================*/
 
-    stopped_workers = 0;
-    stopped_processes_vec.resize(MPIHelper::getInstance().getNumProcesses(), 0);
-    MPI_Barrier(MPI_COMM_WORLD);
 
     checkpointTime = getCPUTime();
 
@@ -1709,22 +1792,12 @@ double IQTree::doTreeSearch() {
 				// new way of updating logl_cutoff: proposed by Vinh (i.e. top 10%)
 				// works for MP, possibly works for ML as well
 				if (params->avoid_duplicated_trees && treels_logl.size() > 1000) {
-					DoubleVector logl = treels_logl;
-					nth_element(logl.begin(), logl.begin() + logl.size() * params->cutoff_percent / 100 , logl.end(), std::greater<double>());
-					if(params->minimize_iter1_candidates) {
-						if(curIt == 2 || workersProgress[0] == 2) {
-							int iter1_num_best = min(int(aln->getNSeq()), int(logl.size() * params->cutoff_percent / 100));
-							DoubleVector tmplogl (logl.begin(), logl.begin() + iter1_num_best);
-							logl = tmplogl;
-							treels_logl = tmplogl;
-						}
-					}
-					logl_cutoff = logl[logl.size() * params->cutoff_percent / 100];
+					recalculateLoglValue();
 				}
 			}
 //			cout << "***TEST: logl_cutoff = " << logl_cutoff << endl;
 		}
-        int saved_treels_logl_size = treels_logl.size();
+        
         
 
         if (estimate_nni_cutoff && nni_info.size() >= 500) {
@@ -1906,7 +1979,7 @@ double IQTree::doTreeSearch() {
         double realtime_remaining = stop_rule.getRemainingTime(curIt, cur_correlation);
         cout.setf(ios::fixed, ios::floatfield);
 
-        if (world_rank == 0 && (curIt % 10 == 0 || verbose_mode >= VB_MED)) {
+        if (MPIHelper::getInstance().isMaster() && (curIt % 10 == 0 || verbose_mode >= VB_MED)) {
             if(on_ratchet_hclimb2){
                 cout << "RATCHET ";
             }
@@ -1981,7 +2054,7 @@ double IQTree::doTreeSearch() {
 		*/
 
 		// Diep: This is old code for updating best tree
-		if (curScore > bestScore && world_rank == 0) {
+		if (curScore > bestScore && MPIHelper::getInstance().isMaster()) {
              stringstream cur_tree_topo_ss;
              setRootNode(params->root);
              printTree(cur_tree_topo_ss, WT_TAXON_ID | WT_SORT_TAXA);
@@ -2058,71 +2131,12 @@ double IQTree::doTreeSearch() {
 	            }
 	        }
         } // end of bootstrap convergence test
-        if (world_rank == 0) workersProgress[0]++;
-        if (MPIHelper::getInstance().isWorker() || MPIHelper::getInstance().gotMessage()) {
-            vector<int> logl_to_send;
-            if (MPIHelper::getInstance().isWorker() && params->cutoff_percent <= 100 && curIt >= 2) {
-                // cout << "Sending " << (int)treels_logl.size() - saved_treels_logl_size << " from worker: " << world_rank << " " << (int)treels_logl.size() <<endl;
-                logl_to_send.resize(treels_logl.size() - saved_treels_logl_size);
-                for(int i = 0; i < logl_to_send.size(); ++i) {
-                    logl_to_send[i] = treels_logl[treels_logl.size() - saved_treels_logl_size + i];
-                }
-            }
-            if(syncTrees(cur_correlation, logl_to_send)) {
-                break;
-            }
-            if (world_rank == PROC_MASTER) updateBestTreeFromCandidateSet(best_tree_topo);
+        if (afterSearchIteration(cur_correlation, best_tree_topo)) {
+            break;
         }
     }
 
-    // The worker that makes 
-
-    // Redundent messages
-    // if (MPIHelper::getInstance().isMaster()) {
-    //     while(stopped_workers < MPIHelper::getInstance().getNumProcesses() - 1) {
-    //         string message;
-    //         int worker = MPIHelper::getInstance().recvString(message);
-    //         message = "1 ";
-    //         MPIHelper::getInstance().sendString(message, worker, TREE_TAG);
-    //         stopped_workers += 1;
-    //     }
-    // }
-
-    mpiout << "$$$$$START cleaning" << endl;
-    if (MPIHelper::getInstance().isMaster()) {
-        cout << "stopped_workers = " << stopped_workers << endl;
-
-
-        while(MPIHelper::getInstance().gotMessage()) {
-            string message;
-            int worker = MPIHelper::getInstance().recvString(message);
-            cout << "$$$$ Message received from process # " << worker << endl;
-            if(!stopped_processes_vec[worker]){
-                cout << "$$$$ Process " << worker << " did not getting stop message" << endl;
-            }
-        }
-
-        for(int w = 1; w <= MPIHelper::getInstance().getNumProcesses() - 1; w++){
-            if(!stopped_processes_vec[w]){
-                string stop_message = "1 ";
-                MPIHelper::getInstance().sendString(stop_message, w, TREE_TAG);
-                stopped_workers += 1;
-                stopped_processes_vec[w] = true;                
-                cout << "$$$$ Sent STOP to process # " << w << endl;
-            }
-        }     
-    } else {
-        while(MPIHelper::getInstance().gotMessage()) {
-            string message;
-            int worker = MPIHelper::getInstance().recvString(message);
-            // cout << "$$$$$FOUND leftover in" << worker << endl;
-        }        
-    }
-    mpiout << "$$$$$END cleaning" << endl;
-
-    mpiout << "CPU time used for tree search (MPI): " << getCPUTime() - checkpointTime << endl;
-    MPI_Barrier(MPI_COMM_WORLD);
-
+    afterTreeSearch();
 
 	// Diep: optimize bootstrap trees if -opt_btree is specified along with -bb -mpars
 	if(params->gbo_replicates && params->maximum_parsimony){
@@ -2138,9 +2152,8 @@ double IQTree::doTreeSearch() {
 
     // Diep: added the text to output to observe the # of candidate trees
     if(params->gbo_replicates && ((curIt - 1) % (params->step_iterations / 2) != 0)){
-    	if (MPIHelper::getInstance().isMaster()) cout << "NOTE: At the end, " << treels_logl.size() << " bootstrap candidate trees evaluated." << endl;
+    	mpiout << "NOTE: At the end, " << treels_logl.size() << " bootstrap candidate trees evaluated." << endl;
     }
-    MPI_Barrier(MPI_COMM_WORLD);
     readTreeString(bestTreeString);
 
     if (testNNI)
@@ -4752,6 +4765,7 @@ bool IQTree::syncTrees(double cur_correlation, vector<int> logl_to_send) {
             for(int i = 0; i < logl_received; ++i) {
                 treels_logl.push_back(-getNumber(message, pter));
             }
+            recalculateLoglValue();
 
 
             int progress = getNumber(message, pter);

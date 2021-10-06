@@ -1315,17 +1315,15 @@ int initCandidateTreeSet(Params &params, IQTree &iqtree, int numInitTrees) {
     }
 	MPI_Barrier(MPI_COMM_WORLD);
     double parsTime = getCPUTime() - startTime;
-    if (isAllowedToPrint){
-		cout << "(" << numDupPars << " duplicated parsimony trees)" << endl;
-    	cout << "Wall used for tree generating time: " << parsTime << endl;
-	}
+	mpiout << "(" << numDupPars << " duplicated parsimony trees)" << endl;
+	mpiout << "Wall used for tree generating time: " << parsTime << endl;
 
 	// do not do anything for parsimony because tree was already optimized by SPR
 	if (params.maximum_parsimony){
 		return -1;
 	}
 
-	cout << "Computing log-likelihood of the parsimony trees ... " << endl;
+	mpiout << "Computing log-likelihood of the parsimony trees ... " << endl;
 
 	startTime = getCPUTime();
     vector<string> unOptParTrees = iqtree.candidateTrees.getHighestScoringTrees(numInitTrees);

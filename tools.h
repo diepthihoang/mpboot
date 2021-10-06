@@ -169,6 +169,8 @@ private:
 
 /**
         vector of double number
+		should be using:
+			using DoubleVector vector<double>;
  */
 typedef vector<double> DoubleVector;
 
@@ -2340,7 +2342,6 @@ class MPIOut {
 			if (isAllowedToPrint) cout << arg;
 			return (*this);
 		}
-
 		static MPIOut &getInstance() {
 			static MPIOut instance;
 			return instance;
