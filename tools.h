@@ -2181,8 +2181,21 @@ void summarizeFooter(ostream &out, Params &params);
 
 using namespace std;
 
+
+
 class MPIHelper {
 public:
+	/**
+	 * Specify message types for MPI
+	 */
+	enum SyncMessage {
+		TREE_STRINGS,
+		LOGL_VECTOR_AND_ITERS,
+		LOGL_CUTOFF_AND_STOP_FLAG
+	};
+
+	static SyncMessage messageTypes;
+
     /**
     *  Singleton method: get one and only one getInstance of the class
     */
@@ -2231,6 +2244,7 @@ public:
 
     /** @return true if got any message from another process */
     bool gotMessage();
+	int getPendingMessageSource();
 
 
     /** wrapper for MPI_Send a string
@@ -2241,6 +2255,7 @@ public:
 
     void sendString(string &str, int dest, int tag);
     void asyncSendString(string &str, int dest, int tag, MPI_Request *req);
+	void asyncSendInts(vector<int> &vec, int dest, int tag, MPI_Request *req);
 
     /** wrapper for MPI_Recv a string
         @param[out] str string received
@@ -2249,6 +2264,7 @@ public:
         @return the source process that sent the message
     */
     int recvString(string &str, int src = MPI_ANY_SOURCE, int tag = MPI_ANY_TAG);
+	int recvInts(vector<int> &vec, int src, int tag);
 
     /** wrapper for MPI_Recv an entire Checkpoint object
         @param[out] ckp Checkpoint object received

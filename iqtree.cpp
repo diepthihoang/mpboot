@@ -1611,7 +1611,7 @@ void IQTree::MPITreeSearch_Initialize() {
     int world_size = MPIHelper::getInstance().getNumProcesses();
 
     if (world_rank == PROC_MASTER) {
-        reqs.resize(world_size);
+        reqs.resize(world_size, vector<MPI_Request>(2));
         workersProgress.resize(world_size, 0);
         string message, topo;
         for(int i = 0; i < world_size - 1; ++i) {
@@ -1621,7 +1621,7 @@ void IQTree::MPITreeSearch_Initialize() {
         }
         updateBestTreeFromCandidateSet(topo);
     } else {
-        reqs.resize(1);
+        reqs.resize(1, vector<MPI_Request>(2));
         gotReplied = true;
         string message = candidateTrees.getSyncTrees(5);
         MPIHelper::getInstance().sendString(message, PROC_MASTER, TREE_TAG);
@@ -1632,6 +1632,7 @@ void IQTree::MPITreeSearch_Initialize() {
 }
 
 void IQTree::recalculateLoglValue() {
+    if (params->cutoff_percent > 100) return;
     DoubleVector logl = treels_logl;
     nth_element(logl.begin(), logl.begin() + logl.size() * params->cutoff_percent / 100 , logl.end(), std::greater<double>());
     if(params->minimize_iter1_candidates) {
@@ -1642,7 +1643,7 @@ void IQTree::recalculateLoglValue() {
             treels_logl = tmplogl;
         }
     }
-    logl_cutoff = logl[logl.size() * params->cutoff_percent / 100];
+    if (logl.size() > 0) logl_cutoff = logl[logl.size() * params->cutoff_percent / 100];
 }
 
 void IQTree::setLoglCheckpoint() {
@@ -1671,35 +1672,44 @@ void IQTree::afterTreeSearch() {
     mpiout << "$$$$$START cleaning" << endl;
     if (MPIHelper::getInstance().isMaster()) {
         cout << "stopped_workers = " << stopped_workers << endl;
-
-
-        while(MPIHelper::getInstance().gotMessage()) {
-            string message;
-            int worker = MPIHelper::getInstance().recvString(message);
+        for(int worker = 1; worker < MPIHelper::getInstance().getNumProcesses(); ++worker) {
+            if (stopped_processes_vec[worker]) continue;
+            string recvString;
+            vector<int> recvVector;
+            MPIHelper::getInstance().recvString(
+                recvString, 
+                worker, 
+                MPIHelper::TREE_STRINGS
+            );
+            MPIHelper::getInstance().recvInts(
+                recvVector,
+                worker,
+                MPIHelper::LOGL_VECTOR_AND_ITERS
+            );
             cout << "$$$$ Message received from process # " << worker << endl;
-            if(!stopped_processes_vec[worker]){
-                cout << "$$$$ Process " << worker << " did not getting stop message" << endl;
-            }
+            
+            string sendingString = "";
+            vector<int> sendingVec = {1, 0};
+
+            MPIHelper::getInstance().asyncSendString(
+                sendingString,
+                worker,
+                MPIHelper::TREE_STRINGS,
+                &reqs[worker][0]
+            );
+
+            MPIHelper::getInstance().asyncSendInts(
+                sendingVec,
+                worker,
+                MPIHelper::LOGL_CUTOFF_AND_STOP_FLAG,
+                &reqs[worker][1]
+            );
+            stopped_workers += 1;
+            stopped_processes_vec[worker] = true;                
+            cout << "$$$$ Sent STOP to process # " << worker << endl;
         }
-
-        for(int w = 1; w <= MPIHelper::getInstance().getNumProcesses() - 1; w++){
-            if(!stopped_processes_vec[w]){
-                string stop_message = "1 ";
-                MPIHelper::getInstance().sendString(stop_message, w, TREE_TAG);
-                stopped_workers += 1;
-                stopped_processes_vec[w] = true;                
-                cout << "$$$$ Sent STOP to process # " << w << endl;
-            }
-        }     
-    } else {
-        while(MPIHelper::getInstance().gotMessage()) {
-            string message;
-            int worker = MPIHelper::getInstance().recvString(message);
-            // cout << "$$$$$FOUND leftover in" << worker << endl;
-        }        
-    }
+    } 
     mpiout << "$$$$$END cleaning" << endl;
-
     mpiout << "CPU time used for tree search (MPI): " << getCPUTime() - checkpointTime << endl;
     MPI_Barrier(MPI_COMM_WORLD);
 }
@@ -1798,7 +1808,7 @@ double IQTree::doTreeSearch() {
 //			cout << "***TEST: logl_cutoff = " << logl_cutoff << endl;
 		}
         
-        
+        setLoglCheckpoint();
 
         if (estimate_nni_cutoff && nni_info.size() >= 500) {
             estimate_nni_cutoff = false;
@@ -2052,7 +2062,6 @@ double IQTree::doTreeSearch() {
 			printResultTree();
         }
 		*/
-
 		// Diep: This is old code for updating best tree
 		if (curScore > bestScore && MPIHelper::getInstance().isMaster()) {
              stringstream cur_tree_topo_ss;
@@ -2082,8 +2091,6 @@ double IQTree::doTreeSearch() {
         }
 
         
-
-
         // check whether the tree can be put into the reference set
         if (params->snni) {
         	candidateTrees.update(imd_tree, curScore);
@@ -2094,7 +2101,6 @@ double IQTree::doTreeSearch() {
             // The IQPNNI algorithm
             readTreeString(bestTreeString);
         }
-
 
         // DTH: make pllUFBootData usable in summarizeBootstrap
         if((!params->maximum_parsimony) && (params->pll) && (params->online_bootstrap) && (params->gbo_replicates > 0))
@@ -2131,6 +2137,7 @@ double IQTree::doTreeSearch() {
 	            }
 	        }
         } // end of bootstrap convergence test
+
         if (afterSearchIteration(cur_correlation, best_tree_topo)) {
             break;
         }
@@ -4748,48 +4755,55 @@ void IQTree::reinsertIdenticalSeqs(Alignment *orig_aln, StrVector &removed_seqs,
 }
 
 // should returns if the doTreeSearch should stop
-bool IQTree::syncTrees(double cur_correlation, vector<int> logl_to_send) {
-    // cout << "Syncing tree on ";
+bool IQTree::syncTrees(double cur_correlation, vector<int> &logl_to_send) {
     int nProcess = MPIHelper::getInstance().getNumProcesses();
     int processId = MPIHelper::getInstance().getProcessID();
 
     if (MPIHelper::getInstance().isMaster()) {
-        // cout << "master " << endl;
         int shouldStop = false;
+        // Master getting message from workers
         while(MPIHelper::getInstance().gotMessage()) {
-            string message;
-            int worker = MPIHelper::getInstance().recvString(message);
-            // if (sentTo[worker]) MPI_Wait(&reqs[worker], &status);
-            int pter = 0;
-            int logl_received = getNumber(message, pter);
-            for(int i = 0; i < logl_received; ++i) {
-                treels_logl.push_back(-getNumber(message, pter));
+            int worker = MPIHelper::getInstance().getPendingMessageSource();
+            string treeStrings;
+            vector<int> vectorLogL;
+            MPIHelper::getInstance().recvInts(vectorLogL, worker, MPIHelper::LOGL_VECTOR_AND_ITERS);
+            MPIHelper::getInstance().recvString(treeStrings, worker, MPIHelper::TREE_STRINGS);
+
+            recalculateIters(worker, vectorLogL.back());
+            vectorLogL.pop_back();
+
+            for(int val: vectorLogL) {
+                treels_logl.push_back(val);
             }
+
+            treels_logl.insert(treels_logl.end(), vectorLogL.begin(), vectorLogL.end());
+            vectorLogL.clear();
+
             recalculateLoglValue();
-
-
-            int progress = getNumber(message, pter);
-
-            // update progress
-            workersProgress[worker] = progress;
-            curIt = 0;
-            for(int i = 0; i < workersProgress.size(); ++i) {
-                curIt += workersProgress[i];
-            }
-
             // update candidatSet
-            candidateTrees.updateSyncTrees(message.substr(pter, message.size() - pter));
 
+            candidateTrees.updateSyncTrees(treeStrings);
+
+            string sendTrees = candidateTrees.getSyncTrees();
             // send sync trees back
             shouldStop = stop_rule.meetStopCondition(curIt, cur_correlation);
+            vector<int> loglAndStopFlag = {shouldStop, (int) logl_cutoff};
 
-            message = (shouldStop ? "1 " : "0 ") +  to_string((int)-logl_cutoff) + " " + candidateTrees.getSyncTrees();
+            MPIHelper::getInstance().asyncSendString(
+                sendTrees,
+                worker, 
+                MPIHelper::TREE_STRINGS, 
+                &reqs[worker][0]
+            );
+            MPIHelper::getInstance().asyncSendInts(
+                loglAndStopFlag, 
+                worker, 
+                MPIHelper::LOGL_CUTOFF_AND_STOP_FLAG, 
+                &reqs[worker][1]
+            );
 
             // message = to_string(shouldStop) + ' ' + to_string((int)-logl_cutoff) + ' ' + candidateTrees.getSyncTrees();
-            if (!shouldStop) {
-                MPIHelper::getInstance().asyncSendString(message, worker, TREE_TAG, &reqs[worker]);
-            } else {
-                MPIHelper::getInstance().asyncSendString(message, worker, TREE_TAG, &reqs[worker]);
+            if (shouldStop) {
                 stopped_workers += 1;                
                 stopped_processes_vec[worker] = true;
                 return true;
@@ -4797,37 +4811,54 @@ bool IQTree::syncTrees(double cur_correlation, vector<int> logl_to_send) {
         }
         return shouldStop; // Diep: Messages in the inbox should be processed until shouldStop == true
     } else {
-        // cout << "worker#" << MPIHelper::getInstance().getProcessID();
-        bool gotNewMessage = MPIHelper::getInstance().gotMessage();
-        int master;
+        // Certainly the message is coming from master
+        vector<int> loglAndStopFlag;
         int shouldStop = false;
-        int pter = 0;
-        string message;
-
+        string treeStrings;
+        bool gotNewMessage = MPIHelper::getInstance().gotMessage();
+        
         if (gotNewMessage) {    
-            pter = 0;
-            master = MPIHelper::getInstance().recvString(message);
-            shouldStop = getNumber(message, pter);
+            MPIHelper::getInstance().recvInts(
+                loglAndStopFlag, 
+                PROC_MASTER, 
+                MPIHelper::LOGL_CUTOFF_AND_STOP_FLAG
+            );
+            MPIHelper::getInstance().recvString(
+                treeStrings, 
+                PROC_MASTER, 
+                MPIHelper::TREE_STRINGS
+            );
+            shouldStop = loglAndStopFlag[0];
             if (shouldStop == 1) return true;
         }
 
         // Diep: I'm changing the logic here. The worker sends if and only if not receiving stop signal
         if (gotReplied && rand() % nProcess == processId) {
-            string wmessage;
-            wmessage += to_string(logl_to_send.size()) + " ";
-            for(int x: logl_to_send) wmessage += to_string(-x) + " ";
-            wmessage += to_string(curIt) + " " + candidateTrees.getSyncTrees();
-            MPIHelper::getInstance().asyncSendString(wmessage, PROC_MASTER, TREE_TAG, &reqs[PROC_MASTER]);
+            logl_to_send.push_back(curIt);
+            MPIHelper::getInstance().asyncSendInts(
+                logl_to_send, 
+                PROC_MASTER, 
+                MPIHelper::LOGL_VECTOR_AND_ITERS, 
+                &reqs[0][0]
+            );
+            string sendTrees = candidateTrees.getSyncTrees();
+            MPIHelper::getInstance().asyncSendString(
+                sendTrees, 
+                PROC_MASTER, 
+                MPIHelper::TREE_STRINGS, 
+                &reqs[0][1]
+            );
             gotReplied = false;
-            // cout << " .... done";
         }
 
         if (gotNewMessage) { // Diep continue with processing received msg
-            logl_cutoff = -getNumber(message, pter);
-            candidateTrees.updateSyncTrees(message.substr(pter, message.size() - pter));
+            logl_cutoff = loglAndStopFlag[1];
+            assert(treeStrings.size() > 0);
+            candidateTrees.updateSyncTrees(treeStrings);
             gotReplied = true;
         }
-        // cout << endl;
+
+        loglAndStopFlag.clear();
         return false;
     }
 }
@@ -4921,4 +4952,12 @@ string IQTree::getTree(string &message, int &pter) {
     while(message[pter] != '#') tree += message[pter++];
     pter++;
     return tree;
+}
+
+void IQTree::recalculateIters(int worker, int progress) {
+    workersProgress[worker] = progress;
+    curIt = 0;
+    for(int i = 0; i < workersProgress.size(); ++i) {
+        curIt += workersProgress[i];
+    }
 }

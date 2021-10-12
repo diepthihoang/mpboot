@@ -944,7 +944,7 @@ protected:
     void estDeltaMin();
 
     bool gotReplied;
-    bool syncTrees(double cur_correlation, vector<int> logl_to_send);
+    bool syncTrees(double cur_correlation, vector<int> &logl_to_send);
     vector<int> workersProgress;
     void updateBestTreeFromCandidateSet(string &best_tree_topo);
     void syncBootTrees();
@@ -958,7 +958,7 @@ protected:
     string convertBootTreeToString(vector<tuple<int, int, string>> bTree);
 	double checkpointTime;
 
-    vector<MPI_Request> reqs;
+    vector<vector<MPI_Request>> reqs;
     vector<int> sentTo;
     MPI_Status status;
 
@@ -971,6 +971,8 @@ protected:
 
     void afterTreeSearch();
     void syncBootstrapArray(Params &params, int nunit);
+
+    void recalculateIters(int worker, int progress);
 };
 
 void estimateNNICutoff(Params &params);
