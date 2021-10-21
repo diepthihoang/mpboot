@@ -2185,16 +2185,16 @@ using namespace std;
 
 class MPIHelper {
 public:
-	/**
-	 * Specify message types for MPI
-	 */
-	enum SyncMessage {
-		TREE_STRINGS,
-		LOGL_VECTOR_AND_ITERS,
-		LOGL_CUTOFF_AND_STOP_FLAG
-	};
+        /**
+         * Specify message types for MPI
+         */
+        enum SyncMessage {
+                TREE_STRINGS,
+                LOGL_VECTOR_AND_ITERS, // worker -> master
+                LOGL_CUTOFF_AND_STOP_FLAG // master -> worker
+        };
 
-	static SyncMessage messageTypes;
+        static SyncMessage messageTypes;
 
     /**
     *  Singleton method: get one and only one getInstance of the class

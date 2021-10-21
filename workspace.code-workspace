@@ -6,7 +6,8 @@
             "tuple": "cpp",
             "utility": "cpp",
             "iostream": "cpp",
-            "iosfwd": "cpp"
+            "iosfwd": "cpp",
+            "system_error": "cpp"
         }
     },
     "folders": [

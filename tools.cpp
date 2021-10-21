@@ -3567,14 +3567,14 @@ void MPIHelper::sendString(string &str, int dest, int tag) {
 }
 
 void MPIHelper::asyncSendString(string &str, int dest, int tag, MPI_Request *req) {
-	if (async_buf != nullptr) delete [] async_buf;
-	async_buf = new char[str.length()+1];
+	// if (async_buf != nullptr) delete [] async_buf;
+	char* async_buf = new char[str.length()+1];
 	strcpy(async_buf, str.c_str());
 	MPI_Isend(async_buf, str.length()+1, MPI_CHAR, dest, tag, MPI_COMM_WORLD, req);
 }
 
 void MPIHelper::asyncSendInts(vector<int> &vec, int dest, int tag, MPI_Request *req) {
-	int *buf = new int[vec.size()];
+	int* buf = new int[vec.size()];
 	copy(vec.begin(), vec.end(), buf);
 	MPI_Isend(buf, vec.size(), MPI_INT, dest, tag, MPI_COMM_WORLD, req);
 }

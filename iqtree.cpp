@@ -1671,7 +1671,7 @@ bool IQTree::afterSearchIteration(double cur_correlation, string &best_tree_topo
 void IQTree::afterTreeSearch() {
     mpiout << "$$$$$START cleaning" << endl;
     if (MPIHelper::getInstance().isMaster()) {
-        cout << "stopped_workers = " << stopped_workers << endl;
+        mpiout << "stopped_workers = " << stopped_workers << endl;
         for(int worker = 1; worker < MPIHelper::getInstance().getNumProcesses(); ++worker) {
             if (stopped_processes_vec[worker]) continue;
             string recvString;
@@ -4772,19 +4772,14 @@ bool IQTree::syncTrees(double cur_correlation, vector<int> &logl_to_send) {
             recalculateIters(worker, vectorLogL.back());
             vectorLogL.pop_back();
 
-            for(int val: vectorLogL) {
-                treels_logl.push_back(val);
-            }
-
             treels_logl.insert(treels_logl.end(), vectorLogL.begin(), vectorLogL.end());
             vectorLogL.clear();
 
             recalculateLoglValue();
             // update candidatSet
 
-            candidateTrees.updateSyncTrees(treeStrings);
-
             string sendTrees = candidateTrees.getSyncTrees();
+            candidateTrees.updateSyncTrees(treeStrings);
             // send sync trees back
             shouldStop = stop_rule.meetStopCondition(curIt, cur_correlation);
             vector<int> loglAndStopFlag = {shouldStop, (int) logl_cutoff};
