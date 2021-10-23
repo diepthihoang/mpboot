@@ -269,30 +269,53 @@ Alignment *Alignment::removeIdenticalSeq(string not_remove, bool keep_two, StrVe
     vector<bool> removed;
     checked.resize(getNSeq(), 0);
     removed.resize(getNSeq(), false);
-    int seq1;
 
+    // map[hash, string] = (countAppearance, firstappearance)
+    map<pair<int, string>, pair<int, int>> infoAppearance;
+
+    int seq1;
 	for (seq1 = 0; seq1 < getNSeq(); seq1++) {
-        if (checked[seq1]) continue;
-        bool first_ident_seq = true;
-		for (int seq2 = seq1+1; seq2 < getNSeq(); seq2++) {
-			if (getSeqName(seq2) == not_remove) continue;
-			bool equal_seq = true;
-			for (iterator it = begin(); it != end(); it++)
-				if  ((*it)[seq1] != (*it)[seq2]) {
-					equal_seq = false;
-					break;
-				}
-			if (equal_seq) {
-				if (!keep_two || !first_ident_seq) {
-					removed_seqs.push_back(getSeqName(seq2));
-					target_seqs.push_back(getSeqName(seq1));
-					removed[seq2] = true;
-				}
-				checked[seq2] = 1;
-				first_ident_seq = false;
-			}
-		}
-		checked[seq1] = 1;
+        pair<int, string> pairValue = make_pair(calculateSequenceHash(at(seq1)), (string) at(seq1));
+        pair<int, int> info = infoAppearance[pairValue];
+
+        bool equal_seq = (info.first > 0);
+        bool first_ident_seq = (info.first == 1);
+
+        // check if we can remove this sequence
+        if (equal_seq && getSeqName(seq1) != not_remove) {
+            if (!keep_two || !first_ident_seq) {
+                removed_seqs.push_back(getSeqName(seq1));
+                target_seqs.push_back(getSeqName(info.second));
+                removed[seq1] = true;
+            }
+        }
+
+        pair<int, int> newInfo = make_pair(info.first + 1, info.second);
+        if (equal_seq == false) {
+            newInfo.second = seq1;
+        }
+        infoAppearance[pairValue] = newInfo;
+        // if (checked[seq1]) continue;
+        // bool first_ident_seq = true;
+		// for (int seq2 = seq1+1; seq2 < getNSeq(); seq2++) {
+		// 	if (getSeqName(seq2) == not_remove) continue;
+		// 	bool equal_seq = true;
+		// 	for (iterator it = begin(); it != end(); it++)
+		// 		if  ((*it)[seq1] != (*it)[seq2]) {
+		// 			equal_seq = false;
+		// 			break;
+		// 		}
+		// 	if (equal_seq) {
+		// 		if (!keep_two || !first_ident_seq) {
+		// 			removed_seqs.push_back(getSeqName(seq2));
+		// 			target_seqs.push_back(getSeqName(seq1));
+		// 			removed[seq2] = true;
+		// 		}
+		// 		checked[seq2] = 1;
+		// 		first_ident_seq = false;
+		// 	}
+		// }
+		// checked[seq1] = 1;
 	}
 
 	if (removed_seqs.size() > 0) {

@@ -3608,3 +3608,12 @@ string MPIHelper::scatterBootstrapTrees(vector<vector<tuple<int, int, string>>> 
 MPIHelper::~MPIHelper() {
 //    cleanUpMessages();
 }
+
+int calculateSequenceHash(string &seq) {
+	const static int modular = 1000000007;
+	int hashValue = 0;
+	for(char &c: seq) {
+		hashValue = ((long long)hashValue * 4 + (int)c) % modular;
+	}
+	return hashValue;
+}
