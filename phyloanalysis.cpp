@@ -1705,20 +1705,61 @@ void runTreeReconstruction(Params &params, string &original_model, IQTree &iqtre
     iqtree.initializeModel(params);
 
     // degree of freedom
-    cout << endl;
+    mpiout << endl;
     if (verbose_mode >= VB_MED) {
-    	cout << "ML-TREE SEARCH START WITH THE FOLLOWING PARAMETERS:" << endl;
+    	mpiout << "ML-TREE SEARCH START WITH THE FOLLOWING PARAMETERS:" << endl;
         int model_df = iqtree.getModelFactory()->getNParameters();
     	printAnalysisInfo(model_df, iqtree, params);
     }
 
-    if (!params.pll && isAllowedToPrint) {
+    if (!params.pll) {
+		auto calcMemoryIntMB = [&](uint64_t mem_size) -> double {
+			return ((double) mem_size * sizeof(int) / 1000.0) / 1000;
+		};
+
         uint64_t mem_size = iqtree.getMemoryRequired();
-#if defined __APPLE__ || defined __MACH__
-        cout << "NOTE: " << ((double) mem_size * sizeof(double) / 1024.0) / 1024 << " MB RAM is required!" << endl;
-#else
-        cout << "NOTE: " << ((double) mem_size * sizeof(double) / 1000.0) / 1000 << " MB RAM is required!" << endl;
-#endif
+        mpiout << "NOTE: " << calcMemoryIntMB(mem_size) << " MB RAM is required for each process!" << endl;
+
+		const int HOST_NAME_TAG = 69420;
+		const int HOST_MEMORY_TAG = 69421;
+
+		string hostName;
+		int countSameHost = 1;
+
+		char *_hostName = new char[MPI_MAX_PROCESSOR_NAME + 1];
+		int *_hostNameLenght = new int;
+		MPI_Get_processor_name(_hostName, _hostNameLenght);
+		hostName = (string) _hostName;			
+		delete[] _hostName;
+		delete _hostNameLenght;
+
+		if (MPIHelper::getInstance().isMaster()) {
+			map<string, int> countProcessPerHost;
+			countProcessPerHost[hostName]++;
+			for(int i = 1; i < MPIHelper::getInstance().getNumProcesses(); ++i) {
+				string processHostName;
+				uint64_t hostMemSize;
+				MPIHelper::getInstance().recvString(processHostName, i, HOST_NAME_TAG);
+				MPI_Status status;
+				MPI_Probe(i, HOST_MEMORY_TAG, MPI_COMM_WORLD, &status);
+				MPI_Recv(&hostMemSize, 1, MPI_LONG_INT, i, HOST_MEMORY_TAG, MPI_COMM_WORLD, &status);
+				countProcessPerHost[processHostName]++;
+				if (countProcessPerHost[processHostName] * mem_size >= hostMemSize) {
+					outError("Memory required exceeds your computer RAM size!");
+				}
+			}
+			for(auto &[hostName, countProcess]: countProcessPerHost) {
+				mpiout << "Host " << hostName << " requires " << calcMemoryIntMB(mem_size) * countProcess << " MB RAM" << endl;
+			}
+			mpiout << endl;
+		} else {
+			uint64_t hostMemorySize = getMemorySize();
+			MPIHelper::getInstance().sendString(hostName, PROC_MASTER, HOST_NAME_TAG);
+			MPI_Send(&hostMemorySize, 1, MPI_LONG_INT, PROC_MASTER, HOST_MEMORY_TAG, MPI_COMM_WORLD);
+		}
+
+		MPI_Barrier(MPI_COMM_WORLD);
+
         if (mem_size >= getMemorySize()) {
             outError("Memory required exceeds your computer RAM size!");
         }

@@ -4734,10 +4734,10 @@ void IQTree::removeIdenticalSeqs(Params &params, StrVector &removed_seqs, StrVec
 	else
 		new_aln = aln->removeIdenticalSeq("", params.gbo_replicates > 0, removed_seqs, twin_seqs);
 	if (removed_seqs.size() > 0) {
-		cout << "NOTE: " << removed_seqs.size() << " identical sequences will be ignored during tree search" << endl;
+		mpiout << "NOTE: " << removed_seqs.size() << " identical sequences will be ignored during tree search" << endl;
 		if (verbose_mode >= VB_MED) {
 			for (int i = 0; i < removed_seqs.size(); i++) {
-				cout << removed_seqs[i] << " is identical to " << twin_seqs[i] << endl;
+				mpiout << removed_seqs[i] << " is identical to " << twin_seqs[i] << endl;
 			}
 		}
 		aln = new_aln;
