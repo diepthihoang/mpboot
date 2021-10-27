@@ -3485,7 +3485,7 @@ int calculateSequenceHash(string &seq) {
 	const static int modular = 1000000007;
 	int hashValue = 0;
 	for(char &c: seq) {
-		hashValue = ((long long)hashValue * 4 + (int)c) % modular;
+		hashValue = ((long long)hashValue * 107 + (int)c) % modular;
 	}
 	return hashValue;
 }

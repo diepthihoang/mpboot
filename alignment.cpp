@@ -275,7 +275,11 @@ Alignment *Alignment::removeIdenticalSeq(string not_remove, bool keep_two, StrVe
 
     int seq1;
 	for (seq1 = 0; seq1 < getNSeq(); seq1++) {
-        pair<int, string> pairValue = make_pair(calculateSequenceHash(at(seq1)), (string) at(seq1));
+        string rowSequence;
+        for(int i = 0; i < getNPattern(); ++i) {
+            rowSequence += at(i)[seq1];
+        }
+        pair<int, string> pairValue = make_pair(calculateSequenceHash(rowSequence), (string) rowSequence);
         pair<int, int> info = infoAppearance[pairValue];
 
         bool equal_seq = (info.first > 0);
