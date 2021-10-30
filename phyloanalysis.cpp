@@ -2700,8 +2700,15 @@ void optimizeAlignment(IQTree * & tree, Params & params){
 	double start = getCPUTime();
 	tree->params = &params; // Diep: 2020-08-17, there are two variables with identical name as 'params'
 
-//	tree->initTopologyByPLLRandomAdition(params); // this pll version needs further sync to work with the rest
-	tree->computeParsimonyTree(params.out_prefix, tree->aln); // this iqtree version plays nicely with the rest
+    if(params.user_file){
+        // Diep: 2021-10-31, to enable sorting columns based on user tree
+        bool rooted = params.is_rooted;
+        tree->readTree(params.user_file, rooted);
+        tree->setAlignment(tree->aln);
+    }else{
+    	// tree->initTopologyByPLLRandomAdition(params); // this pll version needs further sync to work with the rest
+        tree->computeParsimonyTree(params.out_prefix, tree->aln); // this iqtree version plays nicely with the rest
+    }
 	// extract the vector of pattern pars of the initialized tree
 	tree->initializeAllPartialPars();
 	tree->clearAllPartialLH();
