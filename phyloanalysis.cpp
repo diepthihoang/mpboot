@@ -1757,7 +1757,13 @@ void runTreeReconstruction(Params &params, string &original_model, IQTree &iqtre
             int nni_count = 0;
             int nni_steps = 0;
             cout << "Doing NNI on the initial tree ... " << endl;
+
+            // Diep: to fix the bug regarding feeding user tree
+            // Because the following doNNISearch does not have ratchet alignment setup yet, we have to turn-off ratchet
+            int saved_ratchet_iter = params.ratchet_iter;
+            params.ratchet_iter = -1; 
             string tree = iqtree.doNNISearch(nni_count, nni_steps);
+            params.ratchet_iter = saved_ratchet_iter; // Now, reset ratchet
 //            if (params.pll) {
 //                iqtree.curScore = iqtree.pllOptimizeNNI(nni_count, nni_steps, iqtree.searchinfo);
 //                pllTreeToNewick(iqtree.pllInst->tree_string, iqtree.pllInst, iqtree.pllPartitions,

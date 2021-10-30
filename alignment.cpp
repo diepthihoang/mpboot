@@ -263,6 +263,7 @@ int Alignment::checkIdenticalSeq()
 	return num_identical;
 }
 
+
 Alignment *Alignment::removeIdenticalSeq(string not_remove, bool keep_two, StrVector &removed_seqs, StrVector &target_seqs)
 {
     IntVector checked;
@@ -299,27 +300,6 @@ Alignment *Alignment::removeIdenticalSeq(string not_remove, bool keep_two, StrVe
             newInfo.second = seq1;
         }
         infoAppearance[pairValue] = newInfo;
-        // if (checked[seq1]) continue;
-        // bool first_ident_seq = true;
-		// for (int seq2 = seq1+1; seq2 < getNSeq(); seq2++) {
-		// 	if (getSeqName(seq2) == not_remove) continue;
-		// 	bool equal_seq = true;
-		// 	for (iterator it = begin(); it != end(); it++)
-		// 		if  ((*it)[seq1] != (*it)[seq2]) {
-		// 			equal_seq = false;
-		// 			break;
-		// 		}
-		// 	if (equal_seq) {
-		// 		if (!keep_two || !first_ident_seq) {
-		// 			removed_seqs.push_back(getSeqName(seq2));
-		// 			target_seqs.push_back(getSeqName(seq1));
-		// 			removed[seq2] = true;
-		// 		}
-		// 		checked[seq2] = 1;
-		// 		first_ident_seq = false;
-		// 	}
-		// }
-		// checked[seq1] = 1;
 	}
 
 	if (removed_seqs.size() > 0) {
@@ -334,6 +314,51 @@ Alignment *Alignment::removeIdenticalSeq(string not_remove, bool keep_two, StrVe
 	} else return this;
 }
 
+
+// // Diep: This is the old implementation inherited from IQ-TREE1, to be replace by Nghia's better algorithm
+// Alignment *Alignment::removeIdenticalSeq(string not_remove, bool keep_two, StrVector &removed_seqs, StrVector &target_seqs)
+// {
+//     IntVector checked;
+//     vector<bool> removed;
+//     checked.resize(getNSeq(), 0);
+//     removed.resize(getNSeq(), false);
+//     int seq1;
+
+// 	for (seq1 = 0; seq1 < getNSeq(); seq1++) {
+//         if (checked[seq1]) continue;
+//         bool first_ident_seq = true;
+// 		for (int seq2 = seq1+1; seq2 < getNSeq(); seq2++) {
+// 			if (getSeqName(seq2) == not_remove) continue;
+// 			bool equal_seq = true;
+// 			for (iterator it = begin(); it != end(); it++)
+// 				if  ((*it)[seq1] != (*it)[seq2]) {
+// 					equal_seq = false;
+// 					break;
+// 				}
+// 			if (equal_seq) {
+// 				if (!keep_two || !first_ident_seq) {
+// 					removed_seqs.push_back(getSeqName(seq2));
+// 					target_seqs.push_back(getSeqName(seq1));
+// 					removed[seq2] = true;
+// 				}
+// 				checked[seq2] = 1;
+// 				first_ident_seq = false;
+// 			}
+// 		}
+// 		checked[seq1] = 1;
+// 	}
+
+// 	if (removed_seqs.size() > 0) {
+// 		if (removed_seqs.size() > getNSeq()-3)
+// 			outError("Your alignment contains too many identical sequences, quiting now...");
+// 		IntVector keep_seqs;
+// 		for (seq1 = 0; seq1 < getNSeq(); seq1++)
+// 			if (!removed[seq1]) keep_seqs.push_back(seq1);
+// 		Alignment *aln = new Alignment;
+// 		aln->extractSubAlignment(this, keep_seqs, 0);
+// 		return aln;
+// 	} else return this;
+// }
 
 bool Alignment::isGapOnlySeq(int seq_id) {
     assert(seq_id < getNSeq());
