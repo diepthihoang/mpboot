@@ -2166,5 +2166,6 @@ void summarizeHeader(ostream &out, Params &params, bool budget_constraint, Input
  */
 void summarizeFooter(ostream &out, Params &params);
 
+int calculateSequenceHash(string &seq); 
 
 #endif

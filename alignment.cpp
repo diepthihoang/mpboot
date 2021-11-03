@@ -263,7 +263,61 @@ int Alignment::checkIdenticalSeq()
 	return num_identical;
 }
 
+
 Alignment *Alignment::removeIdenticalSeq(string not_remove, bool keep_two, StrVector &removed_seqs, StrVector &target_seqs)
+{
+    IntVector checked;
+    vector<bool> removed;
+    checked.resize(getNSeq(), 0);
+    removed.resize(getNSeq(), false);
+
+    // map[hash, string] = (countAppearance, firstappearance)
+    map<pair<int, string>, pair<int, int>> infoAppearance;
+
+    int seq1;
+	for (seq1 = 0; seq1 < getNSeq(); seq1++) {
+        string rowSequence;
+        for(int i = 0; i < getNPattern(); ++i) {
+            rowSequence += at(i)[seq1];
+        }
+        pair<int, string> pairValue = make_pair(calculateSequenceHash(rowSequence), (string) rowSequence);
+        pair<int, int> info = infoAppearance[pairValue];
+
+        bool equal_seq = (info.first > 0);
+        bool first_ident_seq = (info.first == 1);
+
+        // check if we can remove this sequence
+        if (equal_seq && getSeqName(seq1) != not_remove) {
+            if (!keep_two || !first_ident_seq) {
+                removed_seqs.push_back(getSeqName(seq1));
+                target_seqs.push_back(getSeqName(info.second));
+                removed[seq1] = true;
+            }
+        }
+
+        pair<int, int> newInfo = make_pair(info.first + 1, info.second);
+        if (equal_seq == false) {
+            newInfo.second = seq1;
+        }
+        infoAppearance[pairValue] = newInfo;
+	}
+
+	if (removed_seqs.size() > 0) {
+		if (removed_seqs.size() > getNSeq()-3)
+			outError("Your alignment contains too many identical sequences, quiting now...");
+		IntVector keep_seqs;
+		for (seq1 = 0; seq1 < getNSeq(); seq1++)
+			if (!removed[seq1]) keep_seqs.push_back(seq1);
+		Alignment *aln = new Alignment;
+		aln->extractSubAlignment(this, keep_seqs, 0);
+		return aln;
+	} else return this;
+}
+
+
+// // Diep: This is the old removeIdenticalSeq implementation inherited from IQ-TREE1
+// to be replace by Nghia's better algorithm
+Alignment *Alignment::removeIdenticalSeqObsolete(string not_remove, bool keep_two, StrVector &removed_seqs, StrVector &target_seqs)
 {
     IntVector checked;
     vector<bool> removed;
@@ -306,7 +360,6 @@ Alignment *Alignment::removeIdenticalSeq(string not_remove, bool keep_two, StrVe
 		return aln;
 	} else return this;
 }
-
 
 bool Alignment::isGapOnlySeq(int seq_id) {
     assert(seq_id < getNSeq());

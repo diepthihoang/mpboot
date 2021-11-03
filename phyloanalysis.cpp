@@ -1757,7 +1757,13 @@ void runTreeReconstruction(Params &params, string &original_model, IQTree &iqtre
             int nni_count = 0;
             int nni_steps = 0;
             cout << "Doing NNI on the initial tree ... " << endl;
+
+            // Diep: to fix the bug regarding feeding user tree
+            // Because the following doNNISearch does not have ratchet alignment setup yet, we have to turn-off ratchet
+            int saved_ratchet_iter = params.ratchet_iter;
+            params.ratchet_iter = -1; 
             string tree = iqtree.doNNISearch(nni_count, nni_steps);
+            params.ratchet_iter = saved_ratchet_iter; // Now, reset ratchet
 //            if (params.pll) {
 //                iqtree.curScore = iqtree.pllOptimizeNNI(nni_count, nni_steps, iqtree.searchinfo);
 //                pllTreeToNewick(iqtree.pllInst->tree_string, iqtree.pllInst, iqtree.pllPartitions,
@@ -2694,15 +2700,26 @@ void optimizeAlignment(IQTree * & tree, Params & params){
 	double start = getCPUTime();
 	tree->params = &params; // Diep: 2020-08-17, there are two variables with identical name as 'params'
 
-//	tree->initTopologyByPLLRandomAdition(params); // this pll version needs further sync to work with the rest
-	tree->computeParsimonyTree(params.out_prefix, tree->aln); // this iqtree version plays nicely with the rest
+    if(params.user_file){
+        cout << "\nReading user tree for sorting patterns" << endl;
+        // Diep: 2021-10-31, to enable sorting columns based on user tree
+        bool rooted = params.is_rooted;
+        tree->readTree(params.user_file, rooted);
+        tree->setAlignment(tree->aln);
+        cout << "Time for reading: " << getCPUTime() - start << " seconds" << endl;
+    }else{
+        cout << "\nComputing random stepwise addition parsimony tree for sorting patterns..." << endl;
+    	// tree->initTopologyByPLLRandomAdition(params); // this pll version needs further sync to work with the rest
+        tree->computeParsimonyTree(params.out_prefix, tree->aln); // this iqtree version plays nicely with the rest
+        cout << "Time for random stepwise addition parsimony tree construction: " << getCPUTime() - start << " seconds" << endl;
+    }
 	// extract the vector of pattern pars of the initialized tree
 	tree->initializeAllPartialPars();
 	tree->clearAllPartialLH();
 //	tree->fixNegativeBranch(true);
 	int pars_before = tree->computeParsimony();
     tree->curScore = pars_before;
-    cout << "Time for parsimony tree construction: " << getCPUTime() - start << " seconds" << endl;
+    
     cout << "Parsimony score: " << pars_before << endl;
 	BootValTypePars * tmpPatternPars = tree->getPatternPars();
 	for(int i = 0; i < tree->getAlnNPattern(); i++){

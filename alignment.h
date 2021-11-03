@@ -280,7 +280,7 @@ public:
      * @return this if no sequences were removed, or new alignment if at least 1 sequence was removed
      */
     virtual Alignment *removeIdenticalSeq(string not_remove, bool keep_two, StrVector &removed_seqs, StrVector &target_seqs);
-
+    virtual Alignment *removeIdenticalSeqObsolete(string not_remove, bool keep_two, StrVector &removed_seqs, StrVector &target_seqs);
     /**
             Quit if some sequences contain only gaps or missing data
      */
