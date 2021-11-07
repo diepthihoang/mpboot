@@ -510,6 +510,7 @@ void reportPhyloAnalysis(Params &params, string &original_model,
 				case SEQ_MORPH: out << "MORPH"; break;
 				case SEQ_MULTISTATE: out << "TINA"; break;
 				case SEQ_PROTEIN: out << "AA"; break;
+				case SEQ_GAN: out<<"GAN"; break;
 				case SEQ_UNKNOWN: out << "???"; break;
 				}
 				out.width(5);
@@ -1664,7 +1665,7 @@ void runTreeReconstruction(Params &params, string &original_model, IQTree &iqtre
 			for (PhyloSuperTree::iterator it = stree->begin(); it != stree->end(); it++)
 				if ((*it)->aln->seq_type != SEQ_DNA && (*it)->aln->seq_type != SEQ_PROTEIN)
 					params.start_tree = STT_PARSIMONY;
-		} else if (iqtree.aln->seq_type != SEQ_DNA && iqtree.aln->seq_type != SEQ_PROTEIN)
+		} else if (iqtree.aln->seq_type != SEQ_DNA && iqtree.aln->seq_type != SEQ_PROTEIN && iqtree.aln->seq_type != SEQ_GAN)
 			params.start_tree = STT_PARSIMONY;
     }
 
@@ -2095,13 +2096,23 @@ void convertAlignment(Params &params, IQTree *iqtree) {
 
 	} else if (params.gap_masked_aln) {
 		Alignment out_aln;
-		Alignment masked_aln(params.gap_masked_aln, params.sequence_type, params.intype);
-		out_aln.createGapMaskedAlignment(&masked_aln, alignment);
-		out_aln.printPhylip(params.aln_output, false, params.aln_site_list,
-				params.aln_nogaps, params.aln_no_const_sites, params.ref_seq_name);
-		string str = params.gap_masked_aln;
-		str += ".sitegaps";
-		out_aln.printSiteGaps(str.c_str());
+		if (params.gap_as_new) {
+			Alignment masked_aln(params.gap_masked_aln, params.sequence_type, params.intype, params.gap_as_new);
+			out_aln.createGapMaskedAlignment(&masked_aln, alignment);
+			out_aln.printPhylip(params.aln_output, false, params.aln_site_list,
+			params.aln_nogaps, params.aln_no_const_sites, params.ref_seq_name);
+			string str = params.gap_masked_aln;
+			str += ".sitegaps";
+			out_aln.printSiteGaps(str.c_str());
+		} else {
+			Alignment masked_aln(params.gap_masked_aln, params.sequence_type, params.intype);
+			out_aln.createGapMaskedAlignment(&masked_aln, alignment);
+			out_aln.printPhylip(params.aln_output, false, params.aln_site_list,
+			params.aln_nogaps, params.aln_no_const_sites, params.ref_seq_name);
+			string str = params.gap_masked_aln;
+			str += ".sitegaps";
+			out_aln.printSiteGaps(str.c_str());
+		}
 	} else if (params.aln_output_format == ALN_PHYLIP)
 		alignment->printPhylip(params.aln_output, false, params.aln_site_list,
 				params.aln_nogaps, params.aln_no_const_sites, params.ref_seq_name);
@@ -2136,11 +2147,19 @@ void runPhyloAnalysis(Params &params) {
 		// this alignment will actually be of type SuperAlignment
 		alignment = tree->aln;
 	} else if(params.maximum_parsimony && params.sankoff_cost_file){
-		alignment = new Alignment(params.aln_file, params.sequence_type, params.intype);
+		if (params.gap_as_new) {
+			alignment = new Alignment(params.aln_file, params.sequence_type, params.intype, params.gap_as_new);
+		} else {
+			alignment = new Alignment(params.aln_file, params.sequence_type, params.intype);
+		}
 		tree = new ParsTree(alignment);
 		dynamic_cast<ParsTree *>(tree)->initParsData(&params);
 	}else {
-		alignment = new Alignment(params.aln_file, params.sequence_type, params.intype);
+		if (params.gap_as_new) {
+			alignment = new Alignment(params.aln_file, params.sequence_type, params.intype, params.gap_as_new);
+		} else {
+			alignment = new Alignment(params.aln_file, params.sequence_type, params.intype);
+		}
 		if (params.maximum_parsimony && !params.sankoff_cost_file && params.condense_parsimony_equiv_sites) {
 			Alignment *aln = new Alignment();
 			aln->condenseParsimonyEquivalentSites(alignment);
@@ -2160,9 +2179,15 @@ void runPhyloAnalysis(Params &params) {
 	string original_model = params.model_name;
 
 	if (params.concatenate_aln) {
-		Alignment aln(params.concatenate_aln, params.sequence_type, params.intype);
-		cout << "Concatenating " << params.aln_file << " with " << params.concatenate_aln << " ..." << endl;
-		alignment->concatenateAlignment(&aln);
+		if (params.gap_as_new) {
+			Alignment aln(params.concatenate_aln, params.sequence_type, params.intype, params.gap_as_new);
+			cout << "Concatenating " << params.aln_file << " with " << params.concatenate_aln << " ..." << endl;
+			alignment->concatenateAlignment(&aln);
+		} else {
+			Alignment aln(params.concatenate_aln, params.sequence_type, params.intype);
+			cout << "Concatenating " << params.aln_file << " with " << params.concatenate_aln << " ..." << endl;
+			alignment->concatenateAlignment(&aln);
+		}
 	}
 
 	if (params.aln_output) {
@@ -2263,7 +2288,12 @@ void runPhyloAnalysis(Params &params) {
 }
 
 void printSiteParsimonyUserTree(Params &params) {
-    Alignment alignment(params.aln_file, params.sequence_type, params.intype);
+	Alignment alignment;
+	if (params.gap_as_new) {
+    	Alignment alignment(params.aln_file, params.sequence_type, params.intype, params.gap_as_new);
+	} else {
+    	Alignment alignment(params.aln_file, params.sequence_type, params.intype);
+	}
     IQTree * ptree;
 
     if(params.sankoff_cost_file){

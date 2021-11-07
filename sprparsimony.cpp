@@ -3539,11 +3539,136 @@ void computeUserTreeParsimomy(Params &params) {
 	delete ptree;
 }
 
+void computeUserTreeParsimomyGAN(Params &params) {
+    Alignment alignment(params.aln_file, params.sequence_type, params.intype, params.gap_as_new);
+
+    IQTree * ptree;
+
+    if(params.sankoff_cost_file){
+    	ptree = new ParsTree(&alignment);
+    	dynamic_cast<ParsTree *>(ptree)->initParsData(&params);
+    }else
+    	ptree = new IQTree(&alignment);
+
+
+//	cout << "Read user tree... 1st time";
+    ptree->readTree(params.user_file, params.is_rooted);
+
+	ptree->setAlignment(&alignment); // IMPORTANT: Always call setAlignment() after readTree()
+	optimizeAlignment(ptree, params);
+
+//	cout << "Read user tree... 2nd time";
+    ptree->readTree(params.user_file, params.is_rooted);
+
+	ptree->setAlignment(ptree->aln); // IMPORTANT: Always call setAlignment() after readTree()
+    ptree->initializeAllPartialPars();
+    ptree->clearAllPartialLH();
+
+//    cout << "done" << endl;
+	cout << "Parsimony score (by IQTree kernel) is: ";
+	cout << ptree->computeParsimony() << endl;
+
+	cout << "###################################################################" << endl << endl;
+
+	if(params.sankoff_cost_file){
+		ptree->initializePLL(params);
+		string tree_string = ptree->getTreeString();
+		pllNewickTree *pll_tree = pllNewickParseString(tree_string.c_str());
+		assert(pll_tree != NULL);
+		pllTreeInitTopologyNewick(ptree->pllInst, pll_tree, PLL_FALSE);
+		iqtree = ptree;
+        pllNewickParseDestroy(&pll_tree);
+		_allocateParsimonyDataStructures(ptree->pllInst, ptree->pllPartitions, false);
+		ptree->pllInst->bestParsimony = UINT_MAX; // Important because of early termination in evaluateSankoffParsimonyIterativeFastSIMD
+		unsigned int pll_score = evaluateParsimony(ptree->pllInst, ptree->pllPartitions, ptree->pllInst->start, PLL_TRUE, false);
+		cout << "Parsimony score (by PLL kernel) is: " << pll_score << endl;
+
+
+		if(ptree->pllPartitions->partitionData[0]->informativePtnWgt){
+			int diffCount = 0;
+			unsigned int *ptnWgt = (unsigned int*)ptree->pllPartitions->partitionData[0]->informativePtnWgt;
+			for(int i = 0; i < ptree->aln->n_informative_patterns; i++){
+				if(ptree->aln->at(i).frequency != ptnWgt[i]) diffCount++;
+			}
+			assert(diffCount == 0);
+		}
+
+		_pllFreeParsimonyDataStructures(ptree->pllInst, ptree->pllPartitions);
+	}else{
+		ptree->initializePLL(params);
+		string tree_string = ptree->getTreeString();
+		pllNewickTree *pll_tree = pllNewickParseString(tree_string.c_str());
+		assert(pll_tree != NULL);
+		pllTreeInitTopologyNewick(ptree->pllInst, pll_tree, PLL_FALSE);
+		iqtree = ptree;
+        pllNewickParseDestroy(&pll_tree);
+		_allocateParsimonyDataStructures(ptree->pllInst, ptree->pllPartitions, false);
+		ptree->pllInst->bestParsimony = UINT_MAX; // Important because of early termination in evaluateSankoffParsimonyIterativeFastSIMD
+		unsigned int pll_score = evaluateParsimony(ptree->pllInst, ptree->pllPartitions, ptree->pllInst->start, PLL_TRUE, false);
+		cout << "Parsimony score (by PLL kernel) is: " << pll_score << endl;
+
+
+		_pllFreeParsimonyDataStructures(ptree->pllInst, ptree->pllPartitions);
+	}
+	delete ptree;
+}
+
+
 // Given an alignment A (-s) and a tree T (-nwtree)
 // Convert T into TNT format (clear all bootstrap supports, use tread syntax)
 // @param: Params
 void convertNewickToTnt(Params &params) {
     Alignment alignment(params.aln_file, params.sequence_type, params.intype);
+
+    IQTree * ptree;
+
+    ptree = new IQTree(&alignment);
+
+//	cout << "Read user tree... 1st time";
+    ptree->readTree(params.user_file, params.is_rooted);
+
+	ptree->setAlignment(&alignment); // IMPORTANT: Always call setAlignment() after readTree()
+
+//	ptree->printTree(cout, WT_TAXON_ID | WT_SORT_TAXA);
+//	cout << endl;
+
+	ostringstream ss;
+	ptree->printTree(ss, WT_TAXON_ID | WT_SORT_TAXA);
+
+	string treestrboot = ss.str();
+	string treestr = "";
+	int len = treestrboot.length();
+	int j;
+	for(int i = 0; i < len; i++){
+		if(treestrboot[i] == ',')
+			treestr.append(1, ' ');
+		else
+			treestr.append(1, treestrboot[i]);
+
+		if(treestrboot[i] == ')'){
+			j = i;
+			do{
+				j = j + 1;
+			} while(treestrboot[j] >= '0' && treestrboot[j] <= '9');
+			i = j - 1;
+		}
+	}
+
+	string filename = params.user_file;
+	filename += ".tnt";
+	ofstream fout(filename.c_str());
+	fout << "tread" << endl;
+	fout << treestr << endl;
+	fout << "proc /;" << endl;
+	fout.close();
+
+	cout << "Tree in TNT format is outputted to " << filename.c_str() << endl;
+
+	delete ptree;
+}
+
+void convertNewickToTntGAN(Params &params) {
+    Alignment alignment(params.aln_file, params.sequence_type, params.intype, params.gap_as_new);
 
     IQTree * ptree;
 
@@ -3599,6 +3724,64 @@ void convertNewickToTnt(Params &params) {
 // @param: Params
 void convertNewickToNexus(Params &params) {
     Alignment alignment(params.aln_file, params.sequence_type, params.intype);
+
+    IQTree * ptree;
+
+    ptree = new IQTree(&alignment);
+
+//	cout << "Read user tree... 1st time";
+    ptree->readTree(params.user_file, params.is_rooted);
+
+	ptree->setAlignment(&alignment); // IMPORTANT: Always call setAlignment() after readTree()
+
+	string filename = params.user_file;
+	filename += ".nex";
+	ofstream fout(filename.c_str());
+	fout << "#NEXUS" << endl << endl;
+	fout << "BEGIN TAXA;" << endl;
+	fout << "\tDIMENSIONS ntax=" << ptree->aln->getNSeq() << ";" << endl;
+	fout << "\tTAXLABELS ";
+	for(int i = 0; i < ptree->aln->getNSeq(); i++)
+		fout << ptree->aln->getSeqName(i) << " ";
+	fout << ";" << endl;
+	fout << "END;" << endl << endl << "BEGIN TREES;" << endl << "\tTREE tree_1=";
+
+	ostringstream ss;
+	ptree->printTree(ss, WT_SORT_TAXA);
+	string treestr = ss.str();
+
+	string wtreestr = "";
+	int len = treestr.length();
+	int j;
+	int count=0;
+	for(int i = 0; i < len; i++){
+		wtreestr.append(1, treestr[i]);
+		if(treestr[i] == ')' && i != len - 2){
+			j = i;
+			do{
+				j = j + 1;
+			} while(treestr[j] >= '0' && treestr[j] <= '9');
+			i = j - 1;
+			wtreestr.append("inode");
+			stringstream ssi;
+			ssi << count++;
+			wtreestr.append(ssi.str());
+		}
+		if(treestr[i] == ')' && i == len - 2) wtreestr.append("root");
+	}
+
+	fout << wtreestr;
+
+	fout << endl << "END;" << endl;
+	fout.close();
+
+	cout << "Tree in NEXUS format is outputted to " << filename.c_str() << endl;
+
+	delete ptree;
+}
+
+void convertNewickToNexusGAN(Params &params) {
+    Alignment alignment(params.aln_file, params.sequence_type, params.intype, params.gap_as_new);
 
     IQTree * ptree;
 

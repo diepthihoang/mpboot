@@ -96,6 +96,8 @@ ModelSubst* ModelFactory::createModel(string model_str, StateFreqType freq_type,
 		model = new ModelCodon(model_str.c_str(), model_params, freq_type, freq_params, tree, count_rates);
 	} else if (tree->aln->seq_type == SEQ_MORPH) {
 		model = new ModelMorphology(model_str.c_str(), model_params, freq_type, freq_params, tree);
+	} else if (tree->aln->seq_type == SEQ_GAN) {
+		model = new ModelMorphology(model_str.c_str(), model_params, freq_type, freq_params, tree);
 	} else {
 		outError("Unsupported model type");
 	}
@@ -117,6 +119,7 @@ ModelFactory::ModelFactory(Params &params, PhyloTree *tree) {
 		else if (tree->aln->seq_type == SEQ_BINARY) model_str = "GTR2";
 		else if (tree->aln->seq_type == SEQ_CODON) model_str = "GY";
 		else if (tree->aln->seq_type == SEQ_MORPH) model_str = "MK";
+		else if (tree->aln->seq_type == SEQ_GAN) model_str = "MK";
 		else model_str = "JC";
 		if(!params.maximum_parsimony)
 			outWarning("Default model may be under-fitting. Use option '-m TEST' to select best-fit model.");
@@ -129,6 +132,7 @@ ModelFactory::ModelFactory(Params &params, PhyloTree *tree) {
 		case SEQ_BINARY: freq_type = FREQ_ESTIMATE; break; // default for binary: optimized frequencies
 		case SEQ_PROTEIN: freq_type = FREQ_USER_DEFINED; break; // default for protein: frequencies of the empirical AA matrix
 		case SEQ_MORPH: freq_type = FREQ_EQUAL; break;
+		case SEQ_GAN: freq_type = FREQ_EQUAL; break;
 		default: freq_type = FREQ_EMPIRICAL; break; // default for DNA and others: counted frequencies from alignment
 		}
 	}

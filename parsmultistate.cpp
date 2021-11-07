@@ -34,3 +34,15 @@ void doParsMultiState(Params &params) {
 	cout << "Parsimony score ver2 is: " << tree.computeParsimony() << endl;
 	//tree.printParsimonyStates();
 }
+
+void doParsMultiStateGAN(Params &params) {
+	cout << "Here\n";
+    Alignment alignment(params.aln_file, params.sequence_type, params.intype, params.gap_as_new);
+    TinaTree tree;
+    tree.readTree(params.user_file, params.is_rooted);
+	tree.setAlignment(&alignment);
+	tree.drawTree(cout);
+	cout << "Parsimony score is: " << tree.computeParsimonyScore() << endl;
+	cout << "Parsimony score ver2 is: " << tree.computeParsimony() << endl;
+	//tree.printParsimonyStates();
+}

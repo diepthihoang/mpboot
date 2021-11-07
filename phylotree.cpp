@@ -1032,7 +1032,7 @@ int PhyloTree::computeParsimonyBranch(PhyloNeighbor *dad_branch, PhyloNode *dad,
 					_pattern_pars[ptn] = node_branch->partial_pars[ptn_pars_start_id + ptn] +
 						dad_branch->partial_pars[ptn_pars_start_id + ptn] + 1;
 				}else
-    				_pattern_pars[ptn + i] = node_branch->partial_pars[ptn_pars_start_id + ptn] +
+    				_pattern_pars[ptn] = node_branch->partial_pars[ptn_pars_start_id + ptn] +
     					dad_branch->partial_pars[ptn_pars_start_id + ptn];
 			}
 	    delete[] bits_entry;

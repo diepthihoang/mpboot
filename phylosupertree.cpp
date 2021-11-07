@@ -73,7 +73,12 @@ void PhyloSuperTree::readPartition(Params &params) {
 			info.nniMoves[1].ptnlh = NULL;
 			info.cur_ptnlh = NULL;
 			part_info.push_back(info);
-			Alignment *part_aln = new Alignment((char*)info.aln_file.c_str(), (char*)info.sequence_type.c_str(), params.intype);
+			Alignment *part_aln;
+			if (params.gap_as_new) {
+				part_aln = new Alignment((char*)info.aln_file.c_str(), (char*)info.sequence_type.c_str(), params.intype, params.gap_as_new);
+			} else {
+				part_aln = new Alignment((char*)info.aln_file.c_str(), (char*)info.sequence_type.c_str(), params.intype);
+			}
 			if (!info.position_spec.empty()) {
 				Alignment *new_aln = new Alignment();
 				new_aln->extractSites(part_aln, info.position_spec.c_str());
@@ -108,7 +113,11 @@ void PhyloSuperTree::readPartitionNexus(Params &params) {
 
     Alignment *input_aln = NULL;
     if (params.aln_file) {
-    	input_aln = new Alignment(params.aln_file, params.sequence_type, params.intype);
+		if (params.gap_as_new) {
+    		input_aln = new Alignment(params.aln_file, params.sequence_type, params.intype, params.gap_as_new);
+		} else {
+    		input_aln = new Alignment(params.aln_file, params.sequence_type, params.intype);
+		}
     }
 
     bool empty_partition = true;
@@ -145,7 +154,11 @@ void PhyloSuperTree::readPartitionNexus(Params &params) {
 			part_info.push_back(info);
 			Alignment *part_aln;
 			if (info.aln_file != "") {
-				part_aln = new Alignment((char*)info.aln_file.c_str(), (char*)info.sequence_type.c_str(), params.intype);
+				if (params.gap_as_new) {
+					part_aln = new Alignment((char*)info.aln_file.c_str(), (char*)info.sequence_type.c_str(), params.intype, params.gap_as_new);
+				} else {
+					part_aln = new Alignment((char*)info.aln_file.c_str(), (char*)info.sequence_type.c_str(), params.intype);
+				}
 			} else {
 				part_aln = input_aln;
 			}

@@ -243,7 +243,8 @@ extern "C" {
 #define PLL_SECONDARY_DATA_7                    5
 #define PLL_GENERIC_32                          6
 #define PLL_GENERIC_64                          7
-#define PLL_MAX_MODEL                           8
+#define PLL_GAN_DATA                            8
+#define PLL_MAX_MODEL                           9
 
 #define PLL_SEC_6_A                             0
 #define PLL_SEC_6_B                             1

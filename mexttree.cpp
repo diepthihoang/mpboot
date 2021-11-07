@@ -24,7 +24,11 @@ void MExtTree::generateRandomTree(TreeGenType tree_type, Params &params, bool bi
 	Alignment *alignment = NULL;
 	if (params.aln_file) {
 		// generate random tree with leaf sets taken from an alignment
-		alignment = new Alignment(params.aln_file, params.sequence_type, params.intype);
+		if (params.gap_as_new) {
+			alignment = new Alignment(params.aln_file, params.sequence_type, params.intype, params.gap_as_new);
+		} else {
+			alignment = new Alignment(params.aln_file, params.sequence_type, params.intype);
+		}
 		params.sub_size = alignment->getNSeq();
 	}
 	if (params.sub_size < 3) {

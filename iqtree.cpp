@@ -512,6 +512,8 @@ void IQTree::createPLLPartition(Params &params, ostream &pllPartitionFileHandle)
         	} else {
         		model = "WAG";
         	}
+        } else if (aln->seq_type == SEQ_GAN) {
+            model = "GAN";
         } else {
         	model = "WAG";
         	//outError("PLL currently only supports DNA/protein alignments");

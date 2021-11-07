@@ -446,6 +446,55 @@ Alignment::Alignment(char *filename, char *sequence_type, InputType &intype) : v
 
 }
 
+Alignment::Alignment(char *filename, char *sequence_type, InputType &intype, bool &gap_as_new) : vector<Pattern>() {
+    num_states = 0;
+    frac_const_sites = 0.0;
+    codon_table = NULL;
+    genetic_code = NULL;
+    non_stop_codon = NULL;
+    seq_type = SEQ_UNKNOWN;
+    STATE_UNKNOWN = 126;
+    cout << "Reading alignment file " << filename << " ... ";
+    intype = detectInputFile(filename);
+
+    try {
+
+        if (intype == IN_NEXUS) {
+            cout << "Nexus format detected" << endl;
+            readNexus(filename);
+        } else if (intype == IN_FASTA) {
+            cout << "Fasta format detected" << endl;
+            readFastaGAN(filename, sequence_type, gap_as_new);
+        } else if (intype == IN_PHYLIP) {
+            cout << "Phylip format detected" << endl;
+            readPhylipGAN(filename, sequence_type, gap_as_new);
+        } else {
+            outError("Unknown sequence format, please use PHYLIP, FASTA, or NEXUS format");
+        }
+    } catch (ios::failure) {
+        outError(ERR_READ_INPUT);
+    } catch (const char *str) {
+        outError(str);
+    } catch (string str) {
+        outError(str);
+    }
+
+    if (getNSeq() < 3)
+        outError("Alignment must have at least 3 sequences");
+
+    cout << "Alignment has " << getNSeq() << " sequences with " << getNSite() <<
+         " columns and " << getNPattern() << " patterns"<< endl;
+    buildSeqStates();
+    checkSeqName();
+    // OBSOLETE: identical sequences are handled later
+//	checkIdenticalSeq();
+    //cout << "Number of character states is " << num_states << endl;
+    //cout << "Number of patterns = " << size() << endl;
+    countConstSite();
+    //cout << "Fraction of constant sites: " << frac_const_sites << endl;
+    
+}
+
 void Alignment::buildSeqStates(bool add_unobs_const) {
 	string unobs_const;
 	if (add_unobs_const) unobs_const = getUnobservedConstPatterns();
@@ -512,6 +561,7 @@ void Alignment::computeUnknownState() {
     switch (seq_type) {
     case SEQ_DNA: STATE_UNKNOWN = 18; break;
     case SEQ_PROTEIN: STATE_UNKNOWN = 22; break;
+    case SEQ_GAN: STATE_UNKNOWN= 1+2+4+8+16+4+1; break;
     default: STATE_UNKNOWN = num_states; break;
     }
 }
@@ -772,6 +822,39 @@ SeqType Alignment::detectSequenceType(StrVector &sequences) {
     return SEQ_UNKNOWN;
 }
 
+SeqType Alignment::detectSequenceTypeGAN(StrVector &sequences, bool gap_as_new) {
+    int num_nuc = 0;
+    int num_ungap = 0;
+    int num_bin = 0;
+    int num_alpha = 0;
+    int num_digit = 0;
+
+    for (StrVector::iterator it = sequences.begin(); it != sequences.end(); it++)
+        for (string::iterator i = it->begin(); i != it->end(); i++) {
+            if ((*i) != '?' && (*i) != '-' && (*i) != '.' && *i != 'N' && *i != 'X') num_ungap++;
+            if ((*i) == 'A' || (*i) == 'C' || (*i) == 'G' || (*i) == 'T' || (*i) == 'U')
+                num_nuc++;
+            if ((*i) == 'J' && gap_as_new) 
+                num_nuc++;
+            if ((*i) == '0' || (*i) == '1')
+                num_bin++;
+            if (isalpha(*i)) num_alpha++;
+            if (isdigit(*i)) num_digit++;
+        }
+    if (((double)num_nuc) / num_ungap > 0.9) {
+        if (gap_as_new) return SEQ_GAN;
+        return SEQ_DNA;
+    }
+    if (((double)num_bin) / num_ungap > 0.9)
+        return SEQ_BINARY;
+    if (((double)num_alpha) / num_ungap > 0.9)
+        return SEQ_PROTEIN;
+    if (((double)(num_alpha+num_digit)) / num_ungap > 0.9)
+        return SEQ_MORPH;
+        
+    return SEQ_UNKNOWN;
+}
+
 void Alignment::buildStateMap(char *map, SeqType seq_type) {
     memset(map, STATE_INVALID, NUM_CHAR);
     assert(STATE_UNKNOWN < 126);
@@ -822,11 +905,30 @@ void Alignment::buildStateMap(char *map, SeqType seq_type) {
         for (int i = 0; i < len; i++)
             map[(int)symbols_morph[i]] = i;
         return;
+    case SEQ_GAN: 
+        map[(unsigned char)'A'] = 0;
+        map[(unsigned char)'C'] = 1;
+        map[(unsigned char)'G'] = 2;
+        map[(unsigned char)'T'] = 3;
+        map[(unsigned char)'U'] = 3;
+        map[(unsigned char)'J'] = 4;
+        map[(unsigned char)'R'] = 1+4+4; // A or G, Purine
+        map[(unsigned char)'Y'] = 2+8+4; // C or T, Pyrimidine
+        map[(unsigned char)'N'] = STATE_UNKNOWN;
+        map[(unsigned char)'X'] = STATE_UNKNOWN;
+        map[(unsigned char)'W'] = 1+8+4; // A or T, Weak
+        map[(unsigned char)'S'] = 2+4+4; // G or C, Strong
+        map[(unsigned char)'M'] = 1+2+4; // A or C, Amino
+        map[(unsigned char)'K'] = 4+8+4; // G or T, Keto
+        map[(unsigned char)'B'] = 2+4+8+4; // C or G or T
+        map[(unsigned char)'H'] = 1+2+8+4; // A or C or T
+        map[(unsigned char)'D'] = 1+4+8+4; // A or G or T
+        map[(unsigned char)'V'] = 1+2+4+4; // A or G or C
+        return;
     default:
         return;
     }
 }
-
 
 /**
 	convert a raw characer state into ID, indexed from 0
@@ -908,6 +1010,46 @@ char Alignment::convertState(char state, SeqType seq_type) {
         if (!loc) return STATE_INVALID; // unrecognize character
         state = loc - symbols_morph;
 	    return state;
+        case SEQ_GAN: 
+        switch (state) {
+        case 'A':
+            return 0;
+        case 'C':
+            return 1;
+        case 'G':
+            return 2;
+        case 'T':
+            return 3;
+        case 'U':
+            return 3;
+        case 'J':
+            return 4;
+        case 'R':
+            return 1+4+4; // A or G, Purine
+        case 'Y':
+            return 2+8+4; // C or T, Pyrimidine
+        case 'N':
+            return STATE_UNKNOWN;
+        case 'W':
+            return 1+8+4; // A or T, Weak
+        case 'S':
+            return 2+4+4; // G or C, Strong
+        case 'M':
+            return 1+2+4; // A or C, Amino
+        case 'K':
+            return 4+8+4; // G or T, Keto
+        case 'B':
+            return 2+4+8+4; // C or G or T
+        case 'H':
+            return 1+2+8+4; // A or C or T
+        case 'D':
+            return 1+4+8+4; // A or G or T
+        case 'V':
+            return 1+2+4+4; // A or G or C
+        default:
+            return STATE_INVALID; // unrecognize character
+        }
+        return state;
     default:
         return STATE_INVALID;
     }
@@ -982,6 +1124,42 @@ char Alignment::convertStateBack(char state) {
             return symbols_morph[(int)state];
         else
             return '-';
+    case SEQ_GAN:
+        switch (state) {
+        case 0:
+            return 'A';
+        case 1:
+            return 'C';
+        case 2:
+            return 'G';
+        case 3:
+            return 'T';
+        case 4:
+            return 'J';
+        case 1+4+4:
+            return 'R'; // A or G, Purine
+        case 2+8+4:
+            return 'Y'; // C or T, Pyrimidine
+        case 1+8+4:
+            return 'W'; // A or T, Weak
+        case 2+4+4:
+            return 'S'; // G or C, Strong
+        case 1+2+4:
+            return 'M'; // A or C, Amino
+        case 4+8+4:
+            return 'K'; // G or T, Keto
+        case 2+4+8+4:
+            return 'B'; // C or G or T
+        case 1+2+8+4:
+            return 'H'; // A or C or T
+        case 1+4+8+4:
+            return 'D'; // A or G or T
+        case 1+2+4+4:
+            return 'V'; // A or G or C
+        default:
+            return '?'; // unrecognize character
+        }
+        return state;
     default:
     	// unknown
     	return '*';
@@ -1231,6 +1409,171 @@ int Alignment::buildPattern(StrVector &sequences, char *sequence_type, int nseq,
     return 1;
 }
 
+int Alignment::buildPatternGAN(StrVector &sequences, char *sequence_type, int nseq, int nsite, bool gap_as_new) {
+    int seq_id;
+    ostringstream err_str;
+    codon_table = NULL;
+    genetic_code = NULL;
+    non_stop_codon = NULL;
+
+
+    if (nseq != seq_names.size()) throw "Different number of sequences than specified";
+
+    /* now check that all sequence names are correct */
+    for (seq_id = 0; seq_id < nseq; seq_id ++) {
+        ostringstream err_str;
+        if (seq_names[seq_id] == "")
+            err_str << "Sequence number " << seq_id+1 << " has no names\n";
+        // check that all the names are different
+        for (int i = 0; i < seq_id; i++)
+            if (seq_names[i] == seq_names[seq_id])
+                err_str << "The sequence name " << seq_names[seq_id] << " is dupplicated\n";
+    }
+    if (err_str.str() != "")
+        throw err_str.str();
+
+
+    /* now check that all sequences have the same length */
+    for (seq_id = 0; seq_id < nseq; seq_id ++) {
+        if (sequences[seq_id].length() != nsite) {
+            err_str << "Sequence " << seq_names[seq_id] << " contains ";
+            if (sequences[seq_id].length() < nsite)
+                err_str << "not enough";
+            else
+                err_str << "too many";
+
+            err_str << " characters (" << sequences[seq_id].length() << ")\n";
+        }
+    }
+
+    if (err_str.str() != "")
+        throw err_str.str();
+
+    /* now check data type */
+    seq_type = detectSequenceTypeGAN(sequences, gap_as_new);
+    switch (seq_type) {
+    case SEQ_BINARY:
+        num_states = 2;
+        cout << "Alignment most likely contains binary sequences" << endl;
+        break;
+    case SEQ_DNA:
+        num_states = 4;
+        cout << "Alignment most likely contains DNA/RNA sequences" << endl;
+        break;
+    case SEQ_PROTEIN:
+        num_states = 20;
+        cout << "Alignment most likely contains protein sequences" << endl;
+        break;
+    case SEQ_MORPH:
+        num_states = getMaxObservedStates(sequences);
+        if (num_states < 2 || num_states > 32) throw "Invalid number of states.";
+        cout << "Alignment most likely contains " << num_states << "-state morphological data" << endl;
+        break;
+    case SEQ_GAN:
+        num_states = 5;
+        cout << "Alignment most likely contains 5 states DNA/RNA sequences" << endl;
+        break;
+    default:
+        if (!sequence_type)
+            throw "Unknown sequence type.";
+    }
+
+    if (sequence_type && strcmp(sequence_type,"") != 0) {
+        SeqType user_seq_type;
+        if (strcmp(sequence_type, "BIN") == 0) {
+            num_states = 2;
+            user_seq_type = SEQ_BINARY;
+        } else if (strcmp(sequence_type, "DNA") == 0) {
+            num_states = 4;
+            user_seq_type = SEQ_DNA;
+        } else if (strcmp(sequence_type, "AA") == 0 || strcmp(sequence_type, "PROT") == 0) {
+            num_states = 20;
+            user_seq_type = SEQ_PROTEIN;
+        } else if (strcmp(sequence_type, "NUM") == 0 || strcmp(sequence_type, "MORPH") == 0) {
+            num_states = getMaxObservedStates(sequences);
+            if (num_states < 2 || num_states > 32) throw "Invalid number of states";
+            user_seq_type = SEQ_MORPH;
+        } else if (strcmp(sequence_type, "GAN") == 0) {
+            num_states = 5;
+            user_seq_type = SEQ_GAN;
+        } else if (strcmp(sequence_type, "TINA") == 0 || strcmp(sequence_type, "MULTI") == 0) {
+            cout << "Multi-state data with " << num_states << " alphabets" << endl;
+            user_seq_type = SEQ_MULTISTATE;
+        } else if (strncmp(sequence_type, "CODON", 5) == 0) {
+            if (seq_type != SEQ_DNA) 
+				outWarning("You want to use codon models but the sequences were not detected as DNA");
+            seq_type = user_seq_type = SEQ_CODON;
+        	initCodon(sequence_type);
+        } else
+            throw "Invalid sequence type.";
+        if (user_seq_type != seq_type && seq_type != SEQ_UNKNOWN)
+            outWarning("Your specified sequence type is different from the detected one");
+        seq_type = user_seq_type;
+    }
+
+    // now convert to patterns
+    int site, seq, num_gaps_only = 0;
+
+    char char_to_state[NUM_CHAR];
+    computeUnknownState();
+    buildStateMap(char_to_state, seq_type);
+
+    Pattern pat;
+    pat.resize(nseq);
+    int step = ((seq_type == SEQ_CODON) ? 3 : 1);
+    if (nsite % step != 0)
+    	outError("Number of sites is not multiple of 3");
+    site_pattern.resize(nsite/step, -1);
+    clear();
+    pattern_index.clear();
+
+    for (site = 0; site < nsite; site+=step) {
+        for (seq = 0; seq < nseq; seq++) {
+            //char state = convertState(sequences[seq][site], seq_type);
+            char state = char_to_state[(int)(sequences[seq][site])];
+            //cout<<(char)(sequences[seq][site])<<" "<<(int)state<<endl;
+            if (seq_type == SEQ_CODON) {
+            	// special treatment for codon
+            	char state2 = char_to_state[(int)(sequences[seq][site+1])];
+            	char state3 = char_to_state[(int)(sequences[seq][site+2])];
+            	if (state < 4 && state2 < 4 && state3 < 4) {
+            		state = non_stop_codon[state*16 + state2*4 + state3];
+            		if (state == STATE_INVALID) {
+                        err_str << "Sequence " << seq_names[seq] << " has stop codon " <<
+                        		sequences[seq][site] << sequences[seq][site+1] << sequences[seq][site+2] <<
+                        		" at site " << site+1 << endl;
+                        state = STATE_UNKNOWN;
+            		}
+            	} else if (state == STATE_INVALID || state2 == STATE_INVALID || state3 == STATE_INVALID) {
+            		state = STATE_INVALID;
+            	} else {
+            		if (state != STATE_UNKNOWN || state2 != STATE_UNKNOWN || state3 != STATE_UNKNOWN) {
+            			ostringstream warn_str;
+                        warn_str << "Sequence " << seq_names[seq] << " has ambiguous character " <<
+                        		sequences[seq][site] << sequences[seq][site+1] << sequences[seq][site+2] <<
+                        		" at site " << site+1 << endl;
+                        outWarning(warn_str.str());
+            		}
+            		state = STATE_UNKNOWN;
+            	}
+            }
+            if (state == STATE_INVALID) {
+                err_str << "Sequence " << seq_names[seq] << " has invalid character " << sequences[seq][site];
+            	if (seq_type == SEQ_CODON) err_str << sequences[seq][site+1] << sequences[seq][site+2];
+            	err_str << " at site " << site+1 << endl;
+            }
+            pat[seq] = state;
+            //cout<<(int)pat[seq]<<endl;
+        }
+        num_gaps_only += addPattern(pat, site/step);
+    }
+    if (num_gaps_only)
+        cout << "WARNING: " << num_gaps_only << " sites contain only gaps or ambiguous chars." << endl;
+    if (err_str.str() != "")
+        throw err_str.str();
+    return 1;
+}
+
 int Alignment::readPhylip(char *filename, char *sequence_type) {
 
     StrVector sequences;
@@ -1315,6 +1658,93 @@ int Alignment::readPhylip(char *filename, char *sequence_type) {
     return buildPattern(sequences, sequence_type, nseq, nsite);
 }
 
+int Alignment::readPhylipGAN(char *filename, char *sequence_type, bool gap_as_new) {
+
+    StrVector sequences;
+    ostringstream err_str;
+    ifstream in;
+    int line_num = 1;
+    // set the failbit and badbit
+    in.exceptions(ios::failbit | ios::badbit);
+    in.open(filename);
+    int nseq = 0, nsite = 0;
+    int seq_id = 0;
+    string line;
+    // remove the failbit
+    in.exceptions(ios::badbit);
+    bool tina_state = (sequence_type && strcmp(sequence_type,"TINA") == 0);
+    num_states = 0;
+
+    for (; !in.eof(); line_num++) {
+        getline(in, line);
+        if (line == "") continue;
+
+        //cout << line << endl;
+        if (nseq == 0) { // read number of sequences and sites
+            istringstream line_in(line);
+            if (!(line_in >> nseq >> nsite))
+                throw "Invalid PHYLIP format. First line must contain number of sequences and sites";
+            //cout << "nseq: " << nseq << "  nsite: " << nsite << endl;
+            if (nseq < 3)
+                throw "There must be at least 3 sequences";
+            if (nsite < 1)
+                throw "No alignment columns";
+
+            seq_names.resize(nseq, "");
+            sequences.resize(nseq, "");
+
+        } else { // read sequence contents
+            if (seq_names[seq_id] == "") { // cut out the sequence name
+                string::size_type pos = line.find_first_of(" \t");
+                if (pos == string::npos) pos = 10; //  assume standard phylip
+                seq_names[seq_id] = line.substr(0, pos);
+                line.erase(0, pos);
+            }
+            int old_len = sequences[seq_id].length();
+            if (tina_state) {
+                stringstream linestr(line);
+                int state;
+                while (!linestr.eof() ) {
+                    state = -1;
+                    linestr >> state;
+                    if (state < 0) break;
+                    sequences[seq_id].append(1, state);
+                    if (num_states < state+1) num_states = state+1;
+                }
+            } else
+                for (string::iterator it = line.begin(); it != line.end(); it++) {
+                    if ((*it) <= ' ') continue;
+                    if ((*it) == '-' && gap_as_new) 
+                        (*it) = 'J';
+                    if (isalnum(*it) || (*it) == '-' || (*it) == '?'|| (*it) == '.')
+                        sequences[seq_id].append(1, toupper(*it));
+                    else {
+                        err_str << "Unrecognized character " << *it << " on line " << line_num;
+                        throw err_str.str();
+                    }
+                }
+            if (sequences[seq_id].length() != sequences[0].length()) {
+                err_str << "Line " << line_num << ": alignment block has variable sequence lengths" << endl;
+                throw err_str.str();
+            }
+            if (sequences[seq_id].length() > old_len)
+                seq_id++;
+            if (seq_id == nseq) {
+                seq_id = 0;
+                // make sure that all sequences have the same length at this moment
+            }
+            
+        }
+        //sequences.
+    }
+    in.clear();
+    // set the failbit again
+    in.exceptions(ios::failbit | ios::badbit);
+    in.close();
+
+    return buildPatternGAN(sequences, sequence_type, nseq, nsite, gap_as_new);
+}
+
 int Alignment::readFasta(char *filename, char *sequence_type) {
 
     StrVector sequences;
@@ -1358,6 +1788,53 @@ int Alignment::readFasta(char *filename, char *sequence_type) {
     in.close();
 
     return buildPattern(sequences, sequence_type, seq_names.size(), sequences.front().length());
+}
+
+int Alignment::readFastaGAN(char *filename, char *sequence_type, bool gap_as_new) {
+
+    StrVector sequences;
+    ostringstream err_str;
+    ifstream in;
+    int line_num = 1;
+    string line;
+
+    // set the failbit and badbit
+    in.exceptions(ios::failbit | ios::badbit);
+    in.open(filename);
+    // remove the failbit
+    in.exceptions(ios::badbit);
+
+    for (; !in.eof(); line_num++) {
+        getline(in, line);
+        if (line == "") continue;
+
+        //cout << line << endl;
+        if (line[0] == '>') { // next sequence
+            string::size_type pos = line.find_first_of(" \n\r\t");
+            seq_names.push_back(line.substr(1, pos-1));
+            sequences.push_back("");
+            continue;
+        }
+        // read sequence contents
+        if (sequences.empty()) throw "First line must begin with '>' to define sequence name";
+        for (string::iterator it = line.begin(); it != line.end(); it++) {
+            if ((*it) <= ' ') continue;
+            if (gap_as_new && (*it) == '-') 
+                (*it) = 'J';
+            if (isalnum(*it) || (*it) == '-' || (*it) == '?'|| (*it) == '.')
+                sequences.back().append(1, toupper(*it));
+            else {
+                err_str << "Unrecognized character " << *it << " on line " << line_num;
+                throw err_str.str();
+            }
+        }
+    }
+    in.clear();
+    // set the failbit again
+    in.exceptions(ios::failbit | ios::badbit);
+    in.close();
+
+    return buildPatternGAN(sequences, sequence_type, seq_names.size(), sequences.front().length(), gap_as_new);
 }
 
 bool Alignment::getSiteFromResidue(int seq_id, int &residue_left, int &residue_right) {
