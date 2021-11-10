@@ -763,8 +763,22 @@ SeqType Alignment::detectSequenceType(StrVector &sequences) {
         }
     if (((double)num_nuc) / num_ungap > 0.9)
         return SEQ_DNA;
-    if (((double)num_bin) / num_ungap > 0.9)
-        return SEQ_BINARY;
+    if (((double)num_bin) / num_ungap > 0.9) {
+        cout << "[BINARY-SEQUENCE-WARNING]" << endl;
+        cout << "Since the PLL library we are using only supports sequence of type DNA, the following process will treat the input as DNA (mapping 0 to A and 1 to G) and not break the property of resulting trees." << endl;
+        cout << "[BINARY-SEQUENCE-WARNING]" << endl;
+        cout << endl;
+
+        for (StrVector::iterator it = sequences.begin(); it != sequences.end(); it++) {
+            for (string::iterator i = it->begin(); i != it->end(); i++) {
+                if ((*i) == '0') *i = 'A';
+                if ((*i) == '1') *i = 'G';
+                if ((*i) == '-') *i = 'R';
+            }
+        }
+
+        return SEQ_DNA;
+    }
     if (((double)num_alpha) / num_ungap > 0.9)
         return SEQ_PROTEIN;
     if (((double)(num_alpha+num_digit)) / num_ungap > 0.9)
