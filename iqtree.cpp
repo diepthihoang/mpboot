@@ -1654,12 +1654,13 @@ bool IQTree::afterSearchIteration(double cur_correlation, string &best_tree_topo
     if (MPIHelper::getInstance().isMaster()) workersProgress[0]++;
     if (MPIHelper::getInstance().isWorker() || MPIHelper::getInstance().gotMessage()) {
         vector<int> logl_to_send;
-        if (MPIHelper::getInstance().isWorker() && params->cutoff_percent <= 100 && curIt >= 2) {
+        if (MPIHelper::getInstance().isWorker() && params->cutoff_percent <= 100 && curIt >= 2 && gotReplied) {
             logl_to_send.resize(treels_logl.size() - saved_treels_logl_size);
             for(int i = 0; i < logl_to_send.size(); ++i) {
                 logl_to_send[i] = treels_logl[treels_logl.size() - saved_treels_logl_size + i];
             }
         }
+        setLoglCheckpoint();
         if(syncTrees(cur_correlation, logl_to_send)) {
             return true;
         }
@@ -1808,7 +1809,6 @@ double IQTree::doTreeSearch() {
 //			cout << "***TEST: logl_cutoff = " << logl_cutoff << endl;
 		}
         
-        setLoglCheckpoint();
 
         if (estimate_nni_cutoff && nni_info.size() >= 500) {
             estimate_nni_cutoff = false;
@@ -2138,7 +2138,7 @@ double IQTree::doTreeSearch() {
 	        }
         } // end of bootstrap convergence test
 
-        if (afterSearchIteration(cur_correlation, best_tree_topo)) {
+        if (afterSearchIteration(cur_correlation, best_tree_topo)) { /// Returns the shouldStop flag
             break;
         }
     }
@@ -4873,13 +4873,13 @@ void IQTree::updateBestTreeFromCandidateSet(string &best_tree_topo) {
             if (!params->maximum_parsimony)
                 imd_tree = optimizeModelParameters();
             stop_rule.addImprovedIteration(curIt);
-            cout << "BETTER TREE FOUND at iteration " << curIt << ": " << -curScore;
-            cout << " / CPU time: " << (int) round(getCPUTime() - params->startCPUTime) << "s" << endl << endl;
+            mpiout << "BETTER TREE FOUND at iteration " << curIt << ": " << -curScore;
+            mpiout << " / CPU time: " << (int) round(getCPUTime() - params->startCPUTime) << "s" << endl << endl;
             if (curScore > bestScore) {
                 searchinfo.curPerStrength = params->initPerStrength;
             }
         } else {
-            cout << "UPDATE BEST LOG-LIKELIHOOD: " << curScore << endl;
+            mpiout << "UPDATE BEST LOG-LIKELIHOOD: " << curScore << endl;
         }
         setBestTree(imd_tree, curScore);
         if (params->write_best_trees) {
