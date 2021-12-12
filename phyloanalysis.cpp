@@ -1809,7 +1809,13 @@ void runTreeReconstruction(Params &params, string &original_model, IQTree &iqtre
             int nni_count = 0;
             int nni_steps = 0;
             cout << "Doing NNI on the initial tree ... " << endl;
+
+            // Diep: to fix the bug regarding feeding user tree
+            // Because the following doNNISearch does not have ratchet alignment setup yet, we have to turn-off ratchet
+            int saved_ratchet_iter = params.ratchet_iter;
+            params.ratchet_iter = -1; 
             string tree = iqtree.doNNISearch(nni_count, nni_steps);
+            params.ratchet_iter = saved_ratchet_iter; // Now, reset ratchet
 //            if (params.pll) {
 //                iqtree.curScore = iqtree.pllOptimizeNNI(nni_count, nni_steps, iqtree.searchinfo);
 //                pllTreeToNewick(iqtree.pllInst->tree_string, iqtree.pllInst, iqtree.pllPartitions,
@@ -2048,7 +2054,30 @@ void runStandardBootstrap(Params &params, string &original_model, Alignment *ali
 			boot_tree = new IQTree(bootstrap_alignment);
 		if (params.print_bootaln)
 			bootstrap_alignment->printPhylip(bootaln_name.c_str(), true);
+
+        if(params.maximum_parsimony && (params.sort_alignment || params.sankoff_cost_file)){
+            optimizeAlignment(boot_tree, params);// Diep: this is to rearrange columns for better speed in REPS
+        }
+                    
+		// the main Maximum likelihood tree reconstruction
+		vector<ModelInfo> model_info;
+		alignment->checkGappySeq();
+
+		StrVector removed_seqs;
+		StrVector twin_seqs;
+		// remove identical sequences
+        if (params.ignore_identical_seqs)
+            tree->removeIdenticalSeqs(params, removed_seqs, twin_seqs);
+
 		runTreeReconstruction(params, original_model, *boot_tree, model_info);
+
+        // reinsert identical sequences
+		if (removed_seqs.size() > 0) {
+			delete tree->aln;
+			tree->reinsertIdenticalSeqs(alignment, removed_seqs, twin_seqs);
+			tree->printResultTree();
+		}
+
 		// read in the output tree file
 		string tree_str;
 		try {
@@ -2198,10 +2227,6 @@ void runPhyloAnalysis(Params &params) {
 
 	}
 
-//	if(params.maximum_parsimony && (params.gbo_replicates || params.sankoff_cost_file)){
-	if(params.maximum_parsimony && (params.sort_alignment || params.sankoff_cost_file)){
-		optimizeAlignment(tree, params);// Diep: this is to rearrange columns for better speed in REPS
-	}
 
 	string original_model = params.model_name;
 
@@ -2224,6 +2249,14 @@ void runPhyloAnalysis(Params &params) {
 		// run Arndt's plot of tree likelihoods against bootstrap alignments
 		runBootLhTest(params, alignment, *tree);
 	} else if (params.num_bootstrap_samples == 0) {
+
+        //	if(params.maximum_parsimony && (params.gbo_replicates || params.sankoff_cost_file)){
+        // Diep: Relocate the call to optimizeAlignment HERE 
+        // to not interfere with other utilities (such as standard bootstrap)
+        if(params.maximum_parsimony && (params.sort_alignment || params.sankoff_cost_file)){
+            optimizeAlignment(tree, params);// Diep: this is to rearrange columns for better speed in REPS
+        }
+                    
 		// the main Maximum likelihood tree reconstruction
 		vector<ModelInfo> model_info;
 		alignment->checkGappySeq();

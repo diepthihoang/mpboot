@@ -9,4 +9,3 @@ pll/libpll.a
 pll_test/
 *.code-workspace
 .vscode
-*.code-workspace
