@@ -91,6 +91,7 @@ void IQTree::setParams(Params &params) {
     candidateTrees.aln = aln;
     candidateTrees.popSize = params.popSize;
     candidateTrees.maxCandidates = params.maxCandidates;
+    doingStandardBootstrap = params.num_bootstrap_samples == 0;
 
     sse = params.SSE;
 //    if (params.maxtime != 1000000) {
@@ -1785,12 +1786,12 @@ double IQTree::doTreeSearch() {
 					logl_cutoff = 0.0;
 				if (verbose_mode >= VB_MED) {
 					if (curIt % 10 == 0) {
-						cout << treels.size() << " trees, " << treels_logl.size() << " logls, logl_cutoff= " << logl_cutoff;
+						mpiout << treels.size() << " trees, " << treels_logl.size() << " logls, logl_cutoff= " << logl_cutoff;
 						if (params->store_candidate_trees)
-							cout << " duplicates= " << duplication_counter << " ("
+							mpiout << " duplicates= " << duplication_counter << " ("
 									<< (int) round(100 * ((double) duplication_counter / treels_logl.size())) << "%)" << endl;
 						else
-							cout << endl;
+							mpiout << endl;
 					}
 				}
 			}
@@ -1991,24 +1992,24 @@ double IQTree::doTreeSearch() {
 
         if (MPIHelper::getInstance().isMaster() && (curIt % 10 == 0 || verbose_mode >= VB_MED)) {
             if(on_ratchet_hclimb2){
-                cout << "RATCHET ";
+                mpiout << "RATCHET ";
             }
-            cout << ((iqp_assess_quartet == IQP_BOOTSTRAP) ? "Bootstrap " : "Iteration ") << curIt
+            mpiout << ((iqp_assess_quartet == IQP_BOOTSTRAP) ? "Bootstrap " : "Iteration ") << curIt
                 << (params->maximum_parsimony ? " / Score: " : " / LogL: ");
             if (verbose_mode >= VB_MED)
-                cout << perturbScore << " -> ";
-            cout << (params->maximum_parsimony ? (-curScore) : curScore);
+                mpiout << perturbScore << " -> ";
+            mpiout << (params->maximum_parsimony ? (-curScore) : curScore);
             if (verbose_mode >= VB_MED)
-                cout << " / NNIs: " << nni_count << "," << nni_steps;
-            cout << " / Time: " << convert_time(getRealTime() - params->start_real_time);
+                mpiout << " / NNIs: " << nni_count << "," << nni_steps;
+            mpiout << " / Time: " << convert_time(getRealTime() - params->start_real_time);
 
             if (curIt > 10) {
-                cout << " (" << convert_time(realtime_remaining) << " left)";
+                mpiout << " (" << convert_time(realtime_remaining) << " left)";
             }
     //        if(params->maximum_parsimony && params->gbo_replicates)
     //			cout << "; C = {" << treels_logl.size() << " trees}" << ".";
 
-            cout << endl;
+            mpiout << endl;
         }
 
         if (params->write_intermediate_trees && save_all_trees != 2) {
@@ -2073,13 +2074,13 @@ double IQTree::doTreeSearch() {
                  if (!params->maximum_parsimony)
                  	imd_tree = optimizeModelParameters();
                  stop_rule.addImprovedIteration(curIt);
-                 cout << "BETTER TREE FOUND at iteration " << curIt << ": " << -curScore;
-                 cout << " / CPU time: " << (int) round(getCPUTime() - params->startCPUTime) << "s" << endl << endl;
+                 mpiout << "BETTER TREE FOUND at iteration " << curIt << ": " << -curScore;
+                 mpiout << " / CPU time: " << (int) round(getCPUTime() - params->startCPUTime) << "s" << endl << endl;
                  if (curScore > bestScore) {
                      searchinfo.curPerStrength = params->initPerStrength;
                  }
              } else {
-                 cout << "UPDATE BEST LOG-LIKELIHOOD: " << curScore << endl;
+                 mpiout << "UPDATE BEST LOG-LIKELIHOOD: " << curScore << endl;
              }
              setBestTree(imd_tree, curScore);
              if (params->write_best_trees) {
@@ -2119,7 +2120,7 @@ double IQTree::doTreeSearch() {
             if (params->max_candidate_trees == 0)
                 max_candidate_trees = treels_logl.size() * (curIt + (params->step_iterations / 2)) / curIt;
             string cutoff_name = params->maximum_parsimony ? "candidate-score-cutoff" : "logl-cutoff";
-			cout << "NOTE: " << treels_logl.size() << " bootstrap candidate trees evaluated (" << cutoff_name << ": "
+			mpiout << "NOTE: " << treels_logl.size() << " bootstrap candidate trees evaluated (" << cutoff_name << ": "
 				<< (params->maximum_parsimony ? -logl_cutoff : logl_cutoff)
 				<< ")" << endl;
 
@@ -2127,7 +2128,7 @@ double IQTree::doTreeSearch() {
 			if (curIt % params->step_iterations == 0) {
 	        	cur_correlation = computeBootstrapCorrelation();
 	        	cout.precision(3);
-	            cout << "NOTE: Bootstrap correlation coefficient of split occurrence frequencies: " << cur_correlation << endl;
+	            mpiout << "NOTE: Bootstrap correlation coefficient of split occurrence frequencies: " << cur_correlation << endl;
 	            cout.precision(0);
 	            if (!stop_rule.meetStopCondition(curIt, cur_correlation)) {
 	                if (params->max_candidate_trees == 0) {
@@ -2149,11 +2150,11 @@ double IQTree::doTreeSearch() {
 	if(params->gbo_replicates && params->maximum_parsimony){
 		if(params->optimize_boot_trees){
 			double otime = getCPUTime();
-            if (MPIHelper::getInstance().isMaster()) cout << "Syncing bootstrap trees" << endl;
+            if (MPIHelper::getInstance().isMaster()) mpiout << "Syncing bootstrap trees" << endl;
             syncBootTrees();
-			if (MPIHelper::getInstance().isMaster()) cout << "Optimizing bootstrap trees ..." << endl;
+			if (MPIHelper::getInstance().isMaster()) mpiout << "Optimizing bootstrap trees ..." << endl;
 			optimizeBootTrees();
-			if (MPIHelper::getInstance().isMaster()) cout << "CPU Time used:  " << getCPUTime() - otime << " sec." << endl;
+			if (MPIHelper::getInstance().isMaster()) mpiout << "CPU Time used:  " << getCPUTime() - otime << " sec." << endl;
 		}
 	}
 
@@ -2346,9 +2347,9 @@ double IQTree::optimizeNNI(int &nni_count, int &nni_steps) {
             /* sort all positive NNI moves (descending) */
             sort(plusNNIs.begin(), plusNNIs.end());
             if (verbose_mode >= VB_DEBUG) {
-                cout << "curScore: " << curScore << endl;
+                mpiout << "curScore: " << curScore << endl;
                 for (int i = 0; i < plusNNIs.size(); i++) {
-                    cout << "Logl of positive NNI " << i << " : " << plusNNIs[i].newloglh << endl;
+                    mpiout << "Logl of positive NNI " << i << " : " << plusNNIs[i].newloglh << endl;
                 }
             }
 
@@ -2361,7 +2362,7 @@ double IQTree::optimizeNNI(int &nni_count, int &nni_steps) {
             numNNIs = nonConfNNIs.size();
             if (verbose_mode >= VB_DEBUG) {
                 for (int i = 0; i < nonConfNNIs.size(); i++) {
-                    cout << "Log-likelihood of non-conflicting NNI " << i << " : " << nonConfNNIs[i].newloglh << endl;
+                    mpiout << "Log-likelihood of non-conflicting NNI " << i << " : " << nonConfNNIs[i].newloglh << endl;
                 }
             }
         }
@@ -2369,7 +2370,7 @@ double IQTree::optimizeNNI(int &nni_count, int &nni_steps) {
         doNNIs(numNNIs);
 
         if (verbose_mode >= VB_MED) {
-        	cout << "NNI step: " << nni_steps << " / Number of NNIs applied: " << numNNIs << endl;
+        	mpiout << "NNI step: " << nni_steps << " / Number of NNIs applied: " << numNNIs << endl;
         }
 
         if (searchinfo.speednni) {
@@ -2398,12 +2399,12 @@ double IQTree::optimizeNNI(int &nni_count, int &nni_steps) {
             /* tree cannot be worse if only 1 NNI is applied */
             if (numNNIs == 1 && curScore < nonConfNNIs.at(0).newloglh - 1.0) {
             	cout.precision(15);
-                cout << "BUG: current logl=" << curScore << " < " << nonConfNNIs.at(0).newloglh
+                mpiout << "BUG: current logl=" << curScore << " < " << nonConfNNIs.at(0).newloglh
                         << "(best NNI)" << endl;
                 abort();
             }
             if (verbose_mode >= VB_MED) {
-                cout << "New score = " << curScore << " after applying " << numNNIs <<
+                mpiout << "New score = " << curScore << " after applying " << numNNIs <<
                         " is worse than score = " << nonConfNNIs.at(0).newloglh
                         << " of the best NNI. Roll back tree ..." << endl;
             }
@@ -2433,7 +2434,7 @@ double IQTree::optimizeNNI(int &nni_count, int &nni_steps) {
     }
 
     if (nni_count == 0 && verbose_mode >= VB_MED) {
-        cout << "NOTE: Tree is already NNI-optimized" << endl;
+        mpiout << "NOTE: Tree is already NNI-optimized" << endl;
     }
     brans2Eval.clear();
     return curScore;
@@ -2472,7 +2473,7 @@ double IQTree::pllOptimizeNNI(int &totalNNICount, int &nniSteps, SearchInfo &sea
     }
 
     if (nniSteps == (MAX_NNI_STEPS + 1)) {
-        cout << "WARNING: NNI search seems to run unusually too long and thus it was stopped!" << endl;
+        mpiout << "WARNING: NNI search seems to run unusually too long and thus it was stopped!" << endl;
     }
 
     totalNNICount = searchinfo.numAppliedNNIs;
@@ -3453,11 +3454,11 @@ void IQTree::estimateNNICutoff(Params* params) {
         std::sort(lh_score + 1, lh_score + 4); // sort in ascending order
         delta[i] = lh_score[0] - lh_score[2];
         if (verbose_mode >= VB_MED)
-            cout << i << ": " << lh_score[0] << " " << lh_score[1] << " " << lh_score[2] << " " << lh_score[3] << endl;
+            mpiout << i << ": " << lh_score[0] << " " << lh_score[1] << " " << lh_score[2] << " " << lh_score[3] << endl;
     }
     std::sort(delta, delta + nni_info.size());
     nni_cutoff = delta[nni_info.size() / 20];
-    cout << endl << "Estimated NNI cutoff: " << nni_cutoff << endl;
+    mpiout << endl << "Estimated NNI cutoff: " << nni_cutoff << endl;
     string file_name = params->out_prefix;
     file_name += ".nnidelta";
     try {
@@ -3468,7 +3469,7 @@ void IQTree::estimateNNICutoff(Params* params) {
             out << delta[i] << endl;
         }
         out.close();
-        cout << "NNI delta printed to " << file_name << endl;
+        mpiout << "NNI delta printed to " << file_name << endl;
     } catch (ios::failure) {
         outError(ERR_WRITE_OUTPUT, file_name);
     }
@@ -3529,12 +3530,12 @@ void IQTree::saveCurrentTree(double cur_logl) {
         if (cur_logl <= treels_logl[it->second] + 1e-4) {
             if (cur_logl < treels_logl[it->second] - 5.0)
                 if (verbose_mode >= VB_MED)
-                    cout << "Current lh " << cur_logl << " is much worse than expected " << treels_logl[it->second]
+                    mpiout << "Current lh " << cur_logl << " is much worse than expected " << treels_logl[it->second]
                             << endl;
             return;
         }
         if (verbose_mode >= VB_MAX)
-            cout << "Updated logl " << treels_logl[it->second] << " to " << cur_logl << endl;
+            mpiout << "Updated logl " << treels_logl[it->second] << " to " << cur_logl << endl;
         treels_logl[it->second] = cur_logl;
         if (save_all_br_lens) {
             ostr.seekp(ios::beg);
@@ -3649,9 +3650,9 @@ void IQTree::saveCurrentTree(double cur_logl) {
 						if((!skipped) && (reps_segments > 1) && (segment_id > reps_segments / 4) && (segment_id < reps_segments - 1)){
 							int reps_total = res + boot_samples_pars_remain_bounds[sample][segment_id];
 							if((double)(-reps_total) < boot_logl[sample] - params->ufboot_epsilon){
-//								cout << "Current best of sample " << sample << " = " << int(-boot_logl[sample]) << endl;
-//								cout << "REPS at segment " << segment_id << " = " << res + boot_samples_pars_remain_bounds[sample][segment_id] << endl;
-//								cout << "NOTE: estimated value for boot sample parsimony exceeds its current best."
+//								mpiout << "Current best of sample " << sample << " = " << int(-boot_logl[sample]) << endl;
+//								mpiout << "REPS at segment " << segment_id << " = " << res + boot_samples_pars_remain_bounds[sample][segment_id] << endl;
+//								mpiout << "NOTE: estimated value for boot sample parsimony exceeds its current best."
 //										<< "Skip on sample " << sample << " at site " << segment_upper[segment_id] << endl;
 								skipped = true;
 								break;

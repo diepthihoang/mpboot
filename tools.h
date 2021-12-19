@@ -2353,16 +2353,23 @@ private:
 };
 
 class MPIOut {
+        private: 
+                bool disableOutput;
 	public:
 		template<class TArg>
 		MPIOut &operator<<(TArg arg) {
-			if (isAllowedToPrint) cout << arg;
+			if (MPIHelper::getInstance().isMaster() && !(this)->disableOutput) cout << arg;
 			return (*this);
 		}
 		static MPIOut &getInstance() {
 			static MPIOut instance;
+                        instance.setDisableOutput(false);
 			return instance;
 		}
+
+                void setDisableOutput(bool disableOutput) {
+                        this->disableOutput = disableOutput;
+                }
 };
 
 #define endl '\n'

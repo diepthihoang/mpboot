@@ -3498,6 +3498,7 @@ void MPIHelper::init(int argc, char *argv[]) {
     setNumTreeReceived(0);
     setNumTreeSent(0);
     setNumNNISearch(0);
+	MPIOut::getInstance().setDisableOutput(false);
 }
 
 void MPIHelper::finalize() {

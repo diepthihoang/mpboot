@@ -811,6 +811,8 @@ public:
 		this->curIt = curIt;
 	}
 
+    bool doingStandardBootstrap;
+
 protected:
     /**** NNI cutoff heuristic *****/
     /**
