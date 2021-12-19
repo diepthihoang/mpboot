@@ -2015,15 +2015,15 @@ void runStandardBootstrap(Params &params, string &original_model, Alignment *ali
 		StrVector twin_seqs;
 		// remove identical sequences
         if (params.ignore_identical_seqs)
-            tree->removeIdenticalSeqs(params, removed_seqs, twin_seqs);
+            boot_tree->removeIdenticalSeqs(params, removed_seqs, twin_seqs);
 
 		runTreeReconstruction(params, original_model, *boot_tree, model_info);
 
         // reinsert identical sequences
 		if (removed_seqs.size() > 0) {
-			delete tree->aln;
-			tree->reinsertIdenticalSeqs(alignment, removed_seqs, twin_seqs);
-			tree->printResultTree();
+			delete boot_tree->aln;
+			boot_tree->reinsertIdenticalSeqs(alignment, removed_seqs, twin_seqs);
+			boot_tree->printResultTree();
 		}
 
 		// read in the output tree file
