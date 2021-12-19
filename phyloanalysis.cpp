@@ -2009,7 +2009,7 @@ void runStandardBootstrap(Params &params, string &original_model, Alignment *ali
                     
 		// the main Maximum likelihood tree reconstruction
 		vector<ModelInfo> model_info;
-		alignment->checkGappySeq();
+		bootstrap_alignment->checkGappySeq();
 
 		StrVector removed_seqs;
 		StrVector twin_seqs;
@@ -2022,7 +2022,7 @@ void runStandardBootstrap(Params &params, string &original_model, Alignment *ali
         // reinsert identical sequences
 		if (removed_seqs.size() > 0) {
 			delete boot_tree->aln;
-			boot_tree->reinsertIdenticalSeqs(alignment, removed_seqs, twin_seqs);
+			boot_tree->reinsertIdenticalSeqs(bootstrap_alignment, removed_seqs, twin_seqs);
 			boot_tree->printResultTree();
 		}
 
