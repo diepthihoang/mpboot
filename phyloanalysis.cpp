@@ -2025,7 +2025,7 @@ void runStandardBootstrap(Params &params, string &original_model, Alignment *ali
 
 	for (int sample = 0; sample < numSampleEach; sample++) {
 		mpiout << endl << "===> START BOOTSTRAP REPLICATE NUMBER "
-				<< sample + 1 << endl << endl;
+        resetGlobalParamOnNewAln();
 
 		Alignment* bootstrap_alignment;
 		mpiout << "Creating bootstrap alignment..." << endl;
@@ -2057,7 +2057,7 @@ void runStandardBootstrap(Params &params, string &original_model, Alignment *ali
 		if (params.print_bootaln)
 			bootstrap_alignment->printPhylip(bootaln_name.c_str(), true);
 
-        if(params.maximum_parsimony && (params.sort_alignment || params.sankoff_cost_file)){
+        if(params.maximum_parsimony){
             optimizeAlignment(boot_tree, params);// Diep: this is to rearrange columns for better speed in REPS
         }
                     
@@ -2075,8 +2075,7 @@ void runStandardBootstrap(Params &params, string &original_model, Alignment *ali
 
         // reinsert identical sequences
 		if (removed_seqs.size() > 0) {
-			delete boot_tree->aln;
-			boot_tree->reinsertIdenticalSeqs(bootstrap_alignment, removed_seqs, twin_seqs);
+			boot_tree->insertTaxa(removed_seqs, twin_seqs);
 			boot_tree->printResultTree();
 		}
 
@@ -2132,12 +2131,33 @@ void runStandardBootstrap(Params &params, string &original_model, Alignment *ali
 
 		int savedNumBootstrapSamples = params.num_bootstrap_samples;
 		params.num_bootstrap_samples = 0;
+        if(params.maximum_parsimony){
+            resetGlobalParamOnNewAln();
+            optimizeAlignment(tree, params);// Diep: this is to rearrange columns for better speed in REPS
+        }
+                    
+		// the main Maximum likelihood tree reconstruction
+		vector<ModelInfo> model_info;
+		alignment->checkGappySeq();
+
+		StrVector removed_seqs;
+		StrVector twin_seqs;
+		// remove identical sequences
+        if (params.ignore_identical_seqs)
+            tree->removeIdenticalSeqs(params, removed_seqs, twin_seqs);
+
 		runTreeReconstruction(params, original_model, *tree, model_info);
 		params.num_bootstrap_samples = savedNumBootstrapSamples;
 
 		if (MPIHelper::getInstance().isWorker()) return;
 
 		mpiout << endl << "===> ASSIGN BOOTSTRAP SUPPORTS TO THE TREE FROM ORIGINAL ALIGNMENT" << endl << endl;
+        // reinsert identical sequences
+		if (removed_seqs.size() > 0) {
+			tree->insertTaxa(removed_seqs, twin_seqs);
+			tree->printResultTree();
+		}
+
 		MExtTree ext_tree;
 		assignBootstrapSupport(boottrees_name.c_str(), 0, 1e6,
 				treefile_name.c_str(), false, treefile_name.c_str(),
@@ -2278,10 +2298,9 @@ void runPhyloAnalysis(Params &params) {
 		runBootLhTest(params, alignment, *tree);
 	} else if (params.num_bootstrap_samples == 0) {
 
-        //	if(params.maximum_parsimony && (params.gbo_replicates || params.sankoff_cost_file)){
         // Diep: Relocate the call to optimizeAlignment HERE 
         // to not interfere with other utilities (such as standard bootstrap)
-        if(params.maximum_parsimony && (params.sort_alignment || params.sankoff_cost_file)){
+        if(params.maximum_parsimony){
             optimizeAlignment(tree, params);// Diep: this is to rearrange columns for better speed in REPS
         }
                     
@@ -2355,11 +2374,11 @@ void runPhyloAnalysis(Params &params) {
 //				((PhyloSuperTree*)tree)->computeBranchLengths();
 //			}
 		}
-		// reinsert identical sequences
+		// reinsert identical sequences 
+        // Diep 2021-12-30: use iqtree2 recommendation
 		if (removed_seqs.size() > 0) {
-			delete tree->aln;
-			tree->reinsertIdenticalSeqs(alignment, removed_seqs, twin_seqs);
-			if (MPIHelper::getInstance().isMaster()) tree->printResultTree();
+			tree->insertTaxa(removed_seqs, twin_seqs);
+            if (MPIHelper::getInstance().isMaster()) tree->printResultTree();
 		}
 		if (MPIHelper::getInstance().isMaster()) reportPhyloAnalysis(params, original_model, *alignment, *tree, model_info, removed_seqs, twin_seqs);
 	} else {
@@ -2801,6 +2820,10 @@ bool checkDuplicatePattern(IQTree * & tree){
 	return found;
 }
 
+// Diep 2021-12-28: Changed the logic here
+// All parsimony tree search will have its aln optimized
+//      to initialize n_informative_patterns; n_informative_sites 
+//      and to do segmenting 
 void optimizeAlignment(IQTree * & tree, Params & params){
 //	if(checkDuplicatePattern(tree))
 //		mpiout << "FIRST CHECK: Alignment patterns are not created properly!" << endl;
@@ -2838,7 +2861,9 @@ void optimizeAlignment(IQTree * & tree, Params & params){
 		(tree->aln)->at(i).ras_pars_score = tmpPatternPars[i];
 	}
 
-	if(params.sort_alignment){
+	if(!params.sort_alignment){
+        tree->aln->updateSitePatternAfterOptimized();
+    }else{
 		mpiout << "Reordering patterns in alignment by decreasing order of pattern parsimony... ";
         start = getCPUTime();
 		// reordering patterns
@@ -2851,8 +2876,6 @@ void optimizeAlignment(IQTree * & tree, Params & params){
 		int pars_after = tree->computeParsimony();
 		if(pars_after != pars_before) outError("Reordering alignment has bug.");
 		mpiout << getCPUTime() - start << " seconds" << endl;
-	}else{
-		tree->aln->updateSitePatternAfterOptimized();
 	}
 
 	tree->doSegmenting();
