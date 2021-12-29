@@ -570,11 +570,13 @@ void IQTree::initializePLL(Params &params) {
     // Diep: 	Added this IF statement so that UFBoot-MP SPR code doesn't affect other IQTree mode
     // 			alignment in  UFBoot-MP SPR branch will be sorted by pattern and site pars score
     // PLL eliminates duplicate sites from the alignment and update weights vector
-//    if(params.maximum_parsimony && params.gbo_replicates) // WRONG
-    if(params.maximum_parsimony && (params.sort_alignment || params.sankoff_cost_file))
-    	pllSortedAlignmentRemoveDups(pllAlignment, pllPartitions); // to sync sorted IQTree aln and PLL one
+    // Diep 2021-12-29: 
+    //  For maximum parsimony, SYNCING between two cores (IQ-TREE and PLL) must always be guaranteed!!!!!!!!
+    //  Especially necessary if having ratchet on.
+    if(params.maximum_parsimony)
+    	pllSortedAlignmentRemoveDups(pllAlignment, pllPartitions); // to sync IQTree aln and PLL one
     else
-    	pllAlignmentRemoveDups(pllAlignment, pllPartitions);
+        pllAlignmentRemoveDups(pllAlignment, pllPartitions);
 
     pllTreeInitTopologyForAlignment(pllInst, pllAlignment);
 
@@ -2113,6 +2115,7 @@ string IQTree::doNNISearch(int& nniCount, int& nniSteps) {
 			assert(sprStartTree != NULL);
 			pllTreeInitTopologyNewick(pllInst, sprStartTree, PLL_FALSE);
 
+            // ----------------- Key step: ask PLL to run SPR hill-climbing
 			pllOptimizeSprParsimony(pllInst, pllPartitions, params->spr_mintrav, max_spr_rad, this);
 
 			pllNewickParseDestroy(&sprStartTree);

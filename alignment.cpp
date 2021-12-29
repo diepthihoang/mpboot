@@ -62,8 +62,8 @@ Alignment::Alignment()
     STATE_UNKNOWN = 126;
 
     // Diep added:
-    n_informative_patterns = 0;
-    n_informative_sites = 0;
+    n_informative_patterns = -1; // use -1 for denoting uninitialization
+    n_informative_sites = -1; // use -1 for denoting uninitialization
 }
 
 void Alignment::operator=(Alignment & aln){
@@ -1905,7 +1905,7 @@ void Alignment::createPerturbAlignment(Alignment *aln, int percentage, int weigh
     pattern_index.clear();
     VerboseMode save_mode = verbose_mode;
     verbose_mode = min(verbose_mode, VB_MIN); // to avoid printing gappy sites in addPattern
-
+    
 	int nptn = aln->getNPattern();
 	site = 0;
 	for(int p = 0; p < nptn; p++){
