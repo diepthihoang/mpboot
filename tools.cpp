@@ -3644,3 +3644,13 @@ int calculateSequenceHash(string &seq) {
 	}
 	return hashValue;
 }
+
+void concatMPIFilesIntoSingleFile(string output) {
+	ofstream fout(output);
+	for(int i = 0; i < MPIHelper::getInstance().getNumProcesses(); ++i) {
+		ifstream istr(output + MPIHelper::getInstance().getProcessSuffix(i));
+		fout << istr.rdbuf();
+		istr.close();
+	}
+	fout.close();
+}

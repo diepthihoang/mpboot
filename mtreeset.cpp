@@ -196,7 +196,7 @@ void MTreeSet::readTrees(const char *infile, bool &is_rooted, int burnin, int ma
 			in->exceptions(ios::failbit | ios::badbit);
 
 		}
-		cout << size() << ((front()->rooted) ? " rooted" : " un-rooted") << " tree(s) loaded" << endl;
+		mpiout << size() << ((front()->rooted) ? " rooted" : " un-rooted") << " tree(s) loaded" << endl;
 		if (omitted) cout << omitted << " tree(s) omitted" << endl;
 		//in->exceptions(ios::failbit | ios::badbit);
 		if (compressed) ((igzstream*)in)->close(); else ((ifstream*)in)->close();

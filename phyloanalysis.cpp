@@ -1255,9 +1255,7 @@ int initCandidateTreeSet(Params &params, IQTree &iqtree, int numInitTrees) {
     int numDup = 0;
 	int numProc = MPIHelper::getInstance().getNumProcesses();
 
-	numInitTrees = (numInitTrees + numProc - 1) / numProc + 1;
-
-	MPI_Barrier(MPI_COMM_WORLD);
+	if(!iqtree.doingStandardBootstrap) numInitTrees = (numInitTrees + numProc - 1) / numProc + 1;
 
 	mpiout << "Generating " << numInitTrees - 1 << " parsimony trees... ";
     cout.flush();
@@ -1313,7 +1311,6 @@ int initCandidateTreeSet(Params &params, IQTree &iqtree, int numInitTrees) {
             	iqtree.candidateTrees.update(curParsTree, -DBL_MAX);
         }
     }
-	MPI_Barrier(MPI_COMM_WORLD);
     double parsTime = getCPUTime() - startTime;
 	mpiout << "(" << numDupPars << " duplicated parsimony trees)" << endl;
 	mpiout << "Wall used for tree generating time: " << parsTime << endl;
@@ -1991,13 +1988,13 @@ void runStandardBootstrap(Params &params, string &original_model, Alignment *ali
 	int saved_aLRT_replicates = params.aLRT_replicates;
 	params.aLRT_replicates = 0;
 	string treefile_name = params.out_prefix;
-	treefile_name += ".treefile";
+	treefile_name += ".treefile" + MPIHelper::getInstance().getProcessSuffix();
 	string boottrees_name = params.out_prefix;
-	boottrees_name += ".boottrees";
+	boottrees_name += ".boottrees" + MPIHelper::getInstance().getProcessSuffix();
 	string bootaln_name = params.out_prefix;
-	bootaln_name += ".bootaln";
+	bootaln_name += ".bootaln" + MPIHelper::getInstance().getProcessSuffix();
 	string bootlh_name = params.out_prefix;
-	bootlh_name += ".bootlh";
+	bootlh_name += ".bootlh" + MPIHelper::getInstance().getProcessSuffix();
 	// first empty the boottrees file
 	try {
 		ofstream tree_out;
@@ -2022,7 +2019,11 @@ void runStandardBootstrap(Params &params, string &original_model, Alignment *ali
 	double start_time = getCPUTime();
 
 	// do bootstrap analysis
-	for (int sample = 0; sample < params.num_bootstrap_samples; sample++) {
+	int numBootSamples = params.num_bootstrap_samples;
+	int numProcesses = MPIHelper::getInstance().getNumProcesses();
+	int numSampleEach = numBootSamples / numProcesses + (MPIHelper::getInstance().getProcessID() < numBootSamples % numProcesses);
+
+	for (int sample = 0; sample < numSampleEach; sample++) {
 		mpiout << endl << "===> START BOOTSTRAP REPLICATE NUMBER "
 				<< sample + 1 << endl << endl;
 
@@ -2079,8 +2080,6 @@ void runStandardBootstrap(Params &params, string &original_model, Alignment *ali
 			boot_tree->printResultTree();
 		}
 
-		cout << "Checkpoint 1" << endl;
-
 		// read in the output tree file
 		string tree_str;
 		try {
@@ -2103,21 +2102,24 @@ void runStandardBootstrap(Params &params, string &original_model, Alignment *ali
 			outError(ERR_WRITE_OUTPUT, boottrees_name);
 		}
 
-		cout << "Checkpoint 2" << endl;
-
 		if (params.num_bootstrap_samples == 1)
 			reportPhyloAnalysis(params, original_model, *bootstrap_alignment, *boot_tree, model_info, removed_seqs, twin_seqs);
 		// WHY was the following line missing, which caused memory leak?
-		cout << "Checkpoint 3" << endl;
 	
 		delete boot_tree;
 		delete bootstrap_alignment;
-		cout << "Checkpoint 4" << endl;
-	
 	}
 
-	if (params.consensus_type == CT_CONSENSUS_TREE) {
+    MPI_Barrier(MPI_COMM_WORLD);
 
+	if (MPIHelper::getInstance().isMaster()) {
+		concatMPIFilesIntoSingleFile(
+			boottrees_name = (string) params.out_prefix + ".boottrees"
+		);
+	}
+	MPIOut::getInstance().setDisableOutput(false);
+
+	if (params.consensus_type == CT_CONSENSUS_TREE && MPIHelper::getInstance().isMaster()) {
 		mpiout << endl << "===> COMPUTE CONSENSUS TREE FROM "
 				<< params.num_bootstrap_samples << " BOOTSTRAP TREES" << endl << endl;
 		computeConsensusTree(boottrees_name.c_str(), 0, 1e6, -1,
@@ -2127,7 +2129,13 @@ void runStandardBootstrap(Params &params, string &original_model, Alignment *ali
 	if (params.compute_ml_tree) {
 		mpiout << endl << "===> START ANALYSIS ON THE ORIGINAL ALIGNMENT" << endl << endl;
 		params.aLRT_replicates = saved_aLRT_replicates;
+
+		int savedNumBootstrapSamples = params.num_bootstrap_samples;
+		params.num_bootstrap_samples = 0;
 		runTreeReconstruction(params, original_model, *tree, model_info);
+		params.num_bootstrap_samples = savedNumBootstrapSamples;
+
+		if (MPIHelper::getInstance().isWorker()) return;
 
 		mpiout << endl << "===> ASSIGN BOOTSTRAP SUPPORTS TO THE TREE FROM ORIGINAL ALIGNMENT" << endl << endl;
 		MExtTree ext_tree;
@@ -2141,13 +2149,23 @@ void runStandardBootstrap(Params &params, string &original_model, Alignment *ali
 		STOP_CONDITION sc = params.stop_condition;
 		params.min_iterations = 0;
 		params.stop_condition = SC_FIXED_ITERATION;
+
+		int savedNumBootstrapSamples = params.num_bootstrap_samples;
+		params.num_bootstrap_samples = 0;
 		runTreeReconstruction(params, original_model, *tree, model_info);
+		params.num_bootstrap_samples = savedNumBootstrapSamples;
+
+		if (MPIHelper::getInstance().isWorker()) return;
+
 		params.min_iterations = mi;
 		params.stop_condition = sc;
 		tree->stop_rule.initialize(params);
 		reportPhyloAnalysis(params, original_model, *alignment, *tree, model_info, removed_seqs, twin_seqs);
 	} else
 		mpiout << endl;
+
+	// Making sure worker is off 
+	if (MPIHelper::getInstance().isWorker()) return;
 
 	mpiout << "Total CPU time for bootstrap: " << (getCPUTime() - start_time) << " seconds." << endl << endl;
 	mpiout << "Non-parametric bootstrap results written to:" << endl;
@@ -2344,7 +2362,7 @@ void runPhyloAnalysis(Params &params) {
 			if (MPIHelper::getInstance().isMaster()) tree->printResultTree();
 		}
 		if (MPIHelper::getInstance().isMaster()) reportPhyloAnalysis(params, original_model, *alignment, *tree, model_info, removed_seqs, twin_seqs);
-	} else if (MPIHelper::getInstance().isMaster()) {
+	} else {
 		// the classical non-parameter bootstrap (SBS)
 		runStandardBootstrap(params, original_model, alignment, tree);
 	}
@@ -2813,10 +2831,8 @@ void optimizeAlignment(IQTree * & tree, Params & params){
 //	tree->fixNegativeBranch(true);
 	int pars_before = tree->computeParsimony();
     tree->curScore = pars_before;
-    if (isAllowedToPrint) {
-		mpiout << "Time for parsimony tree construction: " << getCPUTime() - start << " seconds" << endl;
-    	mpiout << "Parsimony score: " << pars_before << endl;
-	}
+	mpiout << "Time for parsimony tree construction: " << getCPUTime() - start << " seconds" << endl;
+	mpiout << "Parsimony score: " << pars_before << endl;
 	BootValTypePars * tmpPatternPars = tree->getPatternPars();
 	for(int i = 0; i < tree->getAlnNPattern(); i++){
 		(tree->aln)->at(i).ras_pars_score = tmpPatternPars[i];
@@ -2841,7 +2857,6 @@ void optimizeAlignment(IQTree * & tree, Params & params){
 
 	tree->doSegmenting();
     MPI_Barrier(MPI_COMM_WORLD);
-
 
 //	if(checkDuplicatePattern(tree))
 //		mpiout << "SECOND CHECK: Sorted alignment patterns are duplicate!" << endl;

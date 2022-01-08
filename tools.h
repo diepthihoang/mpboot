@@ -2170,6 +2170,7 @@ void summarizeHeader(ostream &out, Params &params, bool budget_constraint, Input
 void summarizeFooter(ostream &out, Params &params);
 
 int calculateSequenceHash(string &seq); 
+void concatMPIFilesIntoSingleFile(string output);
 
 #define PROC_MASTER 0
 #define TREE_TAG 1 // Message contain trees
@@ -2235,6 +2236,10 @@ public:
 
     void setProcessID(int processID) {
         MPIHelper::processID = processID;
+    }
+
+    string getProcessSuffix(int i = MPIHelper::getInstance().getProcessID()) {
+        return ".process." + to_string(i);
     }
 
     /** synchronize random seed from master to all workers */
@@ -2356,6 +2361,10 @@ class MPIOut {
         private: 
                 bool disableOutput;
 	public:
+                MPIOut() {
+                        disableOutput = false;
+                }
+
 		template<class TArg>
 		MPIOut &operator<<(TArg arg) {
 			if (MPIHelper::getInstance().isMaster() && !(this)->disableOutput) cout << arg;
@@ -2363,7 +2372,6 @@ class MPIOut {
 		}
 		static MPIOut &getInstance() {
 			static MPIOut instance;
-                        instance.setDisableOutput(false);
 			return instance;
 		}
 
