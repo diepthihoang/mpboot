@@ -2024,7 +2024,7 @@ void runStandardBootstrap(Params &params, string &original_model, Alignment *ali
 	int numSampleEach = numBootSamples / numProcesses + (MPIHelper::getInstance().getProcessID() < numBootSamples % numProcesses);
 
 	for (int sample = 0; sample < numSampleEach; sample++) {
-		mpiout << endl << "===> START BOOTSTRAP REPLICATE NUMBER "
+		mpiout << endl << "===> START BOOTSTRAP REPLICATE NUMBER " << sample + 1 << endl << endl;
         resetGlobalParamOnNewAln();
 
 		Alignment* bootstrap_alignment;
