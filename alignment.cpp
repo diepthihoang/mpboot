@@ -105,12 +105,13 @@ void Alignment::updateSitePatternAfterOptimized(){
     		site++;
     	}
     	pattern_index[at(i)] = i;
-		if(at(i).ras_pars_score != 0){
-			n_informative_patterns++;
-			n_informative_sites += at(i).frequency;
-		}
+		// if(at(i).ras_pars_score != 0){
+		// 	n_informative_patterns++;
+		// 	n_informative_sites += at(i).frequency;
+		// }
     }
 	countConstSite();
+    countInformative();
 }
 
 void Alignment::modifyPatternFreq(Alignment & aln, unsigned short * new_pattern_freqs, int new_nptn){
@@ -736,6 +737,7 @@ void Alignment::condenseParsimonyEquivalentSites(Alignment *aln) {
 		}
 	}
     countConstSite();
+    countInformative();
     cout << "Alignment is condensed into " << size() << " patterns" << endl;
 }
 
@@ -1559,6 +1561,7 @@ void Alignment::extractSubAlignment(Alignment *aln, IntVector &seq_id, int min_t
     site_pattern.resize(site);
     verbose_mode = save_mode;
     countConstSite();
+    countInformative();
     buildSeqStates();
     assert(size() <= aln->size());
 }
@@ -1588,6 +1591,7 @@ void Alignment::extractPatterns(Alignment *aln, IntVector &ptn_id) {
     site_pattern.resize(site);
     verbose_mode = save_mode;
     countConstSite();
+    countInformative();
     buildSeqStates();
     assert(size() <= aln->size());
 }
@@ -1618,6 +1622,7 @@ void Alignment::extractPatternFreqs(Alignment *aln, IntVector &ptn_freq) {
     site_pattern.resize(site);
     verbose_mode = save_mode;
     countConstSite();
+    countInformative();
     buildSeqStates();
     assert(size() <= aln->size());
 }
@@ -1643,6 +1648,7 @@ void Alignment::extractSites(Alignment *aln, IntVector &site_id) {
     }
     verbose_mode = save_mode;
     countConstSite();
+    countInformative();
     buildSeqStates();
     //cout << getNSite() << " positions were extracted" << endl;
     //cout << __func__ << " " << num_states << endl;
@@ -1836,6 +1842,7 @@ void Alignment::createBootstrapAlignment(Alignment *aln, IntVector* pattern_freq
     }
     verbose_mode = save_mode;
     countConstSite();
+    countInformative();
     buildSeqStates();
 }
 /*
@@ -1888,6 +1895,7 @@ void Alignment::createRatchetAlignment(Alignment *aln, int percentage, int weigh
 
     verbose_mode = save_mode;
     countConstSite();
+    countInformative();
     buildSeqStates();
     if(sort_aln) updateSitePatternAfterOptimized();
 }
@@ -1944,6 +1952,7 @@ void Alignment::createPerturbAlignment(Alignment *aln, int percentage, int weigh
 
     verbose_mode = save_mode;
     countConstSite();
+    // countInformative();
     buildSeqStates();
     if(sort_aln) updateSitePatternAfterOptimized();
 }
@@ -2059,6 +2068,7 @@ void Alignment::createGapMaskedAlignment(Alignment *masked_aln, Alignment *aln) 
     }
     verbose_mode = save_mode;
     countConstSite();
+    countInformative();
     buildSeqStates();
 }
 
@@ -2091,6 +2101,7 @@ void Alignment::concatenateAlignment(Alignment *aln) {
     }
     verbose_mode = save_mode;
     countConstSite();
+    countInformative();
     buildSeqStates();
 }
 
@@ -2113,6 +2124,7 @@ void Alignment::copyAlignment(Alignment *aln) {
     }
     verbose_mode = save_mode;
     countConstSite();
+    countInformative();
     buildSeqStates();
 }
 
@@ -2121,6 +2133,19 @@ void Alignment::countConstSite() {
     for (iterator it = begin(); it != end(); it++)
         if ((*it).is_const) num_const_sites += (*it).frequency;
     frac_const_sites = ((double)num_const_sites) / getNSite();
+}
+
+void Alignment::countInformative() {
+	int nptn = getNPattern();
+	n_informative_patterns = 0;
+	n_informative_sites = 0;
+
+    for(int i = 0; i < nptn; ++i) {
+		if(at(i).ras_pars_score != 0){
+			n_informative_patterns++;
+			n_informative_sites += at(i).frequency;
+		}
+    }
 }
 
 string Alignment::getUnobservedConstPatterns() {

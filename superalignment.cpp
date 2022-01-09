@@ -73,6 +73,7 @@ void SuperAlignment::buildPattern() {
 	}
 	verbose_mode = save_mode;
 	countConstSite();
+    countInformative();
     buildSeqStates();
 }
 
@@ -600,6 +601,7 @@ Alignment *SuperAlignment::concatenateAlignments(IntVector &ids) {
     	}
     }
     aln->countConstSite();
+    aln->countInformative();
     aln->buildSeqStates();
 
 	return aln;

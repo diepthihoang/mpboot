@@ -4511,6 +4511,7 @@ void IQTree::removeIdenticalSeqs(Params &params, StrVector &removed_seqs, StrVec
 				cout << removed_seqs[i] << " is identical to " << twin_seqs[i] << endl;
 			}
 		}
+        delete aln; // REF: fix in iqtree1.6.12
 		aln = new_aln;
 	}
 }
