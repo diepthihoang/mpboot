@@ -1699,11 +1699,71 @@ void guidedBootstrap(Params &params)
 	cout << "Log of the probability of the new alignment is printed to: " << outProb_name << endl;
 }
 
+void guidedBootstrapGAN(Params &params)
+{
+	MaAlignment inputAlign(params.aln_file,params.sequence_type, params.intype, params.gap_as_new);
+	inputAlign.readLogLL(params.siteLL_file);
+
+	string outFre_name = params.out_prefix;
+    outFre_name += ".patInfo";
+
+	inputAlign.printPatObsExpFre(outFre_name.c_str());
+
+	string gboAln_name = params.out_prefix;
+    gboAln_name += ".gbo";
+
+	MaAlignment gboAlign;
+	double prob;
+	gboAlign.generateExpectedAlignment(&inputAlign, prob);
+	gboAlign.printPhylip(gboAln_name.c_str());
+
+
+	string outProb_name = params.out_prefix;
+	outProb_name += ".gbo.logP";
+	try {
+		ofstream outProb;
+		outProb.exceptions(ios::failbit | ios::badbit);
+		outProb.open(outProb_name.c_str());
+		outProb.precision(10);
+		outProb << prob << endl;
+		outProb.close();
+	} catch (ios::failure) {
+		outError(ERR_WRITE_OUTPUT, outProb_name);
+	}
+
+	cout << "Information about patterns in the input alignment is printed to: " << outFre_name << endl;
+	cout << "A 'guided bootstrap' alignment is printed to: " << gboAln_name << endl;
+	cout << "Log of the probability of the new alignment is printed to: " << outProb_name << endl;
+}
+
 /**MINH ANH: to compute the probability of an alignment given the multinomial distribution of patterns frequencies derived from a reference alignment*/
 void computeMulProb(Params &params)
 {
 	Alignment refAlign(params.second_align, params.sequence_type, params.intype);
 	Alignment inputAlign(params.aln_file, params.sequence_type, params.intype);
+	double prob;
+	inputAlign.multinomialProb(refAlign,prob);
+	//Printing
+	string outProb_name = params.out_prefix;
+	outProb_name += ".mprob";
+	try {
+		ofstream outProb;
+		outProb.exceptions(ios::failbit | ios::badbit);
+		outProb.open(outProb_name.c_str());
+		outProb.precision(10);
+		outProb << prob << endl;
+		outProb.close();
+	} catch (ios::failure) {
+		outError(ERR_WRITE_OUTPUT, outProb_name);
+	}
+	cout << "Probability of alignment " << params.aln_file << " given alignment " << params.second_align << " is: " << prob << endl;
+	cout << "The probability is printed to: " << outProb_name << endl;
+}
+
+void computeMulProbGAN(Params &params)
+{
+	Alignment refAlign(params.second_align, params.sequence_type, params.intype, params.gap_as_new);
+	Alignment inputAlign(params.aln_file, params.sequence_type, params.intype, params.gap_as_new);
 	double prob;
 	inputAlign.multinomialProb(refAlign,prob);
 	//Printing
@@ -2327,19 +2387,35 @@ int main(int argc, char *argv[])
 	} else if (params.do_pars_multistate) {
 //		cout << "Starting the test for computing concensus NOT from file:" << endl;
 //		testCompConsensus("test.fa.boottrees.treefile", "test.out", &params); // (const char * infile, const char * outfile, Params *params);
-		doParsMultiState(params);
+		if (params.gap_as_new) {
+			doParsMultiStateGAN(params);
+		} else {
+			doParsMultiState(params);
+		}
 	} else if(params.test_mode){
 		test(params);
 	} else if(params.print_site_pars_user_tree){
 		printSiteParsimonyUserTree(params);
 	} else if (params.compute_parsimony) {
-		computeUserTreeParsimomy(params);
+		if (params.gap_as_new) {
+			computeUserTreeParsimomyGAN(params);
+		} else {
+			computeUserTreeParsimomy(params);
+		}
 	}
 	else if (params.newick_to_tnt) {
-		convertNewickToTnt(params);
+		if (params.gap_as_new) {
+			convertNewickToTntGAN(params);
+		} else {
+			convertNewickToTnt(params);
+		}
 	}
 	else if (params.newick_to_nexus) {
-		convertNewickToNexus(params);
+		if (params.gap_as_new) {
+			convertNewickToNexusGAN(params);
+		} else {
+			convertNewickToNexus(params);
+		}
 	}
 	else if (params.rf_dist_mode != 0) {
 		computeRFDist(params);
@@ -2365,10 +2441,22 @@ int main(int argc, char *argv[])
 	} else if (params.aln_file || params.partition_file) {
 		if ((params.siteLL_file || params.second_align) && !params.gbo_replicates)
 		{
-			if (params.siteLL_file)
-				guidedBootstrap(params);
-			if (params.second_align)
-				computeMulProb(params);
+			if (params.siteLL_file) {
+				if (params.gap_as_new) {
+					guidedBootstrapGAN(params);
+				} else {
+					guidedBootstrap(params);
+				}
+			}
+				
+			if (params.second_align) {
+				if (params.gap_as_new) {
+					computeMulProbGAN(params);
+				} else {
+					computeMulProb(params);
+				}
+			}
+				
 		} else {
 			runPhyloAnalysis(params);
 		}

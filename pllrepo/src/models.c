@@ -3383,6 +3383,7 @@ void pllInitReversibleGTR(pllInstance * tr, partitionList * pr, int model)
 
  switch(pr->partitionData[model]->dataType)
    { 
+   case PLL_GAN_DATA:
    case PLL_GENERIC_32:
    case PLL_GENERIC_64:
    case PLL_SECONDARY_DATA_6:
@@ -3855,7 +3856,8 @@ void initRateMatrix(pllInstance *tr, partitionList *pr)
         case PLL_SECONDARY_DATA_6:
         case PLL_SECONDARY_DATA_7:
           setRates(pr->partitionData[model]->substRates, rates);
-          break;          
+          break;        
+        case PLL_GAN_DATA:       
         case PLL_GENERIC_32:
         case PLL_GENERIC_64:      
           switch(tr->multiStateModel)

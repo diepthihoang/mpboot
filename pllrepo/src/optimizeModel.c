@@ -1037,6 +1037,7 @@ void pllOptAlphasGeneric(pllInstance *tr, partitionList * pr, double modelEpsilo
     {
       switch(pr->partitionData[ll->ld[i].partitionList[0]]->dataType)
         {
+        case PLL_GAN_DATA:
         case PLL_DNA_DATA:                          
         case PLL_BINARY_DATA:
         case PLL_SECONDARY_DATA:
@@ -1088,6 +1089,7 @@ void pllOptAlphasGeneric(pllInstance *tr, partitionList * pr, double modelEpsilo
     {
       switch(pr->partitionData[ll->ld[i].partitionList[0]]->dataType)
         {
+        case PLL_GAN_DATA:
         case PLL_DNA_DATA:                          
         case PLL_BINARY_DATA:
         case PLL_SECONDARY_DATA:
@@ -1459,6 +1461,7 @@ void pllOptBaseFreqs(pllInstance *tr, partitionList * pr, double modelEpsilon, l
 	  else
 	    ll->ld[i].valid = PLL_FALSE; 
 	  break;
+  case PLL_GAN_DATA:
 	case PLL_DNA_DATA:	  
 	case PLL_AA_DATA:      
 	case PLL_SECONDARY_DATA:
@@ -1603,6 +1606,7 @@ void pllOptRatesGeneric(pllInstance *tr, partitionList *pr, double modelEpsilon,
 	    else	      
 	      ll->ld[i].valid = PLL_FALSE;	      
             break;
+          case PLL_GAN_DATA:
           case PLL_BINARY_DATA:
           case PLL_AA_DATA:
           case PLL_SECONDARY_DATA:

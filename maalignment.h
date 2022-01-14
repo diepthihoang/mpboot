@@ -35,6 +35,9 @@ public:
     MaAlignment() : Alignment() {};
 
     MaAlignment(char *filename,  char *sequence_type, InputType &intype) : Alignment(filename, sequence_type, intype){};
+
+    MaAlignment(char *filename,  char *sequence_type, InputType &intype, bool &gap_as_new) : Alignment(filename, sequence_type, intype, gap_as_new){};
+
 	
 	MaAlignment(Alignment &align) : Alignment(align){};
 

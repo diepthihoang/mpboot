@@ -23,7 +23,7 @@ const char STATE_INVALID = 127;
 const int NUM_CHAR = 256;
 
 enum SeqType {
-    SEQ_DNA, SEQ_PROTEIN, SEQ_BINARY, SEQ_MORPH, SEQ_MULTISTATE, SEQ_CODON, SEQ_UNKNOWN
+    SEQ_DNA, SEQ_PROTEIN, SEQ_BINARY, SEQ_MORPH, SEQ_MULTISTATE, SEQ_CODON, SEQ_UNKNOWN, SEQ_GAN
 };
 
 
@@ -61,6 +61,15 @@ public:
     Alignment(char *filename, char *sequence_type, InputType &intype);
 
     /**
+            constructor
+            @param filename file name
+            @param sequence_type type of the sequence, either "BIN", "DNA", "AA", or NULL
+            @param intype (OUT) input format of the file
+            @param gap_as_new check if gap character is considered as new character
+     */
+    Alignment(char *filename, char *sequence_type, InputType &intype, bool &gap_as_new);
+
+    /**
             destructor
      */
     virtual ~Alignment();
@@ -93,6 +102,8 @@ public:
 
     int buildPattern(StrVector &sequences, char *sequence_type, int nseq, int nsite);
 
+    int buildPatternGAN(StrVector &sequences, char *sequence_type, int nseq, int nsite, bool gap_as_new);
+
     /**
             read the alignment in PHYLIP format
             @param filename file name
@@ -102,12 +113,30 @@ public:
     int readPhylip(char *filename, char *sequence_type);
 
     /**
+            read the alignment in PHYLIP format
+            @param filename file name
+            @param sequence_type type of the sequence, either "BIN", "DNA", "AA", or NULL
+            @param gap_as_new check if gap character is considered as new character
+            @return 1 on success, 0 on failure
+     */
+    int readPhylipGAN(char *filename, char *sequence_type, bool gap_as_new);
+
+    /**
             read the alignment in FASTA format
             @param filename file name
             @param sequence_type type of the sequence, either "BIN", "DNA", "AA", or NULL
             @return 1 on success, 0 on failure
      */
     int readFasta(char *filename, char *sequence_type);
+
+    /**
+            read the alignment in FASTA format
+            @param filename file name
+            @param sequence_type type of the sequence, either "BIN", "DNA", "AA", or NULL
+            @param gap_as_new check if gap character is considered as new character
+            @return 1 on success, 0 on failure
+     */
+    int readFastaGAN(char *filename, char *sequence_type, bool gap_as_new);
 
     /**
             extract the alignment from a nexus data block, called by readNexus()
@@ -139,6 +168,8 @@ public:
             output alignment 
      ****************************************************************************/
     SeqType detectSequenceType(StrVector &sequences);
+
+    SeqType detectSequenceTypeGAN(StrVector &sequences, bool gap_as_new);
 
     void computeUnknownState();
 

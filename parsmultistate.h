@@ -24,5 +24,6 @@
 #include "tools.h"
 
 void doParsMultiState(Params &params);
+void doParsMultiStateGAN(Params &params);
 
 #endif

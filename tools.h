@@ -1625,6 +1625,12 @@ struct Params {
 	 */
 	bool test_mode;
 
+        /*
+	 * Duong:
+	 * To check how to cheat the gap character
+	 */
+        bool gap_as_new;
+        
 #ifdef _OPENMP
     int num_threads;
 #endif

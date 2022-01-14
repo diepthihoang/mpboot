@@ -804,6 +804,7 @@ void parseArg(int argc, char *argv[], Params &params) {
     params.top_boot_concensus = false;
     params.do_first_rell = false;
     params.test_mode = false;
+	params.gap_as_new = false;
 
 #ifdef _OPENMP
     params.num_threads = 0;
@@ -2461,6 +2462,10 @@ void parseArg(int argc, char *argv[], Params &params) {
             		throw "These options are to convert newick tree string of taxa to one of id.\nUse -s [alignment_file] -test_mode [tree_file]";
 
             	params.test_mode = true;
+            	continue;
+            }
+			if(strcmp(argv[cnt], "-gap_as_new") == 0){
+            	params.gap_as_new = true;
             	continue;
             }
             if(strcmp(argv[cnt], "-opt_btree_spr") == 0){
