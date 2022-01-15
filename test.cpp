@@ -4,8 +4,9 @@
 #include "parstree.h"
 
 void test(Params &params){
-//	testWeightedParsimony(params);
-	testTreeConvertTaxaToID(params);
+	// testWeightedParsimony(params);
+	// testTreeConvertTaxaToID(params);
+    if(params.remove_dup_seq) testRemoveDuplicateSeq(params);
 }
 
 // -s <alnfile> -test_mode <treefile> -cost <costfile>
@@ -75,3 +76,31 @@ void testTreeConvertTaxaToID(Params &params){
 	delete ptree;
 }
 
+
+// Usage 1: -s <alnfile> -test_mode <out_aln>
+// Usage 2: -s <alnfile> -test_mode <out_aln> -bb 100 
+// The 2nd will keep two identical sequences
+void testRemoveDuplicateSeq(Params &params){
+	// read aln
+	Alignment * aln = new Alignment(params.aln_file, params.sequence_type, params.intype);
+
+    StrVector removed_seqs;
+    StrVector twin_seqs;
+	Alignment *new_aln;
+	if (params.root)
+		new_aln = aln->removeIdenticalSeq((string)params.root, params.gbo_replicates > 0, removed_seqs, twin_seqs);
+	else
+		new_aln = aln->removeIdenticalSeq("", params.gbo_replicates > 0, removed_seqs, twin_seqs);
+	if (removed_seqs.size() > 0) {
+		cout << "NOTE: " << removed_seqs.size() << " identical sequences will be ignored when print output alignment." << endl;
+		if (verbose_mode >= VB_MED) {
+			for (int i = 0; i < removed_seqs.size(); i++) {
+				cout << removed_seqs[i] << " is identical to " << twin_seqs[i] << endl;
+			}
+		}
+        delete aln; // REF: fix in iqtree1.6.12
+		aln = new_aln;
+	}
+    aln->printPhylip(params.user_file);
+    delete aln;
+}
