@@ -4,9 +4,18 @@
 #include "parstree.h"
 
 void test(Params &params){
-	// testWeightedParsimony(params);
+	testWeightedParsimony(params);
 	// testTreeConvertTaxaToID(params);
-    if(params.remove_dup_seq) testRemoveDuplicateSeq(params);
+    if(params.remove_dup_seq){
+        testRemoveDuplicateSeq(params);
+        cout << "\nDONE testRemoveDuplicateSeq(). Check output at " << params.user_file << ".\n\n";
+        cout << "NOTE: If you want to remove duplicate sequences for MPBoot search algorithm, "
+            << "the correct command is: \n"
+            << "./mpboot -s " << params.aln_file << " -test_mode -remove_dup_seq " << params.user_file << "\n\n";
+        cout << "NOTE: If you want to remove duplicate sequences for MPBoot bootstrap approximation algorithm, "
+            << "the correct command is: \n"
+            << "./mpboot -s " << params.aln_file << " -test_mode -bb 1000 -remove_dup_seq " << params.user_file << "\n\n";
+    }
 }
 
 // -s <alnfile> -test_mode <treefile> -cost <costfile>
