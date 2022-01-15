@@ -76,8 +76,8 @@ void reportReferences(Params &params, ofstream &out, string &original_model) {
 // 		out << "Since you used Modeltest please also cite Posada and Crandall (1998)" << endl << endl;
 }
 
-void reportAlignment(ofstream &out, Alignment &alignment) {
-	out << "Input data: " << alignment.getNSeq() << " sequences with "
+void reportAlignment(ofstream &out, Alignment &alignment, StrVector &removed_seqs) {
+	out << "Input data: " << alignment.getNSeq() + removed_seqs.size() << " sequences with "
 			<< alignment.getNSite() << " "
 			<< ((alignment.seq_type == SEQ_BINARY) ?
 					"binary" :
@@ -484,7 +484,7 @@ void reportPhyloAnalysis(Params &params, string &original_model,
 		out << "SEQUENCE ALIGNMENT" << endl << "------------------" << endl
 				<< endl;
 		if (tree.isSuperTree()) {
-			out << "Input data: " << alignment.getNSeq() << " taxa with "
+			out << "Input data: " << alignment.getNSeq() + removed_seqs.size() << " taxa with "
 					<< alignment.getNSite() << " partitions and "
 					<< tree.getAlnNSite() << " total sites ("
 					<< ((SuperAlignment*)tree.aln)->computeMissingData()*100 << "% missing data)" << endl << endl;
@@ -523,7 +523,7 @@ void reportPhyloAnalysis(Params &params, string &original_model,
 			}
 			out << endl;
 		} else
-			reportAlignment(out, alignment);
+			reportAlignment(out, alignment, removed_seqs);
 
 		out.precision(4);
 		out << fixed;
@@ -2102,11 +2102,11 @@ void runStandardBootstrap(Params &params, string &original_model, Alignment *ali
 		}
 
 		if (params.num_bootstrap_samples == 1)
-			reportPhyloAnalysis(params, original_model, *bootstrap_alignment, *boot_tree, model_info, removed_seqs, twin_seqs);
+			reportPhyloAnalysis(params, original_model, *(boot_tree->aln), *boot_tree, model_info, removed_seqs, twin_seqs);
 		// WHY was the following line missing, which caused memory leak?
-	
+        
+        delete boot_tree->aln;
 		delete boot_tree;
-		delete bootstrap_alignment;
 	}
 
     MPI_Barrier(MPI_COMM_WORLD);
@@ -2163,7 +2163,7 @@ void runStandardBootstrap(Params &params, string &original_model, Alignment *ali
 				treefile_name.c_str(), false, treefile_name.c_str(),
 				params.out_prefix, ext_tree, NULL, &params);
 		tree->copyTree(&ext_tree);
-		reportPhyloAnalysis(params, original_model, *alignment, *tree, model_info, removed_seqs, twin_seqs);
+		reportPhyloAnalysis(params, original_model, *(tree->aln), *tree, model_info, removed_seqs, twin_seqs);
 	} else if (params.consensus_type == CT_CONSENSUS_TREE) {
 		int mi = params.min_iterations;
 		STOP_CONDITION sc = params.stop_condition;
@@ -2180,7 +2180,7 @@ void runStandardBootstrap(Params &params, string &original_model, Alignment *ali
 		params.min_iterations = mi;
 		params.stop_condition = sc;
 		tree->stop_rule.initialize(params);
-		reportPhyloAnalysis(params, original_model, *alignment, *tree, model_info, removed_seqs, twin_seqs);
+		reportPhyloAnalysis(params, original_model, *(tree->aln), *tree, model_info, removed_seqs, twin_seqs);
 	} else
 		mpiout << endl;
 
@@ -2380,13 +2380,14 @@ void runPhyloAnalysis(Params &params) {
 			tree->insertTaxa(removed_seqs, twin_seqs);
             if (MPIHelper::getInstance().isMaster()) tree->printResultTree();
 		}
-		if (MPIHelper::getInstance().isMaster()) reportPhyloAnalysis(params, original_model, *alignment, *tree, model_info, removed_seqs, twin_seqs);
+		if (MPIHelper::getInstance().isMaster()) reportPhyloAnalysis(params, original_model, *(tree->aln), *tree, model_info, removed_seqs, twin_seqs);
 	} else {
 		// the classical non-parameter bootstrap (SBS)
 		runStandardBootstrap(params, original_model, alignment, tree);
 	}
+
+    delete tree->aln;
 	delete tree;
-	delete alignment;
 }
 
 void printSiteParsimonyUserTree(Params &params) {

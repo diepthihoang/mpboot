@@ -803,6 +803,7 @@ void parseArg(int argc, char *argv[], Params &params) {
     params.distinct_iter_top_boot = 0; // Diep: if not specify -distinct_iter_top_boot <int>
     params.top_boot_concensus = false;
     params.do_first_rell = false;
+    params.remove_dup_seq = false;
     params.test_mode = false;
 
 #ifdef _OPENMP
@@ -2457,10 +2458,14 @@ void parseArg(int argc, char *argv[], Params &params) {
             if(strcmp(argv[cnt], "-test_mode") == 0){
 //            	if(argc != 7)
 //            		throw "These options are to compute weighted parsimony score.\nUse -s [alignment_file] -test_mode [tree_file] -cost fitch/[cost_file]";
-            	if(argc != 5)
-            		throw "These options are to convert newick tree string of taxa to one of id.\nUse -s [alignment_file] -test_mode [tree_file]";
+            	// if(argc != 5)
+            	// 	throw "These options are to convert newick tree string of taxa to one of id.\nUse -s [alignment_file] -test_mode [tree_file]";
 
             	params.test_mode = true;
+            	continue;
+            }
+            if(strcmp(argv[cnt], "-remove_dup_seq") == 0){
+            	params.remove_dup_seq = true;
             	continue;
             }
             if(strcmp(argv[cnt], "-opt_btree_spr") == 0){

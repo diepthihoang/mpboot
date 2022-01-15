@@ -511,6 +511,13 @@ public:
     virtual void countConstSite();
 
     /**
+            Diep: 2022-01-08
+            count the # of informative patterns and the # of informative sites
+            often used when copy/extract alignment
+     */
+    virtual void countInformative();
+
+    /**
      * @return unobserved constant patterns, each entry encoding for one constant character
      */
     string getUnobservedConstPatterns();

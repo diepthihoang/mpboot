@@ -208,6 +208,7 @@ void MaAlignment::generateExpectedAlignment(MaAlignment *aln, double &prob)
 //	cout << "total number of sites: " << site << endl;
 	verbose_mode = save_mode;
 	countConstSite();
+    countInformative();
 	//cout << "Finish generating expected alignment!" << endl;
 	cout << "Logarithm of the probability of the new alignment given the multinomial distribution of the input alignment is: " << prob << endl;
 	cout << "Maximum unconstraint (log) likelihood of the input alignment: " << probMax << endl;
