@@ -1120,6 +1120,17 @@ void computeInitialTree(Params &params, IQTree &iqtree, string &dist_file, int &
         cout << "Reading input tree file " << params.user_file << " ..." << endl;
         bool myrooted = params.is_rooted;
         iqtree.readTree(params.user_file, myrooted);
+
+		NodeVector nodeVec;
+		iqtree.getTaxa(nodeVec);
+		map<string, Node*> taxaNameToNode;
+		for(Node* node: nodeVec) {
+			taxaNameToNode[node->name] = node;
+		}
+		for(string taxaName: iqtree.removedTaxons) {
+			iqtree.deleteLeaf(taxaNameToNode[taxaName]);
+		}
+
         iqtree.setAlignment(iqtree.aln);
         iqtree.initializeAllPartialPars(); // 2020-08-17: Diep added to fix bug while compute score of user tree
         iqtree.clearAllPartialLH(); // 2020-08-17: Diep added to fix bug while compute score of user tree
@@ -2231,12 +2242,13 @@ void runPhyloAnalysis(Params &params) {
 		vector<ModelInfo> model_info;
 		alignment->checkGappySeq();
 
-		StrVector removed_seqs;
+		StrVector removed_seqs; // [SHOULD] move relocate these two variables into IQTREE class
 		StrVector twin_seqs;
 		// remove identical sequences
-        if (params.ignore_identical_seqs)
+        if (params.ignore_identical_seqs) {
             tree->removeIdenticalSeqs(params, removed_seqs, twin_seqs);
-
+			tree->removedTaxons = removed_seqs;
+		}
 		// call main tree reconstruction
 		runTreeReconstruction(params, original_model, *tree, model_info);
 		if (params.gbo_replicates && params.online_bootstrap) {
