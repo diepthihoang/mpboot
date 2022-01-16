@@ -2026,8 +2026,10 @@ void runStandardBootstrap(Params &params, string &original_model, Alignment *ali
 		StrVector removed_seqs;
 		StrVector twin_seqs;
 		// remove identical sequences
-        if (params.ignore_identical_seqs)
+        if (params.ignore_identical_seqs){
             boot_tree->removeIdenticalSeqs(params, removed_seqs, twin_seqs);
+            boot_tree->removedTaxons = removed_seqs;
+        }
 
 		runTreeReconstruction(params, original_model, *boot_tree, model_info);
 
@@ -2090,8 +2092,10 @@ void runStandardBootstrap(Params &params, string &original_model, Alignment *ali
 		StrVector removed_seqs;
 		StrVector twin_seqs;
 		// remove identical sequences
-        if (params.ignore_identical_seqs)
+        if (params.ignore_identical_seqs){
             tree->removeIdenticalSeqs(params, removed_seqs, twin_seqs);
+            tree->removedTaxons = removed_seqs;
+        }
 
 		runTreeReconstruction(params, original_model, *tree, model_info);
 
