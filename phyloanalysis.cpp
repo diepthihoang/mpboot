@@ -75,8 +75,8 @@ void reportReferences(Params &params, ofstream &out, string &original_model) {
 // 		out << "Since you used Modeltest please also cite Posada and Crandall (1998)" << endl << endl;
 }
 
-void reportAlignment(ofstream &out, Alignment &alignment) {
-	out << "Input data: " << alignment.getNSeq() << " sequences with "
+void reportAlignment(ofstream &out, Alignment &alignment, StrVector &removed_seqs) {
+	out << "Input data: " << alignment.getNSeq() + removed_seqs.size() << " sequences with "
 			<< alignment.getNSite() << " "
 			<< ((alignment.seq_type == SEQ_BINARY) ?
 					"binary" :
@@ -483,7 +483,7 @@ void reportPhyloAnalysis(Params &params, string &original_model,
 		out << "SEQUENCE ALIGNMENT" << endl << "------------------" << endl
 				<< endl;
 		if (tree.isSuperTree()) {
-			out << "Input data: " << alignment.getNSeq() << " taxa with "
+			out << "Input data: " << alignment.getNSeq() + removed_seqs.size() << " taxa with "
 					<< alignment.getNSite() << " partitions and "
 					<< tree.getAlnNSite() << " total sites ("
 					<< ((SuperAlignment*)tree.aln)->computeMissingData()*100 << "% missing data)" << endl << endl;
@@ -522,7 +522,7 @@ void reportPhyloAnalysis(Params &params, string &original_model,
 			}
 			out << endl;
 		} else
-			reportAlignment(out, alignment);
+			reportAlignment(out, alignment, removed_seqs);
 
 		out.precision(4);
 		out << fixed;
@@ -1981,6 +1981,7 @@ void runStandardBootstrap(Params &params, string &original_model, Alignment *ali
 
 	// do bootstrap analysis
 	for (int sample = 0; sample < params.num_bootstrap_samples; sample++) {
+        resetGlobalParamOnNewAln();
 		cout << endl << "===> START BOOTSTRAP REPLICATE NUMBER "
 				<< sample + 1 << endl << endl;
 
@@ -2013,7 +2014,29 @@ void runStandardBootstrap(Params &params, string &original_model, Alignment *ali
 			boot_tree = new IQTree(bootstrap_alignment);
 		if (params.print_bootaln)
 			bootstrap_alignment->printPhylip(bootaln_name.c_str(), true);
+
+        if(params.maximum_parsimony){
+            optimizeAlignment(boot_tree, params);// Diep: this is to rearrange columns for better speed in REPS
+        }
+                    
+		// the main Maximum likelihood tree reconstruction
+		vector<ModelInfo> model_info;
+		bootstrap_alignment->checkGappySeq();
+
+		StrVector removed_seqs;
+		StrVector twin_seqs;
+		// remove identical sequences
+        if (params.ignore_identical_seqs)
+            boot_tree->removeIdenticalSeqs(params, removed_seqs, twin_seqs);
+
 		runTreeReconstruction(params, original_model, *boot_tree, model_info);
+
+        // reinsert identical sequences
+		if (removed_seqs.size() > 0) {
+			boot_tree->insertTaxa(removed_seqs, twin_seqs);
+			boot_tree->printResultTree();
+		}
+
 		// read in the output tree file
 		string tree_str;
 		try {
@@ -2036,10 +2059,11 @@ void runStandardBootstrap(Params &params, string &original_model, Alignment *ali
 			outError(ERR_WRITE_OUTPUT, boottrees_name);
 		}
 		if (params.num_bootstrap_samples == 1)
-			reportPhyloAnalysis(params, original_model, *bootstrap_alignment, *boot_tree, model_info, removed_seqs, twin_seqs);
+			reportPhyloAnalysis(params, original_model, *(boot_tree->aln), *boot_tree, model_info, removed_seqs, twin_seqs);
 		// WHY was the following line missing, which caused memory leak?
+        
+        delete boot_tree->aln;
 		delete boot_tree;
-		delete bootstrap_alignment;
 	}
 
 	if (params.consensus_type == CT_CONSENSUS_TREE) {
@@ -2053,7 +2077,29 @@ void runStandardBootstrap(Params &params, string &original_model, Alignment *ali
 	if (params.compute_ml_tree) {
 		cout << endl << "===> START ANALYSIS ON THE ORIGINAL ALIGNMENT" << endl << endl;
 		params.aLRT_replicates = saved_aLRT_replicates;
+
+        if(params.maximum_parsimony){
+            resetGlobalParamOnNewAln();
+            optimizeAlignment(tree, params);// Diep: this is to rearrange columns for better speed in REPS
+        }
+                    
+		// the main Maximum likelihood tree reconstruction
+		vector<ModelInfo> model_info;
+		alignment->checkGappySeq();
+
+		StrVector removed_seqs;
+		StrVector twin_seqs;
+		// remove identical sequences
+        if (params.ignore_identical_seqs)
+            tree->removeIdenticalSeqs(params, removed_seqs, twin_seqs);
+
 		runTreeReconstruction(params, original_model, *tree, model_info);
+
+        // reinsert identical sequences
+		if (removed_seqs.size() > 0) {
+			tree->insertTaxa(removed_seqs, twin_seqs);
+			tree->printResultTree();
+		}
 
 		cout << endl << "===> ASSIGN BOOTSTRAP SUPPORTS TO THE TREE FROM ORIGINAL ALIGNMENT" << endl << endl;
 		MExtTree ext_tree;
@@ -2061,7 +2107,7 @@ void runStandardBootstrap(Params &params, string &original_model, Alignment *ali
 				treefile_name.c_str(), false, treefile_name.c_str(),
 				params.out_prefix, ext_tree, NULL, &params);
 		tree->copyTree(&ext_tree);
-		reportPhyloAnalysis(params, original_model, *alignment, *tree, model_info, removed_seqs, twin_seqs);
+		reportPhyloAnalysis(params, original_model, *(tree->aln), *tree, model_info, removed_seqs, twin_seqs);
 	} else if (params.consensus_type == CT_CONSENSUS_TREE) {
 		int mi = params.min_iterations;
 		STOP_CONDITION sc = params.stop_condition;
@@ -2071,7 +2117,7 @@ void runStandardBootstrap(Params &params, string &original_model, Alignment *ali
 		params.min_iterations = mi;
 		params.stop_condition = sc;
 		tree->stop_rule.initialize(params);
-		reportPhyloAnalysis(params, original_model, *alignment, *tree, model_info, removed_seqs, twin_seqs);
+		reportPhyloAnalysis(params, original_model, *(tree->aln), *tree, model_info, removed_seqs, twin_seqs);
 	} else
 		cout << endl;
 
@@ -2163,10 +2209,6 @@ void runPhyloAnalysis(Params &params) {
 
 	}
 
-//	if(params.maximum_parsimony && (params.gbo_replicates || params.sankoff_cost_file)){
-	if(params.maximum_parsimony && (params.sort_alignment || params.sankoff_cost_file)){
-		optimizeAlignment(tree, params);// Diep: this is to rearrange columns for better speed in REPS
-	}
 
 	string original_model = params.model_name;
 
@@ -2189,6 +2231,13 @@ void runPhyloAnalysis(Params &params) {
 		// run Arndt's plot of tree likelihoods against bootstrap alignments
 		runBootLhTest(params, alignment, *tree);
 	} else if (params.num_bootstrap_samples == 0) {
+
+        // Diep: Relocate the call to optimizeAlignment HERE 
+        // to not interfere with other utilities (such as standard bootstrap)
+        if(params.maximum_parsimony){
+            optimizeAlignment(tree, params);// Diep: this is to rearrange columns for better speed in REPS
+        }
+                    
 		// the main Maximum likelihood tree reconstruction
 		vector<ModelInfo> model_info;
 		alignment->checkGappySeq();
@@ -2258,20 +2307,20 @@ void runPhyloAnalysis(Params &params) {
 //				((PhyloSuperTree*)tree)->computeBranchLengths();
 //			}
 		}
-		// reinsert identical sequences
+		// reinsert identical sequences 
+        // Diep 2021-12-30: use iqtree2 recommendation
 		if (removed_seqs.size() > 0) {
-			delete tree->aln;
-			tree->reinsertIdenticalSeqs(alignment, removed_seqs, twin_seqs);
-			tree->printResultTree();
+			tree->insertTaxa(removed_seqs, twin_seqs);
+            tree->printResultTree();
 		}
-		reportPhyloAnalysis(params, original_model, *alignment, *tree, model_info, removed_seqs, twin_seqs);
+		reportPhyloAnalysis(params, original_model, *(tree->aln), *tree, model_info, removed_seqs, twin_seqs);
 	} else {
 		// the classical non-parameter bootstrap (SBS)
 		runStandardBootstrap(params, original_model, alignment, tree);
 	}
 
+    delete tree->aln;
 	delete tree;
-	delete alignment;
 }
 
 void printSiteParsimonyUserTree(Params &params) {
@@ -2705,6 +2754,10 @@ bool checkDuplicatePattern(IQTree * & tree){
 	return found;
 }
 
+// Diep 2021-12-28: Changed the logic here
+// All parsimony tree search will have its aln optimized
+//      to initialize n_informative_patterns; n_informative_sites 
+//      and to do segmenting 
 void optimizeAlignment(IQTree * & tree, Params & params){
 //	if(checkDuplicatePattern(tree))
 //		cout << "FIRST CHECK: Alignment patterns are not created properly!" << endl;
@@ -2738,7 +2791,9 @@ void optimizeAlignment(IQTree * & tree, Params & params){
 		(tree->aln)->at(i).ras_pars_score = tmpPatternPars[i];
 	}
 
-	if(params.sort_alignment){
+	if(!params.sort_alignment){
+        tree->aln->updateSitePatternAfterOptimized();
+    }else{
 		cout << "Reordering patterns in alignment by decreasing order of pattern parsimony... ";
         start = getCPUTime();
 		// reordering patterns
@@ -2751,8 +2806,6 @@ void optimizeAlignment(IQTree * & tree, Params & params){
 		int pars_after = tree->computeParsimony();
 		if(pars_after != pars_before) outError("Reordering alignment has bug.");
 		cout << getCPUTime() - start << " seconds" << endl;
-	}else{
-		tree->aln->updateSitePatternAfterOptimized();
 	}
 
 	tree->doSegmenting();

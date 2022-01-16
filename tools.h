@@ -1625,6 +1625,15 @@ struct Params {
 	 */
 	bool test_mode;
 
+	/*
+	 * Diep:
+	 * Use with -test_mode
+     * Remove duplicate sequence from the input alignment
+     * (this is to create input aln to compare with mpboot1 because
+     * mpboot1 does not properly support -keep_ident)
+	 */
+	bool remove_dup_seq;
+
 #ifdef _OPENMP
     int num_threads;
 #endif
