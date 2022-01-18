@@ -2770,16 +2770,16 @@ void optimizeAlignment(IQTree * & tree, Params & params){
 	tree->params = &params; // Diep: 2020-08-17, there are two variables with identical name as 'params'
 
     if(params.user_file){
-        cout << "\nReading user tree for sorting patterns" << endl;
+        cout << "\nReading user tree for evaluating patterns" << endl;
         // Diep: 2021-10-31, to enable sorting columns based on user tree
         bool rooted = params.is_rooted;
         tree->readTree(params.user_file, rooted);
         tree->setAlignment(tree->aln);
         cout << "Time for reading: " << getCPUTime() - start << " seconds" << endl;
     }else{
-        cout << "\nComputing random stepwise addition parsimony tree for sorting patterns..." << endl;
-    	// tree->initTopologyByPLLRandomAdition(params); // this pll version needs further sync to work with the rest
-        tree->computeParsimonyTree(params.out_prefix, tree->aln); // this iqtree version plays nicely with the rest
+        cout << "\nComputing random stepwise addition parsimony tree for evaluating patterns..." << endl;
+    	tree->initTopologyByPLLRandomAdition(params); // pll ras
+        // tree->computeParsimonyTree(params.out_prefix, tree->aln); // iqtree ras
         cout << "Time for random stepwise addition parsimony tree construction: " << getCPUTime() - start << " seconds" << endl;
     }
 	// extract the vector of pattern pars of the initialized tree

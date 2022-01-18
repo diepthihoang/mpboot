@@ -358,7 +358,7 @@ void myPartitionsDestroy(partitionList *pl) {
 // This is done independent of Tung's initializePLL function
 // to support reordering aln pattern by parsimony score
 void IQTree::initTopologyByPLLRandomAdition(Params &params){
-	pllInstance * tmpInst;
+	pllInstance * tmpInst = NULL;
 	pllInstanceAttr tmpAttr;
 	pllAlignmentData * tmpAlignmentData;
 	partitionList * tmpPartitions;
@@ -368,6 +368,12 @@ void IQTree::initTopologyByPLLRandomAdition(Params &params){
 	tmpAttr.saveMemory   = PLL_FALSE;
 	tmpAttr.useRecom     = PLL_FALSE;
 	tmpAttr.randomNumberSeed = params.ran_seed;
+
+#ifdef _OPENMP
+    tmpAttr.numberOfThreads = params.num_threads; /* This only affects the pthreads version */
+#else
+    tmpAttr.numberOfThreads = 1;
+#endif
 
 	tmpInst = pllCreateInstance (&tmpAttr);      /* Create the PLL instance */
     /* Read in the aln file */
@@ -397,6 +403,9 @@ void IQTree::initTopologyByPLLRandomAdition(Params &params){
     /* We don't need the the intermediate partition queue structure anymore */
     pllQueuePartitionsDestroy(&partitionInfo);
 
+    if(params.maximum_parsimony)
+    	pllSortedAlignmentRemoveDups(tmpAlignmentData, tmpPartitions); // to sync IQTree aln and PLL one
+    
     pllTreeInitTopologyForAlignment(tmpInst, tmpAlignmentData);
 
     /* Connect the aln and partition structure with the tree structure */
