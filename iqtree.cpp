@@ -2518,7 +2518,7 @@ void IQTree::optimizeBootTrees(){
 		bootstrap_aln->modifyPatternFreq(*saved_aln_on_opt_btree, boot_samples_pars[sample], nptn);
 
 		setAlignment(bootstrap_aln);
-
+        bootstrap_aln->computeUnknownState();
 		if(params->multiple_hits){ // process a few trees in boot_trees_parsimony[sample]
 			IntegerSet result;
 			int best_boot_score = -INT_MAX;
