@@ -1460,7 +1460,7 @@ void Alignment::printPhylip(ostream &out, bool append, const char *aln_site_list
 		int j = 0;
 		for (IntVector::iterator i = site_pattern.begin();  i != site_pattern.end(); i++, j++)
 			if (kept_sites[j]) {
-                if (seq_type == SEQ_MORPH) {
+                if (seq_type == SEQ_MORPH || seq_type == SEQ_BINARY) {
                     string s = convertStateBackStr(at(*i)[seq_id]);
 
                     //due to Pll doesn't allow sequence of digits, change all digits to

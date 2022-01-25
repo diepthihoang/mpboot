@@ -1675,8 +1675,9 @@ void runTreeReconstruction(Params &params, string &original_model, IQTree &iqtre
 			for (PhyloSuperTree::iterator it = stree->begin(); it != stree->end(); it++)
 				if ((*it)->aln->seq_type != SEQ_DNA && (*it)->aln->seq_type != SEQ_PROTEIN)
 					params.start_tree = STT_PARSIMONY;
-		} else if (iqtree.aln->seq_type != SEQ_DNA && iqtree.aln->seq_type != SEQ_PROTEIN && iqtree.aln->seq_type != SEQ_MORPH)
-			params.start_tree = STT_PARSIMONY;
+		} else if (iqtree.aln->seq_type != SEQ_DNA && iqtree.aln->seq_type != SEQ_PROTEIN
+		           && iqtree.aln->seq_type != SEQ_MORPH && iqtree.aln->seq_type != SEQ_BINARY) 
+						params.start_tree = STT_PARSIMONY;
     }
 
     /***************** Initialization for PLL and sNNI ******************/

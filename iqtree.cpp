@@ -523,6 +523,8 @@ void IQTree::createPLLPartition(Params &params, ostream &pllPartitionFileHandle)
         	}
         } else if (aln->seq_type == SEQ_MORPH) {
             model = "MOR";
+        } else if (aln->seq_type == SEQ_BINARY) {
+            model = "BIN";
         } else {
         	model = "WAG";
         	//outError("PLL currently only supports DNA/protein alignments");
