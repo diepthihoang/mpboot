@@ -943,7 +943,7 @@ protected:
      */
     void findBestBonus(double &best_score, NodeVector &best_nodes, NodeVector &best_dads, Node *node = NULL, Node *dad = NULL);
 
-    void estDeltaMin();
+void estDeltaMin();
 
     bool gotReplied;
     bool syncTrees(double cur_correlation, vector<int> &logl_to_send);
@@ -969,12 +969,21 @@ protected:
     bool afterSearchIteration(double cur_correlation, string &best_tree_topo);
 
     int saved_treels_logl_size;
-    void setLoglCheckpoint();
 
+    int getRandomLogl();
+    vector<int> getLoglToSend();
+    void syncFirstLogls();
     void afterTreeSearch();
     void syncBootstrapArray(Params &params, int nunit);
 
     void recalculateIters(int worker, int progress);
+
+    double* benchmarkTime = new double[10];
+    map<int,int> benchMarkLogl;
+    map<int,int> loglIterations;
+
+    ofstream mpiProcessDebug;
+    vector<int> logls_record;
 };
 
 void estimateNNICutoff(Params &params);

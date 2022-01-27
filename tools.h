@@ -2200,6 +2200,9 @@ public:
          * Specify message types for MPI
          */
         enum SyncMessage {
+                LOGL_CUTOFF,
+                LOGL_VECTOR,
+
                 TREE_STRINGS,
                 LOGL_VECTOR_AND_ITERS, // worker -> master
                 LOGL_CUTOFF_AND_STOP_FLAG // master -> worker
