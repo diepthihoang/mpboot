@@ -6,16 +6,16 @@
 void test(Params &params){
 	testWeightedParsimony(params);
 	// testTreeConvertTaxaToID(params);
-    if(params.remove_dup_seq){
-        testRemoveDuplicateSeq(params);
-        cout << "\nDONE testRemoveDuplicateSeq(). Check output at " << params.user_file << ".\n\n";
-        cout << "NOTE: If you want to remove duplicate sequences for MPBoot search algorithm, "
-            << "the correct command is: \n"
-            << "./mpboot -s " << params.aln_file << " -test_mode -remove_dup_seq " << params.user_file << "\n\n";
-        cout << "NOTE: If you want to remove duplicate sequences for MPBoot bootstrap approximation algorithm, "
-            << "the correct command is: \n"
-            << "./mpboot -s " << params.aln_file << " -test_mode -bb 1000 -remove_dup_seq " << params.user_file << "\n\n";
-    }
+    // if(params.remove_dup_seq){
+    //     testRemoveDuplicateSeq(params);
+    //     cout << "\nDONE testRemoveDuplicateSeq(). Check output at " << params.user_file << ".\n\n";
+    //     cout << "NOTE: If you want to remove duplicate sequences for MPBoot search algorithm, "
+    //         << "the correct command is: \n"
+    //         << "./mpboot -s " << params.aln_file << " -test_mode -remove_dup_seq " << params.user_file << "\n\n";
+    //     cout << "NOTE: If you want to remove duplicate sequences for MPBoot bootstrap approximation algorithm, "
+    //         << "the correct command is: \n"
+    //         << "./mpboot -s " << params.aln_file << " -test_mode -bb 1000 -remove_dup_seq " << params.user_file << "\n\n";
+    // }
 }
 
 // -s <alnfile> -test_mode <treefile> -cost <costfile>
@@ -27,24 +27,32 @@ void testWeightedParsimony(Params &params){
 
 	// initialize an ParsTree instance connecting with the alignment
 	ParsTree * ptree = new ParsTree(&alignment);
+	ParsTree * qtree = new ParsTree(&alignment);
 
 	// initialize the cost matrix
 	dynamic_cast<ParsTree *>(ptree)->initParsData(&params);
+	dynamic_cast<ParsTree *>(qtree)->initParsData(&params);
 
 	// read in a tree from user's file
 	ptree->readTree(params.user_file, params.is_rooted);
 	ptree->setAlignment(&alignment); // make BIG difference $$$$$$$$$$$$
 
+
+	qtree->readTree(params.user_file, params.is_rooted);
+	qtree->setAlignment(&alignment); // make BIG difference $$$$$$$$$$$$
+
 	// compute score by Sankoff algorithm
-	cout << "Score = " << ptree->computeParsimony() << endl;
-	cout << "Pattern score = ";
-	ptree->printPatternScore();
+	cout << "Score old = " << ptree->computeParsimony() << endl;
+	cout << "Score new = " << qtree->computeParsimony() << endl;
+
+	// cout << "Pattern score = ";
+	// ptree->printPatternScore();
 	cout << endl;
 
-	cout << "mst score     = ";
-	for(int i = 0; i < ptree->aln->getNPattern(); i++)
-//	for(int i = 0; i < 6; i++)
-		cout << ptree->findMstScore(i) << ", ";
+// 	cout << "mst score     = ";
+// 	for(int i = 0; i < ptree->aln->getNPattern(); i++)
+// //	for(int i = 0; i < 6; i++)
+// 		cout << ptree->findMstScore(i) << ", ";
 	cout << endl;
 	delete ptree;
 
