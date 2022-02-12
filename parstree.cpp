@@ -113,26 +113,12 @@ int ParsTree::computeParsimony(){
     int nptn = aln->size();
     if(_pattern_pars == NULL) _pattern_pars = aligned_alloc<BootValTypePars>(nptn + VCSIZE_USHORT);
 
-    int MAX_VEC_SIZE = max(4, aln->num_states);
     #ifdef __AVX
-        MAX_VEC_SIZE = min(MAX_VEC_SIZE, 8);
+        #define VECTORCLASS Vec8ui
     #else
-        MAX_VEC_SIZE = min(MAX_VEC_SIZE, 4);
+        #define VECTORCLASS Vec4ui
     #endif
-
-    switch (MAX_VEC_SIZE) {
-        case 4:
-            return computeParsimonyBranch<Vec4ui>((PhyloNeighbor*) root->neighbors[0], (PhyloNode*) root);         
-            break;
-        case 8:
-            return computeParsimonyBranch<Vec4ui>((PhyloNeighbor*) root->neighbors[0], (PhyloNode*) root);         
-            break;
-        default:
-            cout << "Unsupported hardware" << endl;
-            assert(false);
-    }
-
-    return computeParsimonyBranch<Vec4ui>((PhyloNeighbor*) root->neighbors[0], (PhyloNode*) root);
+    return computeParsimonyBranch<VECTORCLASS>((PhyloNeighbor*) root->neighbors[0], (PhyloNode*) root);         
 }
 
 //inline UINT computeCostFromChild(UINT child_cost, UINT transition_cost){
@@ -237,15 +223,15 @@ void ParsTree::computePartialParsimony(PhyloNeighbor *dad_branch, PhyloNode *dad
             // bifurcating node
             assert(node->degree() == 3);
 
-            if (aln->num_states >= VECSIZE) {
+            if (aln->num_states != 2) {
                 for(ptn = 0; ptn < aln->size(); ++ptn) {
-                    int ptn_start_index = ptn*4;
+                    int ptn_start_index = ptn * aln->num_states;
                     UINT *left_ptr = &left[ptn_start_index];
                     UINT *right_ptr = &right[ptn_start_index];
                     UINT *partial_pars_ptr = &partial_pars[ptn_start_index];
 
-                    memset(sLeft, 60, sizeof(UINT) * aln->num_states);
-                    memset(sRight, 60, sizeof(UINT) * aln->num_states);
+                    fill(sLeft, sLeft + aln->num_states, INT32_MAX);
+                    fill(sRight, sRight + aln->num_states, INT32_MAX);
 
                     for(int i = 0; i < aln->num_states; ++i) {
                         // transforming from child(i) -> dad(j)
@@ -261,89 +247,30 @@ void ParsTree::computePartialParsimony(PhyloNeighbor *dad_branch, PhyloNode *dad
                     }
                 }
             } else {
+                for (ptn = 0; ptn < aln->size(); ptn++){
+                    // ignore const ptn because it does not affect pars score
+                    if (aln->at(ptn).is_const) continue;
+                    int ptn_start_index = ptn*nstates;
 
-                switch (nstates) {
-                case 4:
-                    for (ptn = 0; ptn < aln->size(); ptn++){
-                        // ignore const ptn because it does not affect pars score
-                        if (aln->at(ptn).is_const) continue;
-                        int ptn_start_index = ptn*4;
+                    UINT *left_ptr = &left[ptn_start_index];
+                    UINT *right_ptr = &right[ptn_start_index];
+                    UINT *partial_pars_ptr = &partial_pars[ptn_start_index];
+                    UINT *cost_matrix_ptr = cost_matrix;
+                    UINT left_contrib, right_contrib;
 
-                        UINT *left_ptr = &left[ptn_start_index];
-                        UINT *right_ptr = &right[ptn_start_index];
-                        UINT *partial_pars_ptr = &partial_pars[ptn_start_index];
-                        UINT *cost_matrix_ptr = cost_matrix;
-                        UINT left_contrib, right_contrib;
-
-                        for(i = 0; i < 4; i++){
-                            // min(j->i) from child_branch
-                            left_contrib = left_ptr[0] + cost_matrix_ptr[0];
-                            right_contrib = right_ptr[0] + cost_matrix_ptr[0];
-                            for(j = 1; j < 4; j++) {
-                                UINT value = left_ptr[j] + cost_matrix_ptr[j];
-                                left_contrib = min(value, left_contrib);
-                                value = right_ptr[j] + cost_matrix_ptr[j];
-                                right_contrib = min(value, right_contrib);
-                            }
-                            partial_pars_ptr[i] = left_contrib+right_contrib;
-                            cost_matrix_ptr += 4;
+                    for(i = 0; i < nstates; i++){
+                        // min(j->i) from child_branch
+                        left_contrib = left_ptr[0] + cost_matrix_ptr[0];
+                        right_contrib = right_ptr[0] + cost_matrix_ptr[0];
+                        for(j = 1; j < nstates; j++) {
+                            UINT value = left_ptr[j] + cost_matrix_ptr[j];
+                            left_contrib = min(value, left_contrib);
+                            value = right_ptr[j] + cost_matrix_ptr[j];
+                            right_contrib = min(value, right_contrib);
                         }
+                        partial_pars_ptr[i] = left_contrib+right_contrib;
+                        cost_matrix_ptr += nstates;
                     }
-                    break;
-                case 20:
-                    for (ptn = 0; ptn < aln->size(); ptn++){
-                        // ignore const ptn because it does not affect pars score
-                        if (aln->at(ptn).is_const) continue;
-                        int ptn_start_index = ptn*20;
-
-                        UINT *left_ptr = &left[ptn_start_index];
-                        UINT *right_ptr = &right[ptn_start_index];
-                        UINT *partial_pars_ptr = &partial_pars[ptn_start_index];
-                        UINT *cost_matrix_ptr = cost_matrix;
-                        UINT left_contrib, right_contrib;
-
-                        for(i = 0; i < 20; i++){
-                            // min(j->i) from child_branch
-                            left_contrib = left_ptr[0] + cost_matrix_ptr[0];
-                            right_contrib = right_ptr[0] + cost_matrix_ptr[0];
-                            for(j = 1; j < 20; j++) {
-                                UINT value = left_ptr[j] + cost_matrix_ptr[j];
-                                left_contrib = min(value, left_contrib);
-                                value = right_ptr[j] + cost_matrix_ptr[j];
-                                right_contrib = min(value, right_contrib);
-                            }
-                            partial_pars_ptr[i] = left_contrib+right_contrib;
-                            cost_matrix_ptr += 20;
-                        }
-                    }
-                    break;
-                default:
-                    for (ptn = 0; ptn < aln->size(); ptn++){
-                        // ignore const ptn because it does not affect pars score
-                        if (aln->at(ptn).is_const) continue;
-                        int ptn_start_index = ptn*nstates;
-
-                        UINT *left_ptr = &left[ptn_start_index];
-                        UINT *right_ptr = &right[ptn_start_index];
-                        UINT *partial_pars_ptr = &partial_pars[ptn_start_index];
-                        UINT *cost_matrix_ptr = cost_matrix;
-                        UINT left_contrib, right_contrib;
-
-                        for(i = 0; i < nstates; i++){
-                            // min(j->i) from child_branch
-                            left_contrib = left_ptr[0] + cost_matrix_ptr[0];
-                            right_contrib = right_ptr[0] + cost_matrix_ptr[0];
-                            for(j = 1; j < nstates; j++) {
-                                UINT value = left_ptr[j] + cost_matrix_ptr[j];
-                                left_contrib = min(value, left_contrib);
-                                value = right_ptr[j] + cost_matrix_ptr[j];
-                                right_contrib = min(value, right_contrib);
-                            }
-                            partial_pars_ptr[i] = left_contrib+right_contrib;
-                            cost_matrix_ptr += nstates;
-                        }
-                    }
-                    break;
                 }
             }
         }
@@ -545,35 +472,35 @@ int ParsTree::computeParsimonyBranch(PhyloNeighbor *dad_branch, PhyloNode *dad, 
         exit(1);
     }
 
-    switch (nstates) {
-    case 4:
-        for (ptn = 0; ptn < aln->size(); ptn++){
-            _pattern_pars[ptn] = 0;
+    if (aln->num_states != 2) {
+        for(ptn = 0; ptn < aln->size(); ++ptn) {
             if (aln->at(ptn).is_const) continue;
-            
-            int ptn_start_index = ptn * 4;
-            UINT *node_branch_ptr = &node_branch->partial_pars[ptn_start_index];
-            UINT *dad_branch_ptr = &dad_branch->partial_pars[ptn_start_index];
-            UINT *cost_matrix_ptr = cost_matrix;
-            UINT min_ptn_pars = UINT_MAX;
-            for(i = 0; i < 4; i++){
-                // min(j->i) from node_branch
-                UINT min_score = node_branch_ptr[0] + cost_matrix_ptr[0];
-                for(j = 1; j < 4; j++) {
-                    UINT value = node_branch_ptr[j] + cost_matrix_ptr[j];
-                    min_score = min(value, min_score);
 
-                }
-                ptn_partial_pars[i] = min_score + dad_branch_ptr[i];
-                min_ptn_pars = min(min_ptn_pars, ptn_partial_pars[i]);
-                cost_matrix_ptr += 4;
+            int ptn_start_index = ptn * aln->num_states;
+            UINT *left_ptr = &node_branch->partial_pars[ptn_start_index];
+            UINT *right_ptr = &dad_branch->partial_pars[ptn_start_index];
+
+            fill(sLeft, sLeft + aln->num_states, UINT_MAX);
+            fill(sRight, sRight + aln->num_states, UINT_MAX);
+
+            for(int i = 0; i < aln->num_states; ++i) {
+                // transforming from child(i) -> dad(j)
+                for(int j = 0; j < aln->num_states; j += VECSIZE) {
+                    VECTORCLASS* vLeft = (VECTORCLASS*) &sLeft[j];
+                    VECTORCLASS* vRight = (VECTORCLASS*) &sRight[j];  
+                    *vLeft = min(*vLeft, *((VECTORCLASS*) &inversedSankoff[i][j]) + left_ptr[i]);
+                    *vRight = min(*vRight, *((VECTORCLASS*) &inversedSankoff[i][j]) + right_ptr[i]); 
+                }    
             }
-            _pattern_pars[ptn] = min_ptn_pars;
-            tree_pars += min_ptn_pars * aln->at(ptn).frequency;
-        }
-        break;
 
-    default:
+            UINT min_pars = INT32_MAX;
+            for(int i = 0; i < aln->num_states; ++i) {
+                min_pars = min(min_pars, sLeft[i] + sRight[i]);
+            }
+            _pattern_pars[ptn] = min_pars;
+            tree_pars += min_pars * aln->at(ptn).frequency;
+        }
+    } else {
         for (ptn = 0; ptn < aln->size(); ptn++){
             _pattern_pars[ptn] = 0;
             if (aln->at(ptn).is_const) continue;
@@ -598,7 +525,6 @@ int ParsTree::computeParsimonyBranch(PhyloNeighbor *dad_branch, PhyloNode *dad, 
             _pattern_pars[ptn] = min_ptn_pars;
             tree_pars += min_ptn_pars * aln->at(ptn).frequency;
         }
-        break;
     }
     if (branch_subst)
         *branch_subst = tree_pars;

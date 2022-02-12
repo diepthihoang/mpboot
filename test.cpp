@@ -43,7 +43,6 @@ void testWeightedParsimony(Params &params){
 
 	// compute score by Sankoff algorithm
 	cout << "Score old = " << ptree->computeParsimony() << endl;
-	cout << "Score new = " << qtree->computeParsimony() << endl;
 
 	// cout << "Pattern score = ";
 	// ptree->printPatternScore();
