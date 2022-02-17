@@ -1832,6 +1832,8 @@ double IQTree::doTreeSearch() {
     stop_rule.addImprovedIteration(1);
     searchinfo.curPerStrength = params->initPerStrength;
 
+    double PHASE_2_START = getRealTime();
+
 	double cur_correlation = 0.0;
 	int ratchet_iter_count = 0;
 
@@ -2149,7 +2151,7 @@ double IQTree::doTreeSearch() {
         if (curScore > bestScore) {
              stringstream cur_tree_topo_ss;
              setRootNode(params->root);
-             if (masterLog) printTree(cur_tree_topo_ss, WT_TAXON_ID | WT_SORT_TAXA);
+             printTree(cur_tree_topo_ss, WT_TAXON_ID | WT_SORT_TAXA);
              if (cur_tree_topo_ss.str() != best_tree_topo) {
                  best_tree_topo = cur_tree_topo_ss.str();
                  // Diep: fix Minh's old if which wrongly set imd_tree = best_tree_topo for mpars
@@ -2238,10 +2240,7 @@ double IQTree::doTreeSearch() {
         afterTreeSearch();
     }
 
-    mpiProcessDebug << fixed << setprecision(3);
-    for(auto &[k, v]: benchMarkLogl) {
-        mpiProcessDebug << k << " " << v << " " << loglIterations[k] << " " << (double) v / loglIterations[k] << endl;
-    }
+    mpiout << "PHASE 2: " << getRealTime() - PHASE_2_START << endl;
 
 	// Diep: optimize bootstrap trees if -opt_btree is specified along with -bb -mpars
 	if(params->gbo_replicates && params->maximum_parsimony){
@@ -2799,7 +2798,7 @@ void IQTree::optimizeBootTrees(){
 	btree_file += ".sampletree";
 
     MPI_Barrier(MPI_COMM_WORLD);
-    checkpointTime = getCPUTime();
+    double PHASE_3_START = getRealTime();
     vector<tuple<int, int, string>> bTrees = scatterBootstrapTrees();
 
 
@@ -3174,7 +3173,7 @@ void IQTree::optimizeBootTrees(){
         MPIHelper::getInstance().sendString(message, PROC_MASTER, BOOT_TREE_TAG);
     }
     MPI_Barrier(MPI_COMM_WORLD);
-    mpiout << "Wall clock time used for boot-optimizing: " << getCPUTime() - checkpointTime << endl;
+    mpiout << "PHASE 3: " << getRealTime() - PHASE_3_START << endl;
 
 
 //	mpiout << "# of multifurcating = " << nmultifurcate << endl;
@@ -5069,8 +5068,10 @@ string IQTree::getTree(string &message, int &pter) {
 
 void IQTree::recalculateIters(int worker, int progress) {
     workersProgress[worker] = progress;
+    int lastCurIt = curIt;
     curIt = 0;
     for(int i = 0; i < workersProgress.size(); ++i) {
         curIt += workersProgress[i];
     }
+    mpiout << "Checkpoint at iteration: " << lastCurIt << "| TIME (seconds): " << getRealTime() - params->start_real_time << " " << (candidateTrees.begin()->first) << endl;
 }

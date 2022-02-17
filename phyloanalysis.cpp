@@ -1260,6 +1260,7 @@ int initCandidateTreeSet(Params &params, IQTree &iqtree, int numInitTrees) {
 	mpiout << "Generating " << numInitTrees - 1 << " parsimony trees... ";
     cout.flush();
     double startTime = getCPUTime();
+	double PHASE_ONE_START = getRealTime();
 
     int numDupPars = 0;
 //    if(params.maximum_parsimony) iqtree.candidateTrees.clear(); // Diep: added this to fix the bug of sorted aln <> orig aln
@@ -1346,8 +1347,7 @@ int initCandidateTreeSet(Params &params, IQTree &iqtree, int numInitTrees) {
             iqtree.setBestTree(tree, iqtree.curScore);
         }
     }
-    double loglTime = getCPUTime() - startTime;
-    mpiout << "CPU time: " << loglTime << endl;
+    mpiout << "PHASE 1: " << getRealTime() - PHASE_ONE_START << endl;
 
     CandidateSet initParsimonyTrees = iqtree.candidateTrees.getBestCandidateTrees(params.numNNITrees);
     iqtree.candidateTrees.clear();
