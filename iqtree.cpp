@@ -5068,10 +5068,9 @@ string IQTree::getTree(string &message, int &pter) {
 
 void IQTree::recalculateIters(int worker, int progress) {
     workersProgress[worker] = progress;
-    int lastCurIt = curIt;
     curIt = 0;
     for(int i = 0; i < workersProgress.size(); ++i) {
         curIt += workersProgress[i];
     }
-    mpiout << "Checkpoint at iteration: " << lastCurIt << " / TIME (seconds): " << getRealTime() - params->start_real_time << " / Best score: " << -(candidateTrees.rbegin()->first) << endl;
+    mpiout << "Checkpoint at iteration: " << curIt << " / TIME (seconds): " << getRealTime() - params->start_real_time << " / Best score: " << -(candidateTrees.rbegin()->first) << endl;
 }
