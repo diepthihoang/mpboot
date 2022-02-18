@@ -982,7 +982,7 @@ void estDeltaMin();
     map<int,int> benchMarkLogl;
     map<int,int> loglIterations;
 
-    ofstream mpiProcessDebug;
+    // ofstream mpiProcessDebug;
     vector<int> logls_record;
 };
 
