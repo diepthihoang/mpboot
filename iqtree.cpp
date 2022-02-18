@@ -79,7 +79,7 @@ void IQTree::init() {
     reps_segments = -1;
     segment_upper = NULL;
     original_sample = NULL;
-    mpiProcessDebug = ofstream(to_string(MPIHelper::getInstance().getProcessID()) + "-mpi-debug.txt");
+    // mpiProcessDebug = ofstream(to_string(MPIHelper::getInstance().getProcessID()) + "-mpi-debug.txt");
 }
 
 IQTree::IQTree(Alignment *aln) : PhyloTree(aln) {
@@ -2238,10 +2238,10 @@ double IQTree::doTreeSearch() {
         afterTreeSearch();
     }
 
-    mpiProcessDebug << fixed << setprecision(3);
-    for(auto &[k, v]: benchMarkLogl) {
-        mpiProcessDebug << k << " " << v << " " << loglIterations[k] << " " << (double) v / loglIterations[k] << endl;
-    }
+    // mpiProcessDebug << fixed << setprecision(3);
+    // for(auto &[k, v]: benchMarkLogl) {
+    //     mpiProcessDebug << k << " " << v << " " << loglIterations[k] << " " << (double) v / loglIterations[k] << endl;
+    // }
 
 	// Diep: optimize bootstrap trees if -opt_btree is specified along with -bb -mpars
 	if(params->gbo_replicates && params->maximum_parsimony){
