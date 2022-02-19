@@ -1735,10 +1735,10 @@ bool IQTree::afterSearchIteration(double cur_correlation, string &best_tree_topo
             logl_to_send = getLoglToSend();
         }
         bool stopFlag = syncTrees(cur_correlation, logl_to_send);
+        updateBestTreeFromCandidateSet(best_tree_topo);
         if(stopFlag) {
             return true;
         }
-        updateBestTreeFromCandidateSet(best_tree_topo);
     }
     return false;
 }
@@ -4885,18 +4885,17 @@ bool IQTree::syncTrees(double cur_correlation, vector<int> &logl_to_send) {
             vector<int> vectorLogL;
             MPIHelper::getInstance().recvInts(vectorLogL, worker, MPIHelper::LOGL_VECTOR_AND_ITERS);
             MPIHelper::getInstance().recvString(treeStrings, worker, MPIHelper::TREE_STRINGS);
-
             recalculateIters(worker, vectorLogL.back());
             vectorLogL.pop_back();
 
             treels_logl.insert(treels_logl.end(), vectorLogL.begin(), vectorLogL.end());
             vectorLogL.clear();
 
+            candidateTrees.updateSyncTrees(treeStrings);
             recalculateLoglValue();
             // update candidatSet
 
             string sendTrees = candidateTrees.getSyncTrees();
-            candidateTrees.updateSyncTrees(treeStrings);
             // send sync trees back
             shouldStop = stop_rule.meetStopCondition(curIt, cur_correlation);
             vector<int> loglAndStopFlag = {shouldStop, (int) getRandomLogl()};

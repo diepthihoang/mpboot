@@ -233,7 +233,7 @@ string CandidateSet::getSyncTrees(int forWorker) {
 	for(int i = 0; i < sz; ++it, ++i) {
 		syncTrees += to_string((int) -(it->first));
 		syncTrees += ' ';
-		syncTrees += (it->second).tree;
+		syncTrees += it->second.topology;
 		syncTrees += '#';
 	}
 	return syncTrees;
@@ -252,7 +252,7 @@ void CandidateSet::updateSingleSyncTree(string singleTree) {
 		}
 	}
 	score = -score;
-	update(tree, score);
+	update(createTempTreeFromTopology(tree), score);
 }
 
 
@@ -265,4 +265,22 @@ void CandidateSet::updateSyncTrees(string syncString) {
 			startPos = i + 1;
 		}
 	}
+}
+
+
+string CandidateSet::createTempTreeFromTopology(string &topology) {
+    string treeString;
+    for(int i = 0; i < topology.size(); ++i) {
+		if (!isdigit(topology[i])) {
+            treeString += topology[i];
+        } else {
+            int j = i, id = 0;
+            while(isdigit(topology[j])) {
+                id = id * 10 + topology[j++] - '0';
+			}
+            treeString += aln->getSeqName(id) + ":0";
+            i = j - 1;
+        }
+    }
+    return treeString;
 }

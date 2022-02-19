@@ -3503,6 +3503,9 @@ void MPIHelper::init(int argc, char *argv[]) {
     setNumTreeReceived(0);
     setNumTreeSent(0);
     setNumNNISearch(0);
+	treeSearchBuffers.resize(n_tasks);
+	loglBuffers.resize(n_tasks);
+
 	MPIOut::getInstance().setDisableOutput(false);
 }
 
@@ -3574,15 +3577,14 @@ void MPIHelper::sendString(string &str, int dest, int tag) {
 
 void MPIHelper::asyncSendString(string &str, int dest, int tag, MPI_Request *req) {
 	// if (async_buf != nullptr) delete [] async_buf;
-	char* async_buf = new char[str.length()+1];
-	strcpy(async_buf, str.c_str());
-	MPI_Isend(async_buf, str.length()+1, MPI_CHAR, dest, tag, MPI_COMM_WORLD, req);
+	treeSearchBuffers[dest] = str + " ";
+	MPI_Isend(treeSearchBuffers[dest].c_str(), str.length()+1, MPI_CHAR, dest, tag, MPI_COMM_WORLD, req);
 }
 
 void MPIHelper::asyncSendInts(vector<int> &vec, int dest, int tag, MPI_Request *req) {
-	int* buf = new int[vec.size()];
-	copy(vec.begin(), vec.end(), buf);
-	MPI_Isend(buf, vec.size(), MPI_INT, dest, tag, MPI_COMM_WORLD, req);
+	loglBuffers[dest] = vec;
+	loglBuffers[dest].push_back(0);
+	MPI_Isend(&loglBuffers[dest][0], vec.size(), MPI_INT, dest, tag, MPI_COMM_WORLD, req);
 }
 
 int MPIHelper::recvInts(vector<int> &vec, int src, int tag) {
