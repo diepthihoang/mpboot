@@ -2196,6 +2196,10 @@ using namespace std;
 
 class MPIHelper {
 public:
+
+	vector<string> treeSearchBuffers;
+	vector<vector<int>> loglBuffers;
+
         /**
          * Specify message types for MPI
          */
