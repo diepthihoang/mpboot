@@ -2197,7 +2197,7 @@ using namespace std;
 class MPIHelper {
 public:
 
-	vector<string> treeSearchBuffers;
+        char **treeSearchBuffers;
 	vector<vector<int>> loglBuffers;
 
         /**
