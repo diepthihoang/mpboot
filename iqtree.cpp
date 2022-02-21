@@ -5075,5 +5075,5 @@ void IQTree::recalculateIters(int worker, int progress) {
     for(int i = 0; i < workersProgress.size(); ++i) {
         curIt += workersProgress[i];
     }
-    mpiout << "Checkpoint at iteration: " << curIt << " / TIME (seconds): " << getRealTime() - params->start_real_time << " / Best score: " << -(candidateTrees.rbegin()->first) << " / Num tree evaluated: " << treels_logl.size() << " " << logl_cutoff << endl;
+    mpiout << "Checkpoint at iteration: " << curIt << " / TIME (seconds): " << getRealTime() - params->start_real_time << " / Best score: " << -(candidateTrees.rbegin()->first) << " / Num tree evaluated: " << treels_logl.size() << " / Logl Cutoff: " << logl_cutoff << endl;
 }
