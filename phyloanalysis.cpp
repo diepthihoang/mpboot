@@ -1316,6 +1316,7 @@ int initCandidateTreeSet(Params &params, IQTree &iqtree, int numInitTrees) {
 	mpiout << "(" << numDupPars << " duplicated parsimony trees)" << endl;
 	mpiout << "Wall used for tree generating time: " << parsTime << endl;
 
+    mpiout << "PHASE 1: " << getRealTime() - PHASE_ONE_START << endl;
 	// do not do anything for parsimony because tree was already optimized by SPR
 	if (params.maximum_parsimony){
 		return -1;
@@ -1347,7 +1348,6 @@ int initCandidateTreeSet(Params &params, IQTree &iqtree, int numInitTrees) {
             iqtree.setBestTree(tree, iqtree.curScore);
         }
     }
-    mpiout << "PHASE 1: " << getRealTime() - PHASE_ONE_START << endl;
 
     CandidateSet initParsimonyTrees = iqtree.candidateTrees.getBestCandidateTrees(params.numNNITrees);
     iqtree.candidateTrees.clear();
