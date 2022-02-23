@@ -98,7 +98,7 @@ void CandidateSet::initParentTrees() {
     }
 }
 
-bool CandidateSet::update(string tree, double score) {
+bool CandidateSet::update(string tree, double score, bool isNewCandidate) {
 	bool newTree;
 	CandidateTree candidate;
 	candidate.tree = tree;
@@ -106,6 +106,8 @@ bool CandidateSet::update(string tree, double score) {
 	candidate.topology = getTopology(tree);
 	if (candidate.score > bestScore)
 		bestScore = candidate.score;
+	
+	iterator iter = end();
 	if (treeTopologyExist(candidate.topology)) {
 	    // if tree topology already exist, we replace the old
 	    // by the new one (with new branch lengths) and update the score
@@ -117,14 +119,14 @@ bool CandidateSet::update(string tree, double score) {
 					break;
 				}
 			// insert tree into candidate set
-			insert(CandidateSet::value_type(score, candidate));
+			iter = insert(CandidateSet::value_type(score, candidate));
 		}
 		newTree = false;
 	} else {
 		newTree = true;
 		if (size() < maxCandidates) {
 			// insert tree into candidate set
-			insert(CandidateSet::value_type(score, candidate));
+			iter = insert(CandidateSet::value_type(score, candidate));
 			topologies[candidate.topology] = score;
 			candidateTreeVec.push_back(tree); // Diep added
 		} else if (getWorstScore() <= score){
@@ -138,13 +140,16 @@ bool CandidateSet::update(string tree, double score) {
 					candidateTreeVec[i] = tree;
 					break;
 				}
-
-			erase(begin());
 			// insert tree into candidate set
-			insert(CandidateSet::value_type(score, candidate));
+			iter = insert(CandidateSet::value_type(score, candidate));
 			topologies[candidate.topology] = score;
 		}else
 			newTree = false; // Diep added
+	}
+
+	if (isNewCandidate && iter != end()) {
+		newCandidates.emplace_back(iter->second.topology, iter->first);
+		if (newCandidates.size() >= 5) newCandidates.erase(newCandidates.begin());
 	}
 	return newTree;
 }
@@ -221,21 +226,15 @@ string CandidateSet::getRandCandVecTree(){
 	return "";
 }
 
-string CandidateSet::getSyncTrees(int forWorker) {
+string CandidateSet::getSyncTrees() {
 	string syncTrees;
-	int sz = min((int) size(), popSize);
-
-	if (MPIHelper::getInstance().isWorker()) {
-		sz = min(sz, forWorker);
-	}
-
-	auto it = rbegin();
-	for(int i = 0; i < sz; ++it, ++i) {
-		syncTrees += to_string((int) -(it->first));
+	for(auto [topo, score]: newCandidates) {
+		syncTrees += to_string((int) -score);
 		syncTrees += ' ';
-		syncTrees += it->second.topology;
+		syncTrees += topo;
 		syncTrees += '#';
 	}
+	if (MPIHelper::getInstance().isWorker()) newCandidates.clear();
 	return syncTrees;
 }
 
@@ -252,7 +251,7 @@ void CandidateSet::updateSingleSyncTree(string singleTree) {
 		}
 	}
 	score = -score;
-	update(createTempTreeFromTopology(tree), score);
+	update(createTempTreeFromTopology(tree), score, MPIHelper::getInstance().isMaster());
 }
 
 

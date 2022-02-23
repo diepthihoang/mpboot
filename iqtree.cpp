@@ -1625,14 +1625,14 @@ void IQTree::MPITreeSearch_Initialize() {
         }
         updateBestTreeFromCandidateSet(topo);
 
-        message = candidateTrees.getSyncTrees(5);
+        message = candidateTrees.getSyncTrees();
         for(int worker = 1; worker < world_size; ++worker) {
             MPIHelper::getInstance().sendString(message, worker, TREE_TAG);
         }
     } else {
         reqs.resize(1, vector<MPI_Request>(2));
         gotReplied = true;
-        string message = candidateTrees.getSyncTrees(5);
+        string message = candidateTrees.getSyncTrees();
         MPIHelper::getInstance().sendString(message, PROC_MASTER, TREE_TAG);
 
         message.clear();
@@ -1671,7 +1671,7 @@ vector<int> IQTree::getLoglToSend() {
         logl_to_send[i] = treels_logl[saved_treels_logl_size + i];
     }
     saved_treels_logl_size = treels_logl.size();
-    return logl_to_send;
+    return compressVec(logl_to_send, logl_cutoff == 0 ? INT32_MIN : logl_cutoff);
 }
 
 int IQTree::getRandomLogl() {
@@ -1694,6 +1694,7 @@ void IQTree::syncFirstLogls() {
                 worker,
                 MPIHelper::LOGL_VECTOR
             );
+            logls = decompressVec(logls);
             treels_logl.insert(treels_logl.end(), logls.begin(), logls.end());
         }
         recalculateLoglValue();
@@ -3586,6 +3587,8 @@ void IQTree::saveCurrentTree(double cur_logl) {
          *  => Bias (a lot of trees evaluated on the same logl_cutoff)
          */
         if (random_int(MPIHelper::getInstance().getNumProcesses()) != 0) return;
+    } else {
+        if (random_int(100) >= params->save_current_tree_percent) return;
     }
 
     // random(last -> current), random(last = 0, current = logl_cutoff) -> ???
@@ -4887,6 +4890,7 @@ bool IQTree::syncTrees(double cur_correlation, vector<int> &logl_to_send) {
             MPIHelper::getInstance().recvString(treeStrings, worker, MPIHelper::TREE_STRINGS);
             recalculateIters(worker, vectorLogL.back());
             vectorLogL.pop_back();
+            vectorLogL = decompressVec(vectorLogL);
 
             treels_logl.insert(treels_logl.end(), vectorLogL.begin(), vectorLogL.end());
             vectorLogL.clear();
