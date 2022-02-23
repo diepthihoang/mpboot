@@ -1347,6 +1347,8 @@ struct Params {
 	 */
 	int k_percent;
 
+        int save_current_tree_percent;
+
     /*
 		diet - percent of species diet to be preserved for species survival
 	*/
@@ -2180,6 +2182,8 @@ void summarizeFooter(ostream &out, Params &params);
 
 int calculateSequenceHash(string &seq); 
 void concatMPIFilesIntoSingleFile(string output);
+vector<int> compressVec(vector<int> &vec, int barrier);
+vector<int> decompressVec(vector<int> &vec);
 
 #define PROC_MASTER 0
 #define TREE_TAG 1 // Message contain trees

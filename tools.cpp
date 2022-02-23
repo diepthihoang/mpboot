@@ -552,6 +552,7 @@ void get2RandNumb(const int size, int &first, int &second) {
 
 void parseArg(int argc, char *argv[], Params &params) {
     int cnt;
+	params.save_current_tree_percent = 100;
     verbose_mode = VB_MIN;
     params.tree_gen = NONE;
     params.user_file = NULL;
@@ -2276,7 +2277,13 @@ void parseArg(int argc, char *argv[], Params &params) {
 				continue;
 			}
 
-
+			if (strcmp(argv[cnt], "-repspercent") == 0) {
+				cnt++;
+				if (cnt >= argc)
+					throw "Use -repspercent <percent_saving_current_tree>";
+				params.save_current_tree_percent = convert_int(argv[cnt]);
+				continue;
+			}
 //			if(strcmp(argv[cnt], "-mpars") == 0){
 //            	params.maximum_parsimony = true;
 //            	params.nni5 = false;
@@ -3662,4 +3669,30 @@ void concatMPIFilesIntoSingleFile(string output) {
 		istr.close();
 	}
 	fout.close();
+}
+
+vector<int> compressVec(vector<int> &vec, int barrier) {
+	if (vec.empty()) return {};
+
+	sort(vec.rbegin(), vec.rend());
+	vector<int> res;
+
+	for(int x: vec) {
+		if (x < barrier) x = barrier;
+		if (!res.empty() && res[res.size() - 2] == x) res.back()++;
+		else {
+			res.push_back(x);
+			res.push_back(1);
+		}
+	}
+
+	return res;
+}
+
+vector<int> decompressVec(vector<int> &vec) {
+	vector<int> res;
+	for(int i = 0; i < vec.size(); i += 2) {
+		res.insert(res.begin(), vec[i+1], vec[i]);
+	}
+	return res;
 }
