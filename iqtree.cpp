@@ -1833,7 +1833,7 @@ double IQTree::doTreeSearch() {
     stop_rule.addImprovedIteration(1);
     searchinfo.curPerStrength = params->initPerStrength;
 
-    double PHASE_2_START = getRealTime();
+    double PHASE_2_START = getCPUTime();
 
 	double cur_correlation = 0.0;
 	int ratchet_iter_count = 0;
@@ -2241,7 +2241,9 @@ double IQTree::doTreeSearch() {
         afterTreeSearch();
     }
 
-    mpiout << "PHASE 2: " << getRealTime() - PHASE_2_START << endl;
+    cout.precision(2);
+    mpiout << "PHASE 2: " << getCPUTime() - PHASE_2_START << endl;
+    cout.precision(0);
 
 	// Diep: optimize bootstrap trees if -opt_btree is specified along with -bb -mpars
 	if(params->gbo_replicates && params->maximum_parsimony){
@@ -2799,7 +2801,7 @@ void IQTree::optimizeBootTrees(){
 	btree_file += ".sampletree";
 
     MPI_Barrier(MPI_COMM_WORLD);
-    double PHASE_3_START = getRealTime();
+    double PHASE_3_START = getCPUTime();
     vector<tuple<int, int, string>> bTrees = scatterBootstrapTrees();
 
 
@@ -3174,7 +3176,10 @@ void IQTree::optimizeBootTrees(){
         MPIHelper::getInstance().sendString(message, PROC_MASTER, BOOT_TREE_TAG);
     }
     MPI_Barrier(MPI_COMM_WORLD);
-    mpiout << "PHASE 3: " << getRealTime() - PHASE_3_START << endl;
+
+    cout.precision(2);
+    mpiout << "PHASE 3: " << getCPUTime() - PHASE_3_START << endl;
+    cout.precision(0);
 
 
 //	mpiout << "# of multifurcating = " << nmultifurcate << endl;
