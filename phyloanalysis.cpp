@@ -1261,6 +1261,7 @@ int initCandidateTreeSet(Params &params, IQTree &iqtree, int numInitTrees) {
     cout.flush();
     double startTime = getCPUTime();
 	double PHASE_ONE_START = getCPUTime();
+    double PHASE_ONE_START_REAL = getRealTime();
 
     int numDupPars = 0;
 //    if(params.maximum_parsimony) iqtree.candidateTrees.clear(); // Diep: added this to fix the bug of sorted aln <> orig aln
@@ -1318,6 +1319,7 @@ int initCandidateTreeSet(Params &params, IQTree &iqtree, int numInitTrees) {
 
 	cout.precision(2);
     mpiout << "PHASE 1: " << getCPUTime() - PHASE_ONE_START << endl;
+    mpiout << "PHASE 1 REAL: " << getRealTime() - PHASE_ONE_START_REAL << endl;
 	cout.precision(0);
 	// do not do anything for parsimony because tree was already optimized by SPR
 	if (params.maximum_parsimony){

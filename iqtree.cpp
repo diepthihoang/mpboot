@@ -1834,6 +1834,7 @@ double IQTree::doTreeSearch() {
     searchinfo.curPerStrength = params->initPerStrength;
 
     double PHASE_2_START = getCPUTime();
+    double PHASE_2_START_REAL = getRealTime();
 
 	double cur_correlation = 0.0;
 	int ratchet_iter_count = 0;
@@ -2243,6 +2244,7 @@ double IQTree::doTreeSearch() {
 
     cout.precision(2);
     mpiout << "PHASE 2: " << getCPUTime() - PHASE_2_START << endl;
+    mpiout << "PHASE 2 REAL: " << getRealTime() - PHASE_2_START_REAL << endl;
     cout.precision(0);
 
 	// Diep: optimize bootstrap trees if -opt_btree is specified along with -bb -mpars
@@ -2802,6 +2804,7 @@ void IQTree::optimizeBootTrees(){
 
     MPI_Barrier(MPI_COMM_WORLD);
     double PHASE_3_START = getCPUTime();
+    double PHASE_3_START_REAL = getRealTime();
     vector<tuple<int, int, string>> bTrees = scatterBootstrapTrees();
 
 
@@ -3179,6 +3182,7 @@ void IQTree::optimizeBootTrees(){
 
     cout.precision(2);
     mpiout << "PHASE 3: " << getCPUTime() - PHASE_3_START << endl;
+    mpiout << "PHASE 3 REAL: " << getRealTime() - PHASE_3_START_REAL << endl;
     cout.precision(0);
 
 
