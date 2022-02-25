@@ -3511,6 +3511,7 @@ void MPIHelper::init(int argc, char *argv[]) {
     setNumTreeSent(0);
     setNumNNISearch(0);
 	treeSearchBuffers = new char*[n_tasks];
+	for (int i=0; i<n_tasks; i++) treeSearchBuffers[i] = new char[1];
 	loglBuffers.resize(n_tasks);
 
 	MPIOut::getInstance().setDisableOutput(false);
@@ -3583,7 +3584,6 @@ void MPIHelper::sendString(string &str, int dest, int tag) {
 }
 
 void MPIHelper::asyncSendString(string &str, int dest, int tag, MPI_Request *req) {
-	// if (async_buf != nullptr) delete [] async_buf;
 	if (treeSearchBuffers[dest] != nullptr) delete[] treeSearchBuffers[dest];
 	treeSearchBuffers[dest] = new char[str.length()+1];
 	strcpy(treeSearchBuffers[dest], str.c_str());
