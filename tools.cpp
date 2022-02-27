@@ -3499,25 +3499,27 @@ MPIHelper& MPIHelper::getInstance() {
 }
 
 void MPIHelper::init(int argc, char *argv[]) {
-    int n_tasks, task_id;
+    int task_id;
     if (MPI_Init(&argc, &argv) != MPI_SUCCESS) {
         outError("MPI initialization failed!");
     }
-    MPI_Comm_size(MPI_COMM_WORLD, &n_tasks);
+    MPI_Comm_size(MPI_COMM_WORLD, &nTasks);
     MPI_Comm_rank(MPI_COMM_WORLD, &task_id);
-    setNumProcesses(n_tasks);
+    setNumProcesses(nTasks);
     setProcessID(task_id);
     setNumTreeReceived(0);
     setNumTreeSent(0);
     setNumNNISearch(0);
-	treeSearchBuffers = new char*[n_tasks];
-	for (int i=0; i<n_tasks; i++) treeSearchBuffers[i] = new char[1];
-	loglBuffers.resize(n_tasks);
+	treeSearchBuffers = new char*[nTasks];
+	for (int i=0; i<nTasks; i++) treeSearchBuffers[i] = nullptr;
+	loglBuffers.resize(nTasks);
 
 	MPIOut::getInstance().setDisableOutput(false);
 }
 
 void MPIHelper::finalize() {
+    for (int i=0; i<nTasks; i++)
+        delete [] treeSearchBuffers[i];
     MPI_Finalize();
 }
 
@@ -3584,7 +3586,10 @@ void MPIHelper::sendString(string &str, int dest, int tag) {
 }
 
 void MPIHelper::asyncSendString(string &str, int dest, int tag, MPI_Request *req) {
-	if (treeSearchBuffers[dest] != nullptr) delete[] treeSearchBuffers[dest];
+	if (treeSearchBuffers[dest] != nullptr){
+        delete[] treeSearchBuffers[dest];
+        treeSearchBuffers[dest] = nullptr;
+    }
 	treeSearchBuffers[dest] = new char[str.length()+1];
 	strcpy(treeSearchBuffers[dest], str.c_str());
 	MPI_Isend(treeSearchBuffers[dest], str.length()+1, MPI_CHAR, dest, tag, MPI_COMM_WORLD, req);
