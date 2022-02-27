@@ -1121,6 +1121,17 @@ void computeInitialTree(Params &params, IQTree &iqtree, string &dist_file, int &
         mpiout << "Reading input tree file " << params.user_file << " ..." << endl;
         bool myrooted = params.is_rooted;
         iqtree.readTree(params.user_file, myrooted);
+
+		NodeVector nodeVec;
+		iqtree.getTaxa(nodeVec);
+		map<string, Node*> taxaNameToNode;
+		for(Node* node: nodeVec) {
+			taxaNameToNode[node->name] = node;
+		}
+		for(string taxaName: iqtree.removedTaxons) {
+			iqtree.deleteLeaf(taxaNameToNode[taxaName]);
+		}
+
         iqtree.setAlignment(iqtree.aln);
         iqtree.initializeAllPartialPars(); // 2020-08-17: Diep added to fix bug while compute score of user tree
         iqtree.clearAllPartialLH(); // 2020-08-17: Diep added to fix bug while compute score of user tree
@@ -2072,8 +2083,10 @@ void runStandardBootstrap(Params &params, string &original_model, Alignment *ali
 		StrVector removed_seqs;
 		StrVector twin_seqs;
 		// remove identical sequences
-        if (params.ignore_identical_seqs)
+        if (params.ignore_identical_seqs){
             boot_tree->removeIdenticalSeqs(params, removed_seqs, twin_seqs);
+            boot_tree->removedTaxons = removed_seqs;
+        }
 
 		runTreeReconstruction(params, original_model, *boot_tree, model_info);
 
@@ -2147,8 +2160,10 @@ void runStandardBootstrap(Params &params, string &original_model, Alignment *ali
 		StrVector removed_seqs;
 		StrVector twin_seqs;
 		// remove identical sequences
-        if (params.ignore_identical_seqs)
+        if (params.ignore_identical_seqs){
             tree->removeIdenticalSeqs(params, removed_seqs, twin_seqs);
+            tree->removedTaxons = removed_seqs;
+        }
 
 		runTreeReconstruction(params, original_model, *tree, model_info);
 		params.num_bootstrap_samples = savedNumBootstrapSamples;
@@ -2312,12 +2327,13 @@ void runPhyloAnalysis(Params &params) {
 		vector<ModelInfo> model_info;
 		alignment->checkGappySeq();
 
-		StrVector removed_seqs;
+		StrVector removed_seqs; // [SHOULD] move relocate these two variables into IQTREE class
 		StrVector twin_seqs;
 		// remove identical sequences
-        if (params.ignore_identical_seqs)
+        if (params.ignore_identical_seqs) {
             tree->removeIdenticalSeqs(params, removed_seqs, twin_seqs);
-
+			tree->removedTaxons = removed_seqs;
+		}
 		// call main tree reconstruction
 		runTreeReconstruction(params, original_model, *tree, model_info);
 		if (MPIHelper::getInstance().isMaster() && params.gbo_replicates && params.online_bootstrap) {
@@ -2839,8 +2855,24 @@ void optimizeAlignment(IQTree * & tree, Params & params){
 //	tree->initTopologyByPLLRandomAdition(params); // this pll version needs further sync to work with the rest
 	
 	if (MPIHelper::getInstance().isMaster()){
-		mpiout << "Creating starting tree and send it to workers..." << endl;
-		tree->computeParsimonyTree(params.out_prefix, tree->aln); // this iqtree version plays nicely with the rest
+		mpiout << "Creating starting tree by ";
+		// tree->computeParsimonyTree(params.out_prefix, tree->aln); // this iqtree version plays nicely with the rest
+
+        if(params.user_file){
+            mpiout << "\nreading user tree ... " << endl;
+            // Diep: 2021-10-31, to enable sorting columns based on user tree
+            bool rooted = params.is_rooted;
+            tree->readTree(params.user_file, rooted);
+            tree->setAlignment(tree->aln);
+            mpiout << "Time for reading: " << getCPUTime() - start << " seconds" << endl;
+        }else{
+            mpiout << "\ncomputing random stepwise addition parsimony tree ..." << endl;
+            tree->initTopologyByPLLRandomAdition(params); // pll ras
+            // tree->computeParsimonyTree(params.out_prefix, tree->aln); // iqtree ras
+            mpiout << "Time for random stepwise addition parsimony tree construction: " << getCPUTime() - start << " seconds" << endl;
+        }
+                
+        mpiout << "Sending starting tree to workers ..." << endl;
 		string message = tree->getTreeString();
 		for(int i = 0; i < MPIHelper::getInstance().getNumProcesses(); ++i) {
 			if (i != PROC_MASTER) {
@@ -2853,6 +2885,7 @@ void optimizeAlignment(IQTree * & tree, Params & params){
 		int master = MPIHelper::getInstance().recvString(message);
 		tree->readTreeString(message);
 	}
+
 	// extract the vector of pattern pars of the initialized tree
 	tree->initializeAllPartialPars();
 	tree->clearAllPartialLH();
