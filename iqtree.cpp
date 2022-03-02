@@ -2222,7 +2222,7 @@ double IQTree::doTreeSearch() {
 	        }
         } // end of bootstrap convergence test
 
-        if (curIt < 3) { // First iteration of all processes
+        if (curIt < 3 && !doingStandardBootstrap) { // First iteration of all processes
             /**
              * @brief To sync the first logl cutoff to all 
              */

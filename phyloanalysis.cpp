@@ -2834,20 +2834,24 @@ void optimizeAlignment(IQTree * & tree, Params & params){
 
 //	tree->initTopologyByPLLRandomAdition(params); // this pll version needs further sync to work with the rest
 	
-	if (MPIHelper::getInstance().isMaster()){
-		mpiout << "Creating starting tree and send it to workers..." << endl;
-		tree->computeParsimonyTree(params.out_prefix, tree->aln); // this iqtree version plays nicely with the rest
-		string message = tree->getTreeString();
-		for(int i = 0; i < MPIHelper::getInstance().getNumProcesses(); ++i) {
-			if (i != PROC_MASTER) {
-				MPIHelper::getInstance().sendString(message, i, TREE_TAG);
+	if (params.num_bootstrap_samples == 0) {
+		if (MPIHelper::getInstance().isMaster()){
+			mpiout << "Creating starting tree and send it to workers..." << endl;
+			tree->computeParsimonyTree(params.out_prefix, tree->aln); // this iqtree version plays nicely with the rest
+			string message = tree->getTreeString();
+			for(int i = 0; i < MPIHelper::getInstance().getNumProcesses(); ++i) {
+				if (i != PROC_MASTER) {
+					MPIHelper::getInstance().sendString(message, i, TREE_TAG);
+				}
 			}
 		}
-	}
-	else {
-		string message;
-		int master = MPIHelper::getInstance().recvString(message);
-		tree->readTreeString(message);
+		else {
+			string message;
+			int master = MPIHelper::getInstance().recvString(message);
+			tree->readTreeString(message);
+		}
+	} else {
+		tree->computeParsimonyTree(MPIHelper::getInstance().isMaster() ? params.out_prefix : nullptr, tree->aln); // this iqtree version plays nicely with the rest
 	}
 	// extract the vector of pattern pars of the initialized tree
 	tree->initializeAllPartialPars();
@@ -2880,7 +2884,7 @@ void optimizeAlignment(IQTree * & tree, Params & params){
 	}
 
 	tree->doSegmenting();
-    MPI_Barrier(MPI_COMM_WORLD);
+    if (params.num_bootstrap_samples == 0) MPI_Barrier(MPI_COMM_WORLD);
 
 //	if(checkDuplicatePattern(tree))
 //		mpiout << "SECOND CHECK: Sorted alignment patterns are duplicate!" << endl;
