@@ -2934,8 +2934,7 @@ void optimizeAlignment(IQTree * & tree, Params & params){
 	}
 
 	tree->doSegmenting();
-    MPI_Barrier(MPI_COMM_WORLD);
-    cout << "Done optimizeAlignment" << endl;
+    if (params.num_bootstrap_samples == 0) MPI_Barrier(MPI_COMM_WORLD);
 
 //	if(checkDuplicatePattern(tree))
 //		mpiout << "SECOND CHECK: Sorted alignment patterns are duplicate!" << endl;
