@@ -1347,7 +1347,17 @@ struct Params {
 	 */
 	int k_percent;
 
-        int save_current_tree_percent;
+    /**
+     * @brief specify the probability to execute REPS (to reduce # of trees evaluated)
+     */
+    int save_current_tree_percent;
+
+    /**
+     * @brief turn on/off the procedure to treat logls exchange betweeen master and workers
+     * in early iterations in a special way
+     */
+    bool do_sync_first_logls; 
+
 
     /*
 		diet - percent of species diet to be preserved for species survival

@@ -1690,6 +1690,14 @@ int IQTree::getRandomLogl() {
     return min(x, y) + random_int(abs(y-x)+1);
 }
 
+int IQTree::getMpiLoglCutoff() {
+    if(params->do_sync_first_logls){
+        return getRandomLogl();
+    }
+
+    return logl_cutoff;
+}
+
 void IQTree::syncFirstLogls() {
     assert(curIt < 3);
     if (params->cutoff_percent > 100) return;
@@ -1709,7 +1717,7 @@ void IQTree::syncFirstLogls() {
         recalculateLoglValue();
         vector<int> logl(1);
         for(int worker = 1; worker < MPIHelper::getInstance().getNumProcesses(); ++worker) {
-            logl[0] = getRandomLogl();
+            logl[0] = getMpiLoglCutoff();
             MPIHelper::getInstance().asyncSendInts(
                 logl,
                 worker,
@@ -2235,7 +2243,7 @@ double IQTree::doTreeSearch() {
 	        }
         } // end of bootstrap convergence test
 
-        if (curIt < 3 && !doingStandardBootstrap) { // First iteration of all processes
+        if (params->do_sync_first_logls && curIt < 3 && !doingStandardBootstrap) { // First iteration of all processes
             /**
              * @brief To sync the first logl cutoff to all 
              */
@@ -3598,7 +3606,7 @@ void IQTree::estimateNNICutoff(Params* params) {
  * 			means the tree is already in IQTREE data structure
  */
 void IQTree::saveCurrentTree(double cur_logl) {
-    if (curIt < 3) { // Special case (first two iterations of all processes)
+    if (params->do_sync_first_logls && curIt < 3) { // Special case (first two iterations of all processes)
         /**
          *  For the first iteration where logl_cutoff is 0 on all processes, all trees satisfying this condition will be saved 
          *  => Slow (a lot trees satisfying this bad logl_cutoff = 0)
@@ -3606,7 +3614,7 @@ void IQTree::saveCurrentTree(double cur_logl) {
          */
         if (random_int(MPIHelper::getInstance().getNumProcesses()) != 0) return;
     } else {
-        if (random_int(100) >= params->save_current_tree_percent) return;
+        if (1 + random_int(100) > params->save_current_tree_percent) return;
     }
 
     // random(last -> current), random(last = 0, current = logl_cutoff) -> ???
@@ -4920,7 +4928,7 @@ bool IQTree::syncTrees(double cur_correlation, vector<int> &logl_to_send) {
             string sendTrees = candidateTrees.getSyncTrees();
             // send sync trees back
             shouldStop = stop_rule.meetStopCondition(curIt, cur_correlation);
-            vector<int> loglAndStopFlag = {shouldStop, (int) getRandomLogl()};
+            vector<int> loglAndStopFlag = {shouldStop, (int) getMpiLoglCutoff()};
 
             MPIHelper::getInstance().asyncSendString(
                 sendTrees,

@@ -972,6 +972,7 @@ void estDeltaMin();
     int saved_treels_logl_size;
 
     int getRandomLogl();
+    int getMpiLoglCutoff();    
     vector<int> getLoglToSend();
     void syncFirstLogls();
     void afterTreeSearch();

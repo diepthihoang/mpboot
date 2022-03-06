@@ -553,6 +553,7 @@ void get2RandNumb(const int size, int &first, int &second) {
 void parseArg(int argc, char *argv[], Params &params) {
     int cnt;
 	params.save_current_tree_percent = 100;
+    params.do_sync_first_logls = false;
     verbose_mode = VB_MIN;
     params.tree_gen = NONE;
     params.user_file = NULL;
@@ -2284,6 +2285,10 @@ void parseArg(int argc, char *argv[], Params &params) {
 				params.save_current_tree_percent = convert_int(argv[cnt]);
 				continue;
 			}
+			if (strcmp(argv[cnt], "-sync_first_logls") == 0) {
+				params.do_sync_first_logls = true;
+				continue;
+			}            
 //			if(strcmp(argv[cnt], "-mpars") == 0){
 //            	params.maximum_parsimony = true;
 //            	params.nni5 = false;
