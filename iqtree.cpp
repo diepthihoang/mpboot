@@ -4778,8 +4778,9 @@ bool IQTree::syncTrees(double cur_correlation, vector<int> logl_to_send) {
                 stopped_processes_vec[worker] = true;
                 return true;
             }
+            return shouldStop; // Diep: Better score if probing once?
         }
-        return shouldStop; // Diep: Messages in the inbox should be processed until shouldStop == true
+        // return shouldStop; // Diep: Messages in the inbox should be processed until shouldStop == true
     } else {
         // cout << "worker#" << MPIHelper::getInstance().getProcessID();
         bool gotNewMessage = MPIHelper::getInstance().gotMessage();
