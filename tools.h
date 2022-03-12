@@ -2330,5 +2330,30 @@ private:
     int numNNISearch;
 };
 
+class MPIOut {
+        private: 
+                bool disableOutput;
+	public:
+                MPIOut() {
+                        disableOutput = false;
+                }
+
+		template<class TArg>
+		MPIOut &operator<<(TArg arg) {
+			if (MPIHelper::getInstance().isMaster() && !(this)->disableOutput) cout << arg;
+			return (*this);
+		}
+		static MPIOut &getInstance() {
+			static MPIOut instance;
+			return instance;
+		}
+
+                void setDisableOutput(bool disableOutput) {
+                        this->disableOutput = disableOutput;
+                }
+};
+
+#define endl '\n'
+#define mpiout MPIOut::getInstance()
 
 #endif

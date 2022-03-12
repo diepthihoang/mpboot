@@ -48,7 +48,7 @@ void ParsTree::loadCostMatrixFile(char * file_name){
 				else cost_matrix[i * cost_nstates + j] = 1;
 			}
     } else{ // Sankoff cost
-        cout << "Loading cost matrix from " << file_name << "..." << endl;
+        mpiout << "Loading cost matrix from " << file_name << "..." << endl;
 		ifstream fin(file_name);
 		if(!fin.is_open()){
 			outError("Reading cost matrix file cannot perform. Please check your input file!");
@@ -80,15 +80,15 @@ void ParsTree::loadCostMatrixFile(char * file_name){
                 }
 
     if (changed) {
-        cout << "WARING: Cost matrix does not satisfy triangular inenquality and is automatically fixed to:" << endl;
-        cout << cost_nstates << endl;
+        mpiout << "WARING: Cost matrix does not satisfy triangular inenquality and is automatically fixed to:" << endl;
+        mpiout << cost_nstates << endl;
         for (i = 0; i < cost_nstates; i++) {
             for (j = 0; j < cost_nstates; j++)
-                cout << "  " << cost_matrix[i*cost_nstates+j];
-            cout << endl;
+                mpiout << "  " << cost_matrix[i*cost_nstates+j];
+            mpiout << endl;
         }
     } else {
-        cout << "Cost matrix satisfies triangular inenquality" << endl;
+        mpiout << "Cost matrix satisfies triangular inenquality" << endl;
     }
 
 

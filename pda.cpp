@@ -239,6 +239,7 @@ void printCopyright(ostream &out) {
 
 
 void printCopyrightMP(ostream &out) {
+	if (!isAllowedToPrint) return;
 #ifdef IQ_TREE
  	out << "MPBoot";
 	#ifdef _OPENMP
@@ -268,7 +269,7 @@ void printCopyrightMP(ostream &out) {
 #endif
 
 #ifdef IQ_TREE
-	if (isAllowedToPrint) out << endl << "Copyright (c) 2016 Diep Thi Hoang, Le Sy Vinh, Tomas Flouri, Alexandros Stamatakis, Arndt von Haeseler and Bui Quang Minh." << endl << endl;
+	mpiout << endl << "Copyright (c) 2016 Diep Thi Hoang, Le Sy Vinh, Tomas Flouri, Alexandros Stamatakis, Arndt von Haeseler and Bui Quang Minh." << endl << endl;
 #else
 	out << endl << "Copyright (c) 2006-2014 Olga Chernomor, Arndt von Haeseler and Bui Quang Minh." << endl << endl;
 #endif
@@ -2319,7 +2320,7 @@ int main(int argc, char *argv[])
 	omp_set_nested(false); // don't allow nested OpenMP parallelism
 #endif
 	//cout << "sizeof(int)=" << sizeof(int) << endl;
-	cout << endl << endl;
+	mpiout << endl << endl;
 
 	precomputeFitchInfo();
 
@@ -2434,7 +2435,7 @@ int main(int argc, char *argv[])
 	}
 
 	time(&cur_time);
-	if (isAllowedToPrint) cout << "Date and Time: " << ctime(&cur_time);
+	mpiout << "Date and Time: " << ctime(&cur_time);
 
 	finish_random();
     MPIHelper::getInstance().finalize(); // Diep 2021.8.03
