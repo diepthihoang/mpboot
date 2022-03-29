@@ -1628,6 +1628,11 @@ struct Params {
 	 */
 	bool test_mode;
 
+        /**
+         * number of search trees saved
+         */
+        int savek;
+
 	/*
 	 * Diep:
 	 * Use with -test_mode

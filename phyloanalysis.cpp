@@ -1889,8 +1889,13 @@ void runTreeReconstruction(Params &params, string &original_model, IQTree &iqtre
 	if (iqtree.isSuperTree())
 			((PhyloSuperTree*) &iqtree)->mapTrees();
 	if (params.snni && params.min_iterations && isAllowedToPrint) {
-		mpiout << (params.maximum_parsimony ? "Scores" : "Log-likelihoods") << " of best " << params.popSize << " trees: " << endl;
-		iqtree.printBestScores(iqtree.candidateTrees.popSize);
+		if (params.savek == 0) {
+			mpiout << (params.maximum_parsimony ? "Scores" : "Log-likelihoods") << " of best " << params.popSize << " trees: " << endl;
+			iqtree.printBestScores(iqtree.candidateTrees.popSize);
+		} else {
+			mpiout << (params.maximum_parsimony ? "Scores" : "Log-likelihoods") << " of best " << params.savek << " trees: " << endl;
+			iqtree.printBestScores(params.savek);
+		}
 	}
 
 	/******** Performs final model parameters optimization ******************/

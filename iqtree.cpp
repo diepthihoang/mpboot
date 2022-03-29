@@ -1573,7 +1573,7 @@ string IQTree::optimizeModelParameters(bool printInfo) {
 }
 
 void IQTree::printBestScores(int numBestScore) {
-	vector<double> bestScores = candidateTrees.getBestScores(candidateTrees.popSize);
+	vector<double> bestScores = candidateTrees.getBestScores(numBestScore);
 	for (vector<double>::iterator it = bestScores.begin(); it != bestScores.end(); it++)
 		mpiout << (params->maximum_parsimony ? -(*it) : (*it)) << " ";
 	mpiout << endl;
@@ -1787,6 +1787,26 @@ void IQTree::afterTreeSearch() {
     mpiout << "$$$$$END cleaning" << endl;
     mpiout << "CPU time used for tree search (MPI): " << getCPUTime() - checkpointTime << endl;
     MPI_Barrier(MPI_COMM_WORLD);
+
+    if (params->savek) {
+        // sync the candidate sets over processes
+        if (MPIHelper::getInstance().isMaster()) {
+            for(int worker = 1; worker < MPIHelper::getInstance().getNumProcesses(); ++worker) {
+                string treeStrings;
+                MPIHelper::getInstance().recvString(treeStrings, worker, MPIHelper::TREE_STRINGS);
+                candidateTrees.updateSyncTrees(treeStrings);
+            }
+        } else {
+            string sendTrees = candidateTrees.getCandidateSetAsSyncTrees(params->savek);
+            MPIHelper::getInstance().asyncSendString(
+                sendTrees, 
+                PROC_MASTER, 
+                MPIHelper::TREE_STRINGS, 
+                &reqs[0][1]
+            );
+        }
+        MPI_Barrier(MPI_COMM_WORLD);
+    }
 }
 
 double IQTree::doTreeSearch() {

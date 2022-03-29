@@ -171,6 +171,8 @@ public:
 
     string getSyncTrees(int forWorker=5);
 
+    string getCandidateSetAsSyncTrees(int limit);
+
     void updateSingleSyncTree(string singleTree);
 
     void updateSyncTrees(string syncString);
