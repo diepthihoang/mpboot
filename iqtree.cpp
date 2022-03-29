@@ -1539,7 +1539,7 @@ string IQTree::optimizeModelParameters(bool printInfo) {
 }
 
 void IQTree::printBestScores(int numBestScore) {
-	vector<double> bestScores = candidateTrees.getBestScores(candidateTrees.popSize);
+	vector<double> bestScores = candidateTrees.getBestScores(numBestScore);
 	for (vector<double>::iterator it = bestScores.begin(); it != bestScores.end(); it++)
 		cout << (params->maximum_parsimony ? -(*it) : (*it)) << " ";
 	cout << endl;
