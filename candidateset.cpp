@@ -150,7 +150,7 @@ bool CandidateSet::update(string tree, double score) {
 }
 
 vector<double> CandidateSet::getBestScores(int numBestScore) {
-	if (numBestScore == 0)
+	if (numBestScore == 0 || numBestScore > size())
 		numBestScore = size();
 	vector<double> res;
 	for (reverse_iterator rit = rbegin(); rit != rend() && numBestScore > 0; rit++, numBestScore--) {
@@ -219,6 +219,20 @@ string CandidateSet::getRandCandVecTree(){
 	return candidateTreeVec[i];
 	assert(0);
 	return "";
+}
+
+string CandidateSet::getCandidateSetAsSyncTrees(int limit) {
+	string syncTrees;
+	int sz = min((int) size(), limit);
+
+	auto it = rbegin();
+	for(int i = 0; i < sz; ++it, ++i) {
+		syncTrees += to_string((int) -(it->first));
+		syncTrees += ' ';
+		syncTrees += (it->second).tree;
+		syncTrees += '#';
+	}
+	return syncTrees;
 }
 
 string CandidateSet::getSyncTrees(int forWorker) {
