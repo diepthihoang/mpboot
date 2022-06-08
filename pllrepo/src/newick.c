@@ -508,6 +508,7 @@ pllNewickParseString (const char * newick)
   t = (pllNewickTree *) rax_calloc (1, sizeof (pllNewickTree));
 
   n = strlen (newick);
+  
 
   init_lexan (newick, n);
   input = get_next_symbol();
