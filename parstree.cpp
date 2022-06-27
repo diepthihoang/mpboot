@@ -54,7 +54,6 @@ void ParsTree::loadCostMatrixFile(char * file_name){
 			outError("Reading cost matrix file cannot perform. Please check your input file!");
 		}
 
-        if (isAllowedToPrint){
             fin >> cost_nstates;
 
             // allocate memory for cost_matrix
@@ -66,7 +65,6 @@ void ParsTree::loadCostMatrixFile(char * file_name){
                     fin >> cost_matrix[i * cost_nstates + j];
             }
             fin.close();
-        }
     }
 
     int i, j, k;
