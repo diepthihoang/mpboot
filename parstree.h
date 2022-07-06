@@ -54,6 +54,7 @@ public:
         @param dad_branch the branch leading to the subtree
         @param dad its dad, used to direct the traversal
     */
+   template<class VECTORCLASS>
     void computePartialParsimony(PhyloNeighbor *dad_branch, PhyloNode *dad);
 
 
@@ -64,6 +65,7 @@ public:
         @param branch_subst (OUT) if not NULL, the number of substitutions on this branch
         @return parsimony score of the tree
     */
+    template<class VECTORCLASS>
     int computeParsimonyBranch(PhyloNeighbor *dad_branch, PhyloNode *dad, int *branch_subst = NULL);
 
     /**
@@ -119,6 +121,15 @@ public:
 //    int * cost_matrix; // Sep 2016: store cost matrix in 1D array
 //    int cost_nstates; // Sep 2016: # of states provided by cost matrix
     UINT tree_pars;
+
+    UINT VECSIZE;
+    UINT sitesPerVec;
+    UINT vecsPerSite;
+    UINT** extendedSankoff;
+    UINT** inversedSankoff;
+
+    UINT *sLeft;
+    UINT *sRight;
 };
 
 #endif /* PARSTREE_H_ */
