@@ -415,8 +415,11 @@ int ParsTree::computeParsimonyBranch(PhyloNeighbor *dad_branch, PhyloNode *dad, 
     PhyloNeighbor *node_branch = (PhyloNeighbor*) node->findNeighbor(dad);
     assert(node_branch);
 
-    if (!central_partial_pars) {
+    if (!central_partial_pars) 
         initializeAllPartialPars();
+
+    // don't recompute
+    if (vecsPerSite != (VECSIZE + aln->num_states - 1) / VECSIZE){
         VECSIZE = VECTORCLASS::size();
         sitesPerVec = (VECSIZE + aln->num_states - 1) / aln->num_states;
         vecsPerSite = (VECSIZE + aln->num_states - 1) / VECSIZE;
@@ -440,6 +443,7 @@ int ParsTree::computeParsimonyBranch(PhyloNeighbor *dad_branch, PhyloNode *dad, 
             }
         }
     }
+        
     // DTH: I don't really understand what this is for. ###########
     // swap node and dad if dad is a leaf
     if (node->isLeaf()) {
