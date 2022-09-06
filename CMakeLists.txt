@@ -50,6 +50,10 @@ if (CMAKE_BUILD_TYPE STREQUAL "Release")
 	message("Builde mode   : Release")
 endif()
 
+if (CMAKE_GENERATOR MATCHES "Xcode")
+    set(CMAKE_XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT "dwarf-with-dsym")
+endif()
+
 include_directories("${PROJECT_SOURCE_DIR}")
 
 
@@ -65,8 +69,8 @@ if (WIN32)
 elseif (APPLE) 
 	message("Target OS     : Mac OS X")
 	# to be compatible back to Mac OS X 10.6
-	add_definitions("-mmacosx-version-min=10.6") 
-	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -mmacosx-version-min=10.6")
+	add_definitions("-mmacosx-version-min=10.7") 
+	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -mmacosx-version-min=10.7")
     SET(CMAKE_FIND_LIBRARY_SUFFIXES .a ${CMAKE_FIND_LIBRARY_SUFFIXES})
 elseif (UNIX) 
 	message("Target OS     : Unix")
@@ -110,6 +114,12 @@ elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 #	set(COMBINED_FLAGS "-Wall -Wno-unused-function -Wno-sign-compare -pedantic -D_GNU_SOURCE -Wno-nested-anon-types")
 	set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 	set(CMAKE_C_FLAGS_RELEASE "-O3")	
+	if (APPLE)
+        set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} -Wl,-dead_strip")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+		SET(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libc++")
+    endif()
 elseif (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
 	set(VCC "TRUE")
 	message("Compiler      : MS Visual C++ Compiler")
@@ -267,6 +277,16 @@ elseif (IQTREE_FLAGS MATCHES "sse") #SSE intruction set
 	endif()
 endif()
 
+if (IQTREE_FLAGS MATCHES "mpi")
+	if (WIN32)
+		find_package(MPI REQUIRED)
+		include_directories(${MPI_INCLUDE_PATH})
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${MPI_FLAGS}")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MPI_CXX_FLAGS}")
+		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${MPI_EXE_LINKER_FLAGS}")	
+	endif()
+endif()
+
 ##################################################################
 # Setup compiler flags
 ##################################################################
@@ -415,7 +435,14 @@ if (IQTREE_FLAGS MATCHES "omp")
 	endif()
 endif()
 
-target_link_libraries(mpboot pll ncl whtest zlibstatic sprng vectorclass model ${PLATFORM_LIB} ${THREAD_LIB})	
+
+if (IQTREE_FLAGS MATCHES "mpi")
+	if (WIN32)
+		target_link_libraries(mpboot pll ncl whtest zlibstatic sprng vectorclass model ${PLATFORM_LIB} ${THREAD_LIB} ${MPI_LIBRARIES})
+	endif()
+else()
+	target_link_libraries(mpboot pll ncl whtest zlibstatic sprng vectorclass model ${PLATFORM_LIB} ${THREAD_LIB})
+endif()
 
 ##################################################################
 # setup the executable name 

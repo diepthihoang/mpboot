@@ -190,6 +190,25 @@ void initializeCostMatrix() {
 /* bit count for 128 bit SSE3 and 256 bit AVX registers */
 
 #if (defined(__SSE3) || defined(__AVX))
+
+#ifdef _WIN32
+ /* emulate with 32-bit version */
+static __inline unsigned int vectorPopcount(INT_TYPE v)
+{
+PLL_ALIGN_BEGIN unsigned int counts[INTS_PER_VECTOR] PLL_ALIGN_END;
+
+  int
+    i,
+    sum = 0;
+
+  VECTOR_STORE((CAST)counts, v);
+
+  for(i = 0; i < INTS_PER_VECTOR; i++)
+    sum += __builtin_popcount(counts[i]);
+  return ((unsigned int)sum);
+}
+#else
+
 static inline unsigned int vectorPopcount(INT_TYPE v)
 {
   unsigned long
@@ -207,6 +226,7 @@ static inline unsigned int vectorPopcount(INT_TYPE v)
   return ((unsigned int)sum);
 }
 #endif
+#endif
 
 
 
@@ -217,6 +237,43 @@ static inline unsigned int vectorPopcount(INT_TYPE v)
 // Diep:
 // store per site score to nodeNumber
 #if (defined(__SSE3) || defined(__AVX))
+
+#ifdef _WIN32
+
+static inline void storePerSiteNodeScores (partitionList * pr, int model, INT_TYPE v, unsigned int offset , int nodeNumber)
+{
+  PLL_ALIGN_BEGIN unsigned int counts[INTS_PER_VECTOR] PLL_ALIGN_END;
+	parsimonyNumber * buf;
+
+	int
+		i,
+		j;
+
+	VECTOR_STORE((CAST)counts, v);
+
+  // int sum =0;
+
+  // for(i = 0; i < INTS_PER_VECTOR; i++)
+  //   sum += __builtin_popcount(counts[i]);
+  // cout<<sum<<"\n";
+
+	int partialParsLength = pr->partitionData[model]->parsimonyLength * PLL_PCF;
+	int nodeStart = partialParsLength * nodeNumber;
+	int nodeStartPlusOffset = nodeStart + offset * PLL_PCF;
+	for (i = 0; i < INTS_PER_VECTOR; ++i){
+		buf = &(pr->partitionData[model]->perSitePartialPars[nodeStartPlusOffset]);
+		nodeStartPlusOffset += 32;
+//		buf = &(pr->partitionData[model]->perSitePartialPars[nodeStart + offset * PLL_PCF + i * ULINT_SIZE]); // Diep's
+//		buf = &(pr->partitionData[model]->perSitePartialPars[nodeStart + offset * PLL_PCF + i]); // Tomas's code
+		for (j = 0; j < 32; ++ j) {
+			buf[j] += ((counts[i] >> j) & 1);
+    }
+	}
+    
+}
+
+#else
+
 static inline void storePerSiteNodeScores (partitionList * pr, int model, INT_TYPE v, unsigned int offset , int nodeNumber)
 {
 
@@ -243,6 +300,8 @@ static inline void storePerSiteNodeScores (partitionList * pr, int model, INT_TY
 	}
     
 }
+
+#endif
 
 
 // Diep:
