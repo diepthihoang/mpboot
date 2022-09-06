@@ -57,7 +57,7 @@
 //void *rax_malloc_aligned(size_t size);
 
 char *my_strndup(const char *s, size_t n);
-char *strtok_r (char * s, const char * delim, char **save_ptr);
+char *user_define_strtok_r (char * s, const char * delim, char **save_ptr);
 
 #if 0
 // using the following contraption to trigger a compile-time error does not work on some gcc versions. It will trigger a confising linker error in the best case, so it is deativated.

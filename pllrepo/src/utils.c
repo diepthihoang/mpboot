@@ -177,7 +177,7 @@ char *my_strndup(const char *s, size_t n) {
     return ret;
 }
 
-char *strtok_r (char * s, const char * delim, char **save_ptr)
+char *user_define_strtok_r (char * s, const char * delim, char **save_ptr)
 {  
   char *token;
    
@@ -2653,7 +2653,7 @@ static int init_Q_MatrixSymmetries(char *linkageString, partitionList * pr, int 
 
   for(j = 0, str1 = ch; ;j++, str1 = (char *)NULL) 
     {
-      token = strtok_r(str1, ",", &saveptr);
+      token = user_define_strtok_r(str1, ",", &saveptr);
       if(token == (char *)NULL)
         break;
       if(!(j < numberOfRates))
@@ -3424,7 +3424,7 @@ static linkageList* initLinkageListString(char *linkageString, partitionList * p
 
   for(j = 0, str1 = ch; ;j++, str1 = (char *)NULL) 
     {
-      token = strtok_r(str1, ",", &saveptr);
+      token = user_define_strtok_r(str1, ",", &saveptr);
       if(token == (char *)NULL)
         break;
       assert(j < pr->numberOfPartitions);
