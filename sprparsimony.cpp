@@ -221,7 +221,6 @@ PLL_ALIGN_BEGIN unsigned int counts[INTS_PER_VECTOR] PLL_ALIGN_END;
 
   for(i = 0; i < INTS_PER_VECTOR; i++)
     sum += __builtin_popcount(counts[i]);
-  // cout<<sum<<"hihihi"<<endl;
   return ((unsigned int)sum);
 }
 #else

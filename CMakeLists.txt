@@ -277,6 +277,16 @@ elseif (IQTREE_FLAGS MATCHES "sse") #SSE intruction set
 	endif()
 endif()
 
+if (IQTREE_FLAGS MATCHES "mpi")
+	if (WIN32)
+		find_package(MPI REQUIRED)
+		include_directories(${MPI_INCLUDE_PATH})
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${MPI_FLAGS}")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MPI_CXX_FLAGS}")
+		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${MPI_EXE_LINKER_FLAGS}")	
+	endif()
+endif()
+
 ##################################################################
 # Setup compiler flags
 ##################################################################
@@ -425,7 +435,14 @@ if (IQTREE_FLAGS MATCHES "omp")
 	endif()
 endif()
 
-target_link_libraries(mpboot pll ncl whtest zlibstatic sprng vectorclass model ${PLATFORM_LIB} ${THREAD_LIB})	
+
+if (IQTREE_FLAGS MATCHES "mpi")
+	if (WIN32)
+		target_link_libraries(mpboot pll ncl whtest zlibstatic sprng vectorclass model ${PLATFORM_LIB} ${THREAD_LIB} ${MPI_LIBRARIES})
+	endif()
+else()
+	target_link_libraries(mpboot pll ncl whtest zlibstatic sprng vectorclass model ${PLATFORM_LIB} ${THREAD_LIB})
+endif()
 
 ##################################################################
 # setup the executable name 
