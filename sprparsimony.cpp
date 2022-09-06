@@ -565,6 +565,12 @@ static void newviewParsimonyIterativeFast(pllInstance *tr, partitionList *pr, in
             case 20:
                 newviewSankoffParsimonyIterativeFastSIMD<Vec16us, parsimonyNumberShort, 20>(tr, pr);
                 break;
+            case 2:
+                newviewSankoffParsimonyIterativeFastSIMD<Vec16us, parsimonyNumberShort, 2>(tr, pr);
+                break;
+            case 32:
+                newviewSankoffParsimonyIterativeFastSIMD<Vec16us, parsimonyNumberShort, 32>(tr, pr);
+                break;
             default:
                 cerr << "Unsupported" << endl;
                 exit(EXIT_FAILURE);
@@ -577,6 +583,12 @@ static void newviewParsimonyIterativeFast(pllInstance *tr, partitionList *pr, in
                 break;
             case 20:
                 newviewSankoffParsimonyIterativeFastSIMD<Vec8ui, parsimonyNumber, 20>(tr, pr);
+                break;
+            case 2:
+                newviewSankoffParsimonyIterativeFastSIMD<Vec8ui, parsimonyNumber, 2>(tr, pr);
+                break;
+            case 32:
+                newviewSankoffParsimonyIterativeFastSIMD<Vec8ui, parsimonyNumber, 32>(tr, pr);
                 break;
             default:
                 cerr << "Unsupported" << endl;
@@ -593,6 +605,12 @@ static void newviewParsimonyIterativeFast(pllInstance *tr, partitionList *pr, in
             case 20:
                 newviewSankoffParsimonyIterativeFastSIMD<Vec8us, parsimonyNumberShort, 20>(tr, pr);
                 break;
+            case 2:
+                newviewSankoffParsimonyIterativeFastSIMD<Vec8us, parsimonyNumberShort, 2>(tr, pr);
+                break;
+            case 32:
+                newviewSankoffParsimonyIterativeFastSIMD<Vec8us, parsimonyNumberShort, 32>(tr, pr);
+                break;
             default:
                 cerr << "Unsupported" << endl;
                 exit(EXIT_FAILURE);
@@ -605,6 +623,12 @@ static void newviewParsimonyIterativeFast(pllInstance *tr, partitionList *pr, in
                 break;
             case 20:
                 newviewSankoffParsimonyIterativeFastSIMD<Vec4ui, parsimonyNumber, 20>(tr, pr);
+                break;
+            case 2:
+                newviewSankoffParsimonyIterativeFastSIMD<Vec4ui, parsimonyNumber, 2>(tr, pr);
+                break;
+            case 32:
+                newviewSankoffParsimonyIterativeFastSIMD<Vec4ui, parsimonyNumber, 32>(tr, pr);
                 break;
             default:
                 cerr << "Unsupported" << endl;
@@ -948,6 +972,10 @@ static unsigned int evaluateParsimonyIterativeFast(pllInstance *tr, partitionLis
                 return evaluateSankoffParsimonyIterativeFastSIMD<Vec16us, parsimonyNumberShort, 4,true>(tr, pr, perSiteScores);
             case 20:
                 return evaluateSankoffParsimonyIterativeFastSIMD<Vec16us, parsimonyNumberShort, 20,true>(tr, pr, perSiteScores);
+            case 2:
+                return evaluateSankoffParsimonyIterativeFastSIMD<Vec16us, parsimonyNumberShort, 2,true>(tr, pr, perSiteScores);
+            case 32:
+                return evaluateSankoffParsimonyIterativeFastSIMD<Vec16us, parsimonyNumberShort, 32,true>(tr, pr, perSiteScores);
             default:
                 cerr << "Unsupported" << endl;
                 exit(EXIT_FAILURE);
@@ -958,6 +986,10 @@ static unsigned int evaluateParsimonyIterativeFast(pllInstance *tr, partitionLis
                 return evaluateSankoffParsimonyIterativeFastSIMD<Vec8ui, parsimonyNumber, 4,true>(tr, pr, perSiteScores);
             case 20:
                 return evaluateSankoffParsimonyIterativeFastSIMD<Vec8ui, parsimonyNumber, 20,true>(tr, pr, perSiteScores);
+            case 2:
+                return evaluateSankoffParsimonyIterativeFastSIMD<Vec8ui, parsimonyNumber, 2,true>(tr, pr, perSiteScores);
+            case 32:
+                return evaluateSankoffParsimonyIterativeFastSIMD<Vec8ui, parsimonyNumber, 32,true>(tr, pr, perSiteScores);
             default:
                 cerr << "Unsupported" << endl;
                 exit(EXIT_FAILURE);
@@ -970,6 +1002,10 @@ static unsigned int evaluateParsimonyIterativeFast(pllInstance *tr, partitionLis
                 return evaluateSankoffParsimonyIterativeFastSIMD<Vec8us, parsimonyNumberShort,4,true>(tr, pr, perSiteScores);
             case 20:
                 return evaluateSankoffParsimonyIterativeFastSIMD<Vec8us, parsimonyNumberShort,20,true>(tr, pr, perSiteScores);
+            case 2:
+                return evaluateSankoffParsimonyIterativeFastSIMD<Vec8us, parsimonyNumberShort,2,true>(tr, pr, perSiteScores);
+            case 32:
+                return evaluateSankoffParsimonyIterativeFastSIMD<Vec8us, parsimonyNumberShort,32,true>(tr, pr, perSiteScores);
             default:
                 cerr << "Unsupported" << endl;
                 exit(EXIT_FAILURE);
@@ -980,6 +1016,10 @@ static unsigned int evaluateParsimonyIterativeFast(pllInstance *tr, partitionLis
                 return evaluateSankoffParsimonyIterativeFastSIMD<Vec4ui, parsimonyNumber,4,true>(tr, pr, perSiteScores);
             case 20:
                 return evaluateSankoffParsimonyIterativeFastSIMD<Vec4ui, parsimonyNumber,20,true>(tr, pr, perSiteScores);
+            case 2:
+                return evaluateSankoffParsimonyIterativeFastSIMD<Vec4ui, parsimonyNumber,2,true>(tr, pr, perSiteScores);
+            case 32:
+                return evaluateSankoffParsimonyIterativeFastSIMD<Vec4ui, parsimonyNumber,32,true>(tr, pr, perSiteScores);
             default:
                 cerr << "Unsupported" << endl;
                 exit(EXIT_FAILURE);
@@ -1855,7 +1895,7 @@ static unsigned int evaluateParsimony(pllInstance *tr, partitionList *pr, nodept
 
 	ti[1] = p->number;
 	ti[2] = q->number;
-
+  
 	if(full){
 		if(p->number > tr->mxtips)
 			computeTraversalInfoParsimony(p, ti, &counter, tr->mxtips, full, perSiteScores);

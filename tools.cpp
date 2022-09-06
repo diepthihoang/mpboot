@@ -552,6 +552,8 @@ void get2RandNumb(const int size, int &first, int &second) {
 
 void parseArg(int argc, char *argv[], Params &params) {
     int cnt;
+	params.save_current_tree_percent = 100;
+    params.do_sync_first_logls = false;
     verbose_mode = VB_MIN;
     params.tree_gen = NONE;
     params.user_file = NULL;
@@ -2276,7 +2278,17 @@ void parseArg(int argc, char *argv[], Params &params) {
 				continue;
 			}
 
-
+			if (strcmp(argv[cnt], "-repspercent") == 0) {
+				cnt++;
+				if (cnt >= argc)
+					throw "Use -repspercent <percent_saving_current_tree>";
+				params.save_current_tree_percent = convert_int(argv[cnt]);
+				continue;
+			}
+			if (strcmp(argv[cnt], "-sync_first_logls") == 0) {
+				params.do_sync_first_logls = true;
+				continue;
+			}            
 //			if(strcmp(argv[cnt], "-mpars") == 0){
 //            	params.maximum_parsimony = true;
 //            	params.nni5 = false;
@@ -3492,21 +3504,27 @@ MPIHelper& MPIHelper::getInstance() {
 }
 
 void MPIHelper::init(int argc, char *argv[]) {
-    int n_tasks, task_id;
+    int task_id;
     if (MPI_Init(&argc, &argv) != MPI_SUCCESS) {
         outError("MPI initialization failed!");
     }
-    MPI_Comm_size(MPI_COMM_WORLD, &n_tasks);
+    MPI_Comm_size(MPI_COMM_WORLD, &nTasks);
     MPI_Comm_rank(MPI_COMM_WORLD, &task_id);
-    setNumProcesses(n_tasks);
+    setNumProcesses(nTasks);
     setProcessID(task_id);
     setNumTreeReceived(0);
     setNumTreeSent(0);
     setNumNNISearch(0);
+	treeSearchBuffers = new char*[nTasks];
+	for (int i=0; i<nTasks; i++) treeSearchBuffers[i] = nullptr;
+	loglBuffers.resize(nTasks);
+
 	MPIOut::getInstance().setDisableOutput(false);
 }
 
 void MPIHelper::finalize() {
+    for (int i=0; i<nTasks; i++)
+        delete [] treeSearchBuffers[i];
     MPI_Finalize();
 }
 
@@ -3573,16 +3591,19 @@ void MPIHelper::sendString(string &str, int dest, int tag) {
 }
 
 void MPIHelper::asyncSendString(string &str, int dest, int tag, MPI_Request *req) {
-	// if (async_buf != nullptr) delete [] async_buf;
-	char* async_buf = new char[str.length()+1];
-	strcpy(async_buf, str.c_str());
-	MPI_Isend(async_buf, str.length()+1, MPI_CHAR, dest, tag, MPI_COMM_WORLD, req);
+	if (treeSearchBuffers[dest] != nullptr){
+        delete[] treeSearchBuffers[dest];
+        treeSearchBuffers[dest] = nullptr;
+    }
+	treeSearchBuffers[dest] = new char[str.length()+1];
+	strcpy(treeSearchBuffers[dest], str.c_str());
+	MPI_Isend(treeSearchBuffers[dest], str.length()+1, MPI_CHAR, dest, tag, MPI_COMM_WORLD, req);
 }
 
 void MPIHelper::asyncSendInts(vector<int> &vec, int dest, int tag, MPI_Request *req) {
-	int* buf = new int[vec.size()];
-	copy(vec.begin(), vec.end(), buf);
-	MPI_Isend(buf, vec.size(), MPI_INT, dest, tag, MPI_COMM_WORLD, req);
+	loglBuffers[dest] = vec;
+	loglBuffers[dest].push_back(0);
+	MPI_Isend(&loglBuffers[dest][0], vec.size(), MPI_INT, dest, tag, MPI_COMM_WORLD, req);
 }
 
 int MPIHelper::recvInts(vector<int> &vec, int src, int tag) {
@@ -3658,4 +3679,30 @@ void concatMPIFilesIntoSingleFile(string output) {
 		istr.close();
 	}
 	fout.close();
+}
+
+vector<int> compressVec(vector<int> &vec, int barrier) {
+	if (vec.empty()) return {};
+
+	sort(vec.rbegin(), vec.rend());
+	vector<int> res;
+
+	for(int x: vec) {
+		if (x < barrier) x = barrier;
+		if (!res.empty() && res[res.size() - 2] == x) res.back()++;
+		else {
+			res.push_back(x);
+			res.push_back(1);
+		}
+	}
+
+	return res;
+}
+
+vector<int> decompressVec(vector<int> &vec) {
+	vector<int> res;
+	for(int i = 0; i < vec.size(); i += 2) {
+		res.insert(res.begin(), vec[i+1], vec[i]);
+	}
+	return res;
 }

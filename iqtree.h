@@ -581,6 +581,7 @@ public:
     unsigned int * cost_matrix; // Sep 2016: store cost matrix in 1D array
     int cost_nstates; // Sep 2016: # of states provided by cost matrix
 
+    StrVector removedTaxons;
 protected:
 
     /**
@@ -971,6 +972,7 @@ void estDeltaMin();
     int saved_treels_logl_size;
 
     int getRandomLogl();
+    int getMpiLoglCutoff();    
     vector<int> getLoglToSend();
     void syncFirstLogls();
     void afterTreeSearch();
@@ -982,7 +984,7 @@ void estDeltaMin();
     map<int,int> benchMarkLogl;
     map<int,int> loglIterations;
 
-    ofstream mpiProcessDebug;
+    // ofstream mpiProcessDebug;
     vector<int> logls_record;
 };
 

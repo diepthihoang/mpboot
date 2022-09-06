@@ -1121,6 +1121,17 @@ void computeInitialTree(Params &params, IQTree &iqtree, string &dist_file, int &
         mpiout << "Reading input tree file " << params.user_file << " ..." << endl;
         bool myrooted = params.is_rooted;
         iqtree.readTree(params.user_file, myrooted);
+
+		NodeVector nodeVec;
+		iqtree.getTaxa(nodeVec);
+		map<string, Node*> taxaNameToNode;
+		for(Node* node: nodeVec) {
+			taxaNameToNode[node->name] = node;
+		}
+		for(string taxaName: iqtree.removedTaxons) {
+			iqtree.deleteLeaf(taxaNameToNode[taxaName]);
+		}
+
         iqtree.setAlignment(iqtree.aln);
         iqtree.initializeAllPartialPars(); // 2020-08-17: Diep added to fix bug while compute score of user tree
         iqtree.clearAllPartialLH(); // 2020-08-17: Diep added to fix bug while compute score of user tree
@@ -1260,6 +1271,8 @@ int initCandidateTreeSet(Params &params, IQTree &iqtree, int numInitTrees) {
 	mpiout << "Generating " << numInitTrees - 1 << " parsimony trees... ";
     cout.flush();
     double startTime = getCPUTime();
+	double PHASE_ONE_START = getCPUTime();
+    double PHASE_ONE_START_REAL = getRealTime();
 
     int numDupPars = 0;
 //    if(params.maximum_parsimony) iqtree.candidateTrees.clear(); // Diep: added this to fix the bug of sorted aln <> orig aln
@@ -1315,6 +1328,10 @@ int initCandidateTreeSet(Params &params, IQTree &iqtree, int numInitTrees) {
 	mpiout << "(" << numDupPars << " duplicated parsimony trees)" << endl;
 	mpiout << "Wall used for tree generating time: " << parsTime << endl;
 
+	cout.precision(2);
+    mpiout << "PHASE 1: " << getCPUTime() - PHASE_ONE_START << endl;
+    mpiout << "PHASE 1 REAL: " << getRealTime() - PHASE_ONE_START_REAL << endl;
+	cout.precision(0);
 	// do not do anything for parsimony because tree was already optimized by SPR
 	if (params.maximum_parsimony){
 		return -1;
@@ -1346,8 +1363,6 @@ int initCandidateTreeSet(Params &params, IQTree &iqtree, int numInitTrees) {
             iqtree.setBestTree(tree, iqtree.curScore);
         }
     }
-    double loglTime = getCPUTime() - startTime;
-    mpiout << "CPU time: " << loglTime << endl;
 
     CandidateSet initParsimonyTrees = iqtree.candidateTrees.getBestCandidateTrees(params.numNNITrees);
     iqtree.candidateTrees.clear();
@@ -1670,8 +1685,9 @@ void runTreeReconstruction(Params &params, string &original_model, IQTree &iqtre
 			for (PhyloSuperTree::iterator it = stree->begin(); it != stree->end(); it++)
 				if ((*it)->aln->seq_type != SEQ_DNA && (*it)->aln->seq_type != SEQ_PROTEIN)
 					params.start_tree = STT_PARSIMONY;
-		} else if (iqtree.aln->seq_type != SEQ_DNA && iqtree.aln->seq_type != SEQ_PROTEIN)
-			params.start_tree = STT_PARSIMONY;
+		} else if (iqtree.aln->seq_type != SEQ_DNA && iqtree.aln->seq_type != SEQ_PROTEIN
+		           && iqtree.aln->seq_type != SEQ_MORPH && iqtree.aln->seq_type != SEQ_BINARY) 
+						params.start_tree = STT_PARSIMONY;
     }
 
     /***************** Initialization for PLL and sNNI ******************/
@@ -2068,8 +2084,10 @@ void runStandardBootstrap(Params &params, string &original_model, Alignment *ali
 		StrVector removed_seqs;
 		StrVector twin_seqs;
 		// remove identical sequences
-        if (params.ignore_identical_seqs)
+        if (params.ignore_identical_seqs){
             boot_tree->removeIdenticalSeqs(params, removed_seqs, twin_seqs);
+            boot_tree->removedTaxons = removed_seqs;
+        }
 
 		runTreeReconstruction(params, original_model, *boot_tree, model_info);
 
@@ -2143,8 +2161,10 @@ void runStandardBootstrap(Params &params, string &original_model, Alignment *ali
 		StrVector removed_seqs;
 		StrVector twin_seqs;
 		// remove identical sequences
-        if (params.ignore_identical_seqs)
+        if (params.ignore_identical_seqs){
             tree->removeIdenticalSeqs(params, removed_seqs, twin_seqs);
+            tree->removedTaxons = removed_seqs;
+        }
 
 		runTreeReconstruction(params, original_model, *tree, model_info);
 		params.num_bootstrap_samples = savedNumBootstrapSamples;
@@ -2308,12 +2328,13 @@ void runPhyloAnalysis(Params &params) {
 		vector<ModelInfo> model_info;
 		alignment->checkGappySeq();
 
-		StrVector removed_seqs;
+		StrVector removed_seqs; // [SHOULD] move relocate these two variables into IQTREE class
 		StrVector twin_seqs;
 		// remove identical sequences
-        if (params.ignore_identical_seqs)
+        if (params.ignore_identical_seqs) {
             tree->removeIdenticalSeqs(params, removed_seqs, twin_seqs);
-
+			tree->removedTaxons = removed_seqs;
+		}
 		// call main tree reconstruction
 		runTreeReconstruction(params, original_model, *tree, model_info);
 		if (MPIHelper::getInstance().isMaster() && params.gbo_replicates && params.online_bootstrap) {
@@ -2833,26 +2854,56 @@ void optimizeAlignment(IQTree * & tree, Params & params){
 	tree->params = &params; // Diep: 2020-08-17, there are two variables with identical name as 'params'
 
 //	tree->initTopologyByPLLRandomAdition(params); // this pll version needs further sync to work with the rest
-	
-	if (params.num_bootstrap_samples == 0) {
-		if (MPIHelper::getInstance().isMaster()){
-			mpiout << "Creating starting tree and send it to workers..." << endl;
-			tree->computeParsimonyTree(params.out_prefix, tree->aln); // this iqtree version plays nicely with the rest
-			string message = tree->getTreeString();
-			for(int i = 0; i < MPIHelper::getInstance().getNumProcesses(); ++i) {
-				if (i != PROC_MASTER) {
-					MPIHelper::getInstance().sendString(message, i, TREE_TAG);
-				}
-			}
-		}
-		else {
-			string message;
-			int master = MPIHelper::getInstance().recvString(message);
-			tree->readTreeString(message);
-		}
-	} else {
-		tree->computeParsimonyTree(MPIHelper::getInstance().isMaster() ? params.out_prefix : nullptr, tree->aln); // this iqtree version plays nicely with the rest
-	}
+
+    if(params.num_bootstrap_samples > 0){ // Turn off MPI here
+        cout << "Creating starting tree by ";
+
+        if(params.user_file){
+            cout << "\nreading user tree ... " << endl;
+            bool rooted = params.is_rooted;
+            tree->readTree(params.user_file, rooted);
+            tree->setAlignment(tree->aln);
+            cout << "Time for reading: " << getCPUTime() - start << " seconds" << endl;
+        }else{
+            cout << "\ncomputing random stepwise addition parsimony tree ..." << endl;
+            tree->initTopologyByPLLRandomAdition(params); // pll ras
+            cout << "Time for random stepwise addition parsimony tree construction: " << getCPUTime() - start << " seconds" << endl;
+        }
+    }else{ // MPI on is ok
+        if (MPIHelper::getInstance().isMaster()){
+            mpiout << "Creating starting tree by ";
+            // tree->computeParsimonyTree(params.out_prefix, tree->aln); // this iqtree version plays nicely with the rest
+
+            if(params.user_file){
+                mpiout << "\nreading user tree ... " << endl;
+                // Diep: 2021-10-31, to enable sorting columns based on user tree
+                bool rooted = params.is_rooted;
+                tree->readTree(params.user_file, rooted);
+                tree->setAlignment(tree->aln);
+                mpiout << "Time for reading: " << getCPUTime() - start << " seconds" << endl;
+            }else{
+                mpiout << "\ncomputing random stepwise addition parsimony tree ..." << endl;
+                tree->initTopologyByPLLRandomAdition(params); // pll ras
+                // tree->computeParsimonyTree(params.out_prefix, tree->aln); // iqtree ras
+                mpiout << "Time for random stepwise addition parsimony tree construction: " << getCPUTime() - start << " seconds" << endl;
+            }
+                    
+            mpiout << "Sending starting tree to workers ..." << endl;
+            string message = tree->getTreeString();
+            // string message = tree->getTopology();
+            for(int i = 0; i < MPIHelper::getInstance().getNumProcesses(); ++i) {
+                if (i != PROC_MASTER) {
+                    MPIHelper::getInstance().sendString(message, i, TREE_TAG);
+                }
+            }
+        }
+        else {
+            string message;
+            int master = MPIHelper::getInstance().recvString(message);
+            tree->readTreeString(message);
+        }
+    }
+
 	// extract the vector of pattern pars of the initialized tree
 	tree->initializeAllPartialPars();
 	tree->clearAllPartialLH();

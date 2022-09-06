@@ -135,7 +135,25 @@ static const char PLL_MAP_AA[256] =
    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1
  };
 
-
+static const char PLL_MAP_GENERIC_32[256] =
+ {
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 32, -1, -1, 32, -1, -1,
+    0,  1,  2,  3,  4,  5,  6,  7,  8,  9, -1, -1, -1, -1, -1, 22,
+   -1, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
+   25, 26, 27, 28, 29, 30, 31, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
+   25, 26, 27, 28, 29, 30, 31, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1
+ };
 
 
 
@@ -159,7 +177,9 @@ char *my_strndup(const char *s, size_t n) {
     return ret;
 }
 
-char *strtok_r (char * s, const char * delim, char **save_ptr)
+
+char *user_define_strtok_r (char * s, const char * delim, char **save_ptr)
+
 {  
   char *token;
    
@@ -2523,6 +2543,9 @@ void pllBaseSubstitute (pllInstance * tr, partitionList * partitions)
         case PLL_AA_DATA:
           d = PLL_MAP_AA;
           break;
+        case PLL_GENERIC_32:
+          d = PLL_MAP_GENERIC_32;
+          break;
         default:
           assert(0);
       }
@@ -2632,7 +2655,7 @@ static int init_Q_MatrixSymmetries(char *linkageString, partitionList * pr, int 
 
   for(j = 0, str1 = ch; ;j++, str1 = (char *)NULL) 
     {
-      token = strtok_r(str1, ",", &saveptr);
+      token = user_define_strtok_r(str1, ",", &saveptr);
       if(token == (char *)NULL)
         break;
       if(!(j < numberOfRates))
@@ -3403,7 +3426,7 @@ static linkageList* initLinkageListString(char *linkageString, partitionList * p
 
   for(j = 0, str1 = ch; ;j++, str1 = (char *)NULL) 
     {
-      token = strtok_r(str1, ",", &saveptr);
+      token = user_define_strtok_r(str1, ",", &saveptr);
       if(token == (char *)NULL)
         break;
       assert(j < pr->numberOfPartitions);
