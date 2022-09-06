@@ -81,6 +81,10 @@ public:
 	*/
 //	int getPredictedIteration(int cur_iteration);
 
+	void shouldStop() {
+		
+	}
+
 private:
 
 	double predict (double &upperTime);

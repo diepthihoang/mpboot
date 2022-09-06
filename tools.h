@@ -32,6 +32,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <stdint.h>
+#include <mpi.h>
 
 //#include <sys/time.h>
 //#include <time.h>
@@ -168,6 +169,8 @@ private:
 
 /**
         vector of double number
+		should be using:
+			using DoubleVector vector<double>;
  */
 typedef vector<double> DoubleVector;
 
@@ -1344,6 +1347,18 @@ struct Params {
 	 */
 	int k_percent;
 
+    /**
+     * @brief specify the probability to execute REPS (to reduce # of trees evaluated)
+     */
+    int save_current_tree_percent;
+
+    /**
+     * @brief turn on/off the procedure to treat logls exchange betweeen master and workers
+     * in early iterations in a special way
+     */
+    bool do_sync_first_logls; 
+
+
     /*
 		diet - percent of species diet to be preserved for species survival
 	*/
@@ -2176,5 +2191,227 @@ void summarizeHeader(ostream &out, Params &params, bool budget_constraint, Input
 void summarizeFooter(ostream &out, Params &params);
 
 int calculateSequenceHash(string &seq); 
+void concatMPIFilesIntoSingleFile(string output);
+vector<int> compressVec(vector<int> &vec, int barrier);
+vector<int> decompressVec(vector<int> &vec);
+
+#define PROC_MASTER 0
+#define TREE_TAG 1 // Message contain trees
+#define STOP_TAG 2 // Stop message
+#define BOOT_TAG 3 // Message to please send bootstrap trees
+#define BOOT_TREE_TAG 4 // bootstrap tree tag
+#define LOGL_CUTOFF_TAG 5 // send logl_cutoff for ultrafast bootstrap
+#define isAllowedToPrint MPIHelper::getInstance().isMaster()
+
+
+using namespace std;
+
+
+
+class MPIHelper {
+public:
+
+    char **treeSearchBuffers;
+    int nTasks;
+	vector<vector<int>> loglBuffers;
+
+        /**
+         * Specify message types for MPI
+         */
+        enum SyncMessage {
+                LOGL_CUTOFF,
+                LOGL_VECTOR,
+
+                TREE_STRINGS,
+                LOGL_VECTOR_AND_ITERS, // worker -> master
+                LOGL_CUTOFF_AND_STOP_FLAG // master -> worker
+        };
+
+        static SyncMessage messageTypes;
+
+    /**
+    *  Singleton method: get one and only one getInstance of the class
+    */
+    static MPIHelper &getInstance();
+
+    /** initialize MPI */
+    void init(int argc, char *argv[]);
+    
+    /** finalize MPI */
+    void finalize();
+    
+    /**
+        destructor
+    */
+    ~MPIHelper();
+
+    int getNumProcesses() const {
+        return numProcesses;
+    }
+
+    void setNumProcesses(int numProcesses) {
+        MPIHelper::numProcesses = numProcesses;
+    }
+
+    int getProcessID() const {
+        return processID;
+    }
+
+    bool isMaster() const {
+        return processID == PROC_MASTER;
+    }
+
+    bool isWorker() const {
+        return processID != PROC_MASTER;
+    }
+
+    void setProcessID(int processID) {
+        MPIHelper::processID = processID;
+    }
+
+    string getProcessSuffix(int i = MPIHelper::getInstance().getProcessID()) {
+        return ".process." + to_string(i);
+    }
+
+    /** synchronize random seed from master to all workers */
+    void syncRandomSeed();
+    
+    /** count the number of host with the same name as the current host */
+    int countSameHost();
+
+    /** @return true if got any message from another process */
+    bool gotMessage();
+	int getPendingMessageSource();
+
+
+    /** wrapper for MPI_Send a string
+        @param str string to send
+        @param dest destination process
+        @param tag message tag
+    */
+
+    void sendString(string &str, int dest, int tag);
+    void asyncSendString(string &str, int dest, int tag, MPI_Request *req);
+	void asyncSendInts(vector<int> &vec, int dest, int tag, MPI_Request *req);
+
+    /** wrapper for MPI_Recv a string
+        @param[out] str string received
+        @param src source process
+        @param tag message tag
+        @return the source process that sent the message
+    */
+    int recvString(string &str, int src = MPI_ANY_SOURCE, int tag = MPI_ANY_TAG);
+	int recvInts(vector<int> &vec, int src, int tag);
+
+    /** wrapper for MPI_Recv an entire Checkpoint object
+        @param[out] ckp Checkpoint object received
+        @param src source process
+        @param tag message tag
+        @return the source process that sent the message
+    */
+
+    /**
+        wrapper for MPI_Bcast to broadcast checkpoint from Master to all Workers
+        @param ckp Checkpoint object
+    */
+
+    /**
+        wrapper for MPI_Gather to gather all checkpoints into Master
+        @param ckp Checkpoint object
+    */
+
+    void increaseTreeSent(int inc = 1) {
+        numTreeSent += inc;
+    }
+
+    void increaseTreeReceived(int inc = 1) {
+        numTreeReceived += inc;
+    }
+
+    string scatterBootstrapTrees(vector<vector<tuple<int, int, string>>> &bTrees);
+
+private:
+    /**
+    *  Remove the buffers for finished messages
+    */
+    int cleanUpMessages();
+
+private:
+    MPIHelper() { }; // Disable constructor
+    MPIHelper(MPIHelper const &) { }; // Disable copy constructor
+    void operator=(MPIHelper const &) { }; // Disable assignment
+
+    int processID;
+
+    int numProcesses;
+
+public:
+    int getNumTreeReceived() const {
+        return numTreeReceived;
+    }
+
+    void setNumTreeReceived(int numTreeReceived) {
+        MPIHelper::numTreeReceived = numTreeReceived;
+    }
+
+    int getNumTreeSent() const {
+        return numTreeSent;
+    }
+
+    void setNumTreeSent(int numTreeSent) {
+        MPIHelper::numTreeSent = numTreeSent;
+    }
+    
+    void resetNumbers() {
+//        numTreeSent = 0;
+//        numTreeReceived = 0;
+//        numNNISearch = 0;
+    }
+
+private:
+	char* async_buf;
+
+    int numTreeSent;
+
+    int numTreeReceived;
+
+public:
+    int getNumNNISearch() const {
+        return numNNISearch;
+    }
+
+    void setNumNNISearch(int numNNISearch) {
+        MPIHelper::numNNISearch = numNNISearch;
+    }
+
+private:
+    int numNNISearch;
+};
+
+class MPIOut {
+        private: 
+                bool disableOutput;
+	public:
+                MPIOut() {
+                        disableOutput = false;
+                }
+
+		template<class TArg>
+		MPIOut &operator<<(TArg arg) {
+			if (MPIHelper::getInstance().isMaster() && !(this)->disableOutput) cout << arg;
+			return (*this);
+		}
+		static MPIOut &getInstance() {
+			static MPIOut instance;
+			return instance;
+		}
+
+                void setDisableOutput(bool disableOutput) {
+                        this->disableOutput = disableOutput;
+                }
+};
+
+#define endl '\n'
+#define mpiout MPIOut::getInstance()
 
 #endif

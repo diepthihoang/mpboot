@@ -1,0 +1,18 @@
+{
+    "settings": {
+        "files.associations": {
+            "ostream": "cpp",
+            "array": "cpp",
+            "tuple": "cpp",
+            "utility": "cpp",
+            "iostream": "cpp",
+            "iosfwd": "cpp",
+            "system_error": "cpp"
+        }
+    },
+    "folders": [
+        {
+            "path": "."
+        }
+    ]
+}

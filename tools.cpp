@@ -552,6 +552,8 @@ void get2RandNumb(const int size, int &first, int &second) {
 
 void parseArg(int argc, char *argv[], Params &params) {
     int cnt;
+	params.save_current_tree_percent = 100;
+    params.do_sync_first_logls = false;
     verbose_mode = VB_MIN;
     params.tree_gen = NONE;
     params.user_file = NULL;
@@ -2109,8 +2111,8 @@ void parseArg(int argc, char *argv[], Params &params) {
 					throw "Use -bb <#replicates>";
 				params.gbo_replicates = convert_int(argv[cnt]);
 				params.avoid_duplicated_trees = true;
-				if (params.gbo_replicates < 1000)
-					throw "#replicates must be >= 1000";
+				// if (params.gbo_replicates < 1000)
+				// 	throw "#replicates must be >= 1000";
 				params.consensus_type = CT_CONSENSUS_TREE;
 //				params.stop_condition = SC_BOOTSTRAP_CORRELATION;
 				params.stop_condition = SC_UNSUCCESS_ITERATION; // Diep: because MP already has refinement
@@ -2276,7 +2278,17 @@ void parseArg(int argc, char *argv[], Params &params) {
 				continue;
 			}
 
-
+			if (strcmp(argv[cnt], "-repspercent") == 0) {
+				cnt++;
+				if (cnt >= argc)
+					throw "Use -repspercent <percent_saving_current_tree>";
+				params.save_current_tree_percent = convert_int(argv[cnt]);
+				continue;
+			}
+			if (strcmp(argv[cnt], "-sync_first_logls") == 0) {
+				params.do_sync_first_logls = true;
+				continue;
+			}            
 //			if(strcmp(argv[cnt], "-mpars") == 0){
 //            	params.maximum_parsimony = true;
 //            	params.nni5 = false;
@@ -3322,14 +3334,14 @@ int init_random(int seed) {
     if (seed < 0)
         seed = make_sprng_seed();
 #ifndef PARALLEL
-    cout << "(Using SPRNG - Scalable Parallel Random Number Generator)" << endl;
+    mpiout << "(Using SPRNG - Scalable Parallel Random Number Generator)" << endl;
     randstream = init_sprng(0, 1, seed, SPRNG_DEFAULT); /*init stream*/
     if (verbose_mode >= VB_MED) {
         print_sprng(randstream);
     }
 #else /* PARALLEL */
     if (PP_IamMaster) {
-        cout << "(Using SPRNG - Scalable Parallel Random Number Generator)" << endl;
+        mpiout << "(Using SPRNG - Scalable Parallel Random Number Generator)" << endl;
     }
     /* MPI_Bcast(&seed, 1, MPI_UNSIGNED, PP_MyMaster, MPI_COMM_WORLD); */
     randstream = init_sprng(PP_Myid, PP_NumProcs, seed, SPRNG_DEFAULT); /*initialize stream*/
@@ -3486,6 +3498,170 @@ double computePValueChiSquare(double x, int df) /* x: obtained chi-square value,
 }
 
 
+MPIHelper& MPIHelper::getInstance() {
+    static MPIHelper instance;
+    return instance;
+}
+
+void MPIHelper::init(int argc, char *argv[]) {
+    int task_id;
+    if (MPI_Init(&argc, &argv) != MPI_SUCCESS) {
+        outError("MPI initialization failed!");
+    }
+    MPI_Comm_size(MPI_COMM_WORLD, &nTasks);
+    MPI_Comm_rank(MPI_COMM_WORLD, &task_id);
+    setNumProcesses(nTasks);
+    setProcessID(task_id);
+    setNumTreeReceived(0);
+    setNumTreeSent(0);
+    setNumNNISearch(0);
+	treeSearchBuffers = new char*[nTasks];
+	for (int i=0; i<nTasks; i++) treeSearchBuffers[i] = nullptr;
+	loglBuffers.resize(nTasks);
+
+	MPIOut::getInstance().setDisableOutput(false);
+}
+
+void MPIHelper::finalize() {
+    for (int i=0; i<nTasks; i++)
+        delete [] treeSearchBuffers[i];
+    MPI_Finalize();
+}
+
+void MPIHelper::syncRandomSeed() {
+    unsigned int rndSeed;
+    if (MPIHelper::getInstance().isMaster()) {
+        // rndSeed = Params::getInstance().ran_seed;
+		rndSeed = 1;
+	}
+    // Broadcast random seed
+    MPI_Bcast(&rndSeed, 1, MPI_INT, PROC_MASTER, MPI_COMM_WORLD);
+    if (MPIHelper::getInstance().isWorker()) {
+        //        Params::getInstance().ran_seed = rndSeed + task_id * 100000;
+        //        printf("Process %d: random_seed = %d\n", task_id, Params::getInstance().ran_seed);
+    }
+}
+
+int MPIHelper::countSameHost() {
+    // detect if processes are in the same host
+    char host_name[MPI_MAX_PROCESSOR_NAME];
+    int resultlen;
+    /*int pID =*/ (void) MPIHelper::getInstance().getProcessID();
+    MPI_Get_processor_name(host_name, &resultlen);
+    char *host_names;
+    host_names = new char[MPI_MAX_PROCESSOR_NAME * MPIHelper::getInstance().getNumProcesses()];
+    
+    MPI_Allgather(host_name, resultlen+1, MPI_CHAR, host_names, MPI_MAX_PROCESSOR_NAME, MPI_CHAR,
+               MPI_COMM_WORLD);
+    
+    int count = 0;
+    for (int i = 0; i < MPIHelper::getInstance().getNumProcesses(); i++)
+        if (strcmp(&host_names[i*MPI_MAX_PROCESSOR_NAME], host_name) == 0)
+            count++;
+    delete [] host_names;
+    if (count>1)
+        cout << "NOTE: " << count << " processes are running on the same host " << host_name << endl; 
+    return count;
+}
+
+bool MPIHelper::gotMessage() {
+    // Check for incoming messages
+    if (getNumProcesses() == 1)
+        return false;
+    int flag = 0;
+    MPI_Status status;
+    MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &flag, &status);
+    if (flag)
+        return true;
+    else
+        return false;
+}
+
+int MPIHelper::getPendingMessageSource() {
+	assert(gotMessage());
+	int flag = 0;
+    MPI_Status status;
+    MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &flag, &status);
+	return status.MPI_SOURCE;
+}
+
+void MPIHelper::sendString(string &str, int dest, int tag) {
+    char *buf = (char*)str.c_str();
+    MPI_Send(buf, str.length()+1, MPI_CHAR, dest, tag, MPI_COMM_WORLD);
+}
+
+void MPIHelper::asyncSendString(string &str, int dest, int tag, MPI_Request *req) {
+	if (treeSearchBuffers[dest] != nullptr){
+        delete[] treeSearchBuffers[dest];
+        treeSearchBuffers[dest] = nullptr;
+    }
+	treeSearchBuffers[dest] = new char[str.length()+1];
+	strcpy(treeSearchBuffers[dest], str.c_str());
+	MPI_Isend(treeSearchBuffers[dest], str.length()+1, MPI_CHAR, dest, tag, MPI_COMM_WORLD, req);
+}
+
+void MPIHelper::asyncSendInts(vector<int> &vec, int dest, int tag, MPI_Request *req) {
+	loglBuffers[dest] = vec;
+	loglBuffers[dest].push_back(0);
+	MPI_Isend(&loglBuffers[dest][0], vec.size(), MPI_INT, dest, tag, MPI_COMM_WORLD, req);
+}
+
+int MPIHelper::recvInts(vector<int> &vec, int src, int tag) {
+	MPI_Status status;
+	MPI_Probe(src, tag, MPI_COMM_WORLD, &status);
+	int msgCount;
+	MPI_Get_count(&status, MPI_INT, &msgCount);
+	// receive the message
+	int *recvBuffer = new int[msgCount];
+	MPI_Recv(recvBuffer, msgCount, MPI_INT, status.MPI_SOURCE, status.MPI_TAG, MPI_COMM_WORLD, &status);
+	vec = vector<int>(recvBuffer, recvBuffer + msgCount);
+	delete[] recvBuffer;
+	return status.MPI_SOURCE;
+}
+
+int MPIHelper::recvString(string &str, int src, int tag) {
+    MPI_Status status;
+    MPI_Probe(src, tag, MPI_COMM_WORLD, &status);
+    int msgCount;
+    MPI_Get_count(&status, MPI_CHAR, &msgCount);
+    // receive the message
+    char *recvBuffer = new char[msgCount];
+    MPI_Recv(recvBuffer, msgCount, MPI_CHAR, status.MPI_SOURCE, status.MPI_TAG, MPI_COMM_WORLD, &status);
+    str = recvBuffer;
+    delete [] recvBuffer;
+    return status.MPI_SOURCE;
+}
+
+string MPIHelper::scatterBootstrapTrees(vector<vector<tuple<int, int, string>>> &bTrees) {
+	vector<int> cnt_vt, offset_vt;
+	string messageToSend;
+	char *buf;
+
+	if (isMaster()) {
+		for(int processID = 0; processID < bTrees.size(); ++processID) {
+			offset_vt.push_back(messageToSend.size());
+			messageToSend += to_string(bTrees[processID].size()) + ' ';
+			for(auto tree: bTrees[processID]) {
+				messageToSend += to_string(get<0>(tree)) + ' ' + to_string(get<1>(tree)) + ' ' + get<2>(tree) + '#';
+			}
+			cnt_vt.push_back(messageToSend.size() - offset_vt.back());
+		}
+		buf = new char[messageToSend.size() + 10];
+		for(int i = 0; i < messageToSend.size(); ++i) buf[i] = messageToSend[i];
+	}
+
+	int out_cnt;
+	MPI_Scatter(cnt_vt.data(), 1, MPI_INT, &out_cnt, 1, MPI_INT, PROC_MASTER, MPI_COMM_WORLD);
+
+	char *recv_buf = new char[out_cnt + 10];
+	MPI_Scatterv(buf, cnt_vt.data(), offset_vt.data(), MPI_CHAR, recv_buf, out_cnt, MPI_CHAR, PROC_MASTER, MPI_COMM_WORLD);
+	return (string) recv_buf;
+}
+
+
+MPIHelper::~MPIHelper() {
+//    cleanUpMessages();
+}
 int calculateSequenceHash(string &seq) {
 	const static int modular = 1000000007;
 	int hashValue = 0;
@@ -3493,4 +3669,40 @@ int calculateSequenceHash(string &seq) {
 		hashValue = ((long long)hashValue * 107 + (int)c) % modular;
 	}
 	return hashValue;
+}
+
+void concatMPIFilesIntoSingleFile(string output) {
+	ofstream fout(output);
+	for(int i = 0; i < MPIHelper::getInstance().getNumProcesses(); ++i) {
+		ifstream istr(output + MPIHelper::getInstance().getProcessSuffix(i));
+		fout << istr.rdbuf();
+		istr.close();
+	}
+	fout.close();
+}
+
+vector<int> compressVec(vector<int> &vec, int barrier) {
+	if (vec.empty()) return {};
+
+	sort(vec.rbegin(), vec.rend());
+	vector<int> res;
+
+	for(int x: vec) {
+		if (x < barrier) x = barrier;
+		if (!res.empty() && res[res.size() - 2] == x) res.back()++;
+		else {
+			res.push_back(x);
+			res.push_back(1);
+		}
+	}
+
+	return res;
+}
+
+vector<int> decompressVec(vector<int> &vec) {
+	vector<int> res;
+	for(int i = 0; i < vec.size(); i += 2) {
+		res.insert(res.begin(), vec[i+1], vec[i]);
+	}
+	return res;
 }

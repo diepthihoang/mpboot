@@ -201,6 +201,7 @@ inline void separator(ostream &out, int type = 0) {
 
 
 void printCopyright(ostream &out) {
+	if (!isAllowedToPrint) return;
 #ifdef IQ_TREE
  	out << "IQ-TREE";
 	#ifdef _OPENMP
@@ -238,6 +239,7 @@ void printCopyright(ostream &out) {
 
 
 void printCopyrightMP(ostream &out) {
+	if (!isAllowedToPrint) return;
 #ifdef IQ_TREE
  	out << "MPBoot";
 	#ifdef _OPENMP
@@ -267,7 +269,7 @@ void printCopyrightMP(ostream &out) {
 #endif
 
 #ifdef IQ_TREE
-	out << endl << "Copyright (c) 2016 Diep Thi Hoang, Le Sy Vinh, Tomas Flouri, Alexandros Stamatakis, Arndt von Haeseler and Bui Quang Minh." << endl << endl;
+	mpiout << endl << "Copyright (c) 2016 Diep Thi Hoang, Le Sy Vinh, Tomas Flouri, Alexandros Stamatakis, Arndt von Haeseler and Bui Quang Minh." << endl << endl;
 #else
 	out << endl << "Copyright (c) 2006-2014 Olga Chernomor, Arndt von Haeseler and Bui Quang Minh." << endl << endl;
 #endif
@@ -2140,7 +2142,7 @@ int main(){
 
 int main(int argc, char *argv[])
 {
-
+	MPIHelper::getInstance().init(argc, argv);
 	/*************************/
 	{ /* local scope */
 		int found=FALSE;              /* "click" found in cmd name? */
@@ -2225,7 +2227,7 @@ int main(int argc, char *argv[])
 		outError("Your CPU does not support AVX, please use SSE3 version of MPBoot.");
 	}
 #else
-	if (instrset >= 7) {
+	if (instrset >= 7 && isAllowedToPrint) {
 		outWarning("Your CPU supports AVX but you are using SSE3 version of MPBoot!");
 		outWarning("Please switch to AVX version that is 40% faster than SSE3.");
 		cout << endl;
@@ -2243,61 +2245,65 @@ int main(int argc, char *argv[])
 //		cout << endl;
 //	}
 #endif
-
-	cout << "Host:    " << hostname << " (";
-	switch (instrset) {
-	case 3: cout << "SSE3, "; break;
-	case 4: cout << "SSSE3, "; break;
-	case 5: cout << "SSE4.1, "; break;
-	case 6: cout << "SSE4.2, "; break;
-	case 7: cout << "AVX, "; break;
-	case 8: cout << "AVX2, "; break;
-	default: cout << "AVX512F, "; break;
-	}
-	if (has_fma3) cout << "FMA3, ";
-	if (has_fma4) cout << "FMA4, ";
-#if defined __APPLE__ || defined __MACH__
-	cout << (int)(((getMemorySize()/1024.0)/1024)/1024) << " GB RAM)" << endl;
-#else
-	cout << (int)(((getMemorySize()/1000.0)/1000)/1000) << " GB RAM)" << endl;
-#endif
-
-	cout << "Command:";
-	for (int i = 0; i < argc; i++)
-		cout << " " << argv[i];
-	cout << endl;
-
-	cout << "Seed:    " << params.ran_seed <<  " ";
 	init_random(params.ran_seed);
 
 	time_t cur_time;
 	time(&cur_time);
-	cout << "Time:    " << ctime(&cur_time);
 
-	cout << "Kernel:  ";
-	if (params.pll) {
-#ifdef __AVX
-		cout << "PLL-AVX";
-#else
-		cout << "PLL-SSE3";
-#endif
-	} else {
-		switch (params.SSE) {
-		case LK_NORMAL: cout << "Slow"; break;
-		case LK_SSE: cout << "Slow SSE3"; break;
-		case LK_EIGEN: cout << "No SSE"; break;
-		case LK_EIGEN_SSE:
-#ifdef __AVX
-			cout << "AVX";
-#else
-			cout << "SSE3";
-#endif
-#ifdef __FMA__
-			cout << "+FMA";
-#endif
-			break;
+	if (isAllowedToPrint) {
+		cout << "Host:    " << hostname << " (";
+		switch (instrset) {
+		case 3: cout << "SSE3, "; break;
+		case 4: cout << "SSSE3, "; break;
+		case 5: cout << "SSE4.1, "; break;
+		case 6: cout << "SSE4.2, "; break;
+		case 7: cout << "AVX, "; break;
+		case 8: cout << "AVX2, "; break;
+		default: cout << "AVX512F, "; break;
+		}
+		if (has_fma3) cout << "FMA3, ";
+		if (has_fma4) cout << "FMA4, ";
+	#if defined __APPLE__ || defined __MACH__
+		cout << (int)(((getMemorySize()/1024.0)/1024)/1024) << " GB RAM)" << endl;
+	#else
+		cout << (int)(((getMemorySize()/1000.0)/1000)/1000) << " GB RAM)" << endl;
+	#endif
+
+		cout << "Command:";
+		for (int i = 0; i < argc; i++)
+			cout << " " << argv[i];
+		cout << endl;
+
+		cout << "Seed:    " << params.ran_seed <<  " ";
+
+		cout << "Time:    " << ctime(&cur_time);
+
+		cout << "Kernel:  ";
+		if (params.pll) {
+	#ifdef __AVX
+			cout << "PLL-AVX";
+	#else
+			cout << "PLL-SSE3";
+	#endif
+		} else {
+			switch (params.SSE) {
+			case LK_NORMAL: cout << "Slow"; break;
+			case LK_SSE: cout << "Slow SSE3"; break;
+			case LK_EIGEN: cout << "No SSE"; break;
+			case LK_EIGEN_SSE:
+	#ifdef __AVX
+				cout << "AVX";
+	#else
+				cout << "SSE3";
+	#endif
+	#ifdef __FMA__
+				cout << "+FMA";
+	#endif
+				break;
+			}
 		}
 	}
+	
 
 
 
@@ -2314,7 +2320,7 @@ int main(int argc, char *argv[])
 	omp_set_nested(false); // don't allow nested OpenMP parallelism
 #endif
 	//cout << "sizeof(int)=" << sizeof(int) << endl;
-	cout << endl << endl;
+	mpiout << endl << endl;
 
 	precomputeFitchInfo();
 
@@ -2429,8 +2435,9 @@ int main(int argc, char *argv[])
 	}
 
 	time(&cur_time);
-	cout << "Date and Time: " << ctime(&cur_time);
+	mpiout << "Date and Time: " << ctime(&cur_time);
 
 	finish_random();
+    MPIHelper::getInstance().finalize(); // Diep 2021.8.03
 	return EXIT_SUCCESS;
 }

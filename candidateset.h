@@ -62,7 +62,7 @@ public:
      * @return false if the tree topology already exists
      *
      */
-    bool update(string tree, double score);
+    bool update(string tree, double score, bool isNewCandidate = true);
 
     /**
      *  print score of max_candidates best trees
@@ -167,9 +167,19 @@ public:
      */
     string getRandCandVecTree();
 
+    void syncCandidateSet();
+
+    string getSyncTrees();
+
+    void updateSingleSyncTree(string singleTree);
+
+    void updateSyncTrees(string syncString);
+
+    string createTempTreeFromTopology(string &topology);
 private:
 	vector<string> candidateTreeVec; // Diep added to avoid bias in support values for big group
 
+    vector<pair<string, int>> newCandidates;
 };
 
 #endif /* CANDIDATESET_H_ */
