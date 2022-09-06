@@ -160,6 +160,10 @@ static pllQueue * parse_partition (int * inp, pllHashTable * proteinModelsHash)
        if (!strcmp(modelptr, "DNAX")) 
          pi->optimizeBaseFrequencies = PLL_TRUE; 
      }
+    else if (!strcmp(modelptr, "MOR"))
+     {
+       pi->dataType   = PLL_GENERIC_32;
+     }
     else
      {                  /* and  protein data */
        pi->dataType  = PLL_AA_DATA;

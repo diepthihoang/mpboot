@@ -1032,7 +1032,7 @@ int PhyloTree::computeParsimonyBranch(PhyloNeighbor *dad_branch, PhyloNode *dad,
 					_pattern_pars[ptn] = node_branch->partial_pars[ptn_pars_start_id + ptn] +
 						dad_branch->partial_pars[ptn_pars_start_id + ptn] + 1;
 				}else
-    				_pattern_pars[ptn + i] = node_branch->partial_pars[ptn_pars_start_id + ptn] +
+    				_pattern_pars[ptn] = node_branch->partial_pars[ptn_pars_start_id + ptn] +
     					dad_branch->partial_pars[ptn_pars_start_id + ptn];
 			}
 	    delete[] bits_entry;
@@ -1258,7 +1258,7 @@ void PhyloTree::computeParsimonyTree(const char *out_prefix, Alignment *alignmen
     // randomize the addition order
 //    random_shuffle(taxon_order.begin(), taxon_order.end(), p_myrandom);
     my_random_shuffle(taxon_order.begin(), taxon_order.end());
-
+    
     // create initial tree with 3 taxa
     for (leafNum = 0; leafNum < 3; leafNum++) {
         if (verbose_mode >= VB_MAX)
@@ -1268,11 +1268,12 @@ void PhyloTree::computeParsimonyTree(const char *out_prefix, Alignment *alignmen
         new_taxon->addNeighbor(root, -1.0);
     }
     root = findNodeID(taxon_order[0]);
-
+    
     // stepwise adding the next taxon
     for (leafNum = 3; leafNum < size; leafNum++) {
         if (verbose_mode >= VB_MAX)
             cout << "Add " << aln->getSeqName(taxon_order[leafNum]) << " to the tree";
+
         initializeAllPartialPars();
         clearAllPartialLH();
         // allocate a new taxon and a new adjacent internal node
@@ -1285,12 +1286,12 @@ void PhyloTree::computeParsimonyTree(const char *out_prefix, Alignment *alignmen
         // preserve two neighbors
         added_node->addNeighbor((Node*) 1, -1.0);
         added_node->addNeighbor((Node*) 2, -1.0);
-
         Node *target_node = NULL;
         Node *target_dad = NULL;
         int score = addTaxonMPFast(added_node, target_node, target_dad, root->neighbors[0]->node, root);
         delete[] ((PhyloNeighbor*) new_taxon->findNeighbor(added_node))->partial_pars;
         delete[] ((PhyloNeighbor*) added_node->findNeighbor(new_taxon))->partial_pars;
+        
         if (verbose_mode >= VB_MAX)
             cout << ", score = " << score << endl;
         // now insert the new node in the middle of the branch node-dad
@@ -1304,7 +1305,7 @@ void PhyloTree::computeParsimonyTree(const char *out_prefix, Alignment *alignmen
         //optimizeAllBranches();
         //optimizeNNI();
     }
-
+    
     nodeNum = 2 * leafNum - 2;
     setAlignment(alignment);
     initializeAllPartialPars();
@@ -1326,7 +1327,7 @@ int PhyloTree::addTaxonMPFast(Node* added_node, Node*& target_node, Node*& targe
         if (added_node->neighbors[i]->node != (Node*) 1 && added_node->neighbors[i]->node != (Node*) 2)
             added_taxon = added_node->neighbors[i]->node;
     }
-
+    
     //    Node *added_taxon;
     //    for (NeighborVec::iterator it = (added_node)->neighbors.begin(); it != (added_node)->neighbors.end(); it++) {
     //    	if ( (*it)->node->isLeaf() ) {

@@ -387,6 +387,12 @@ parse_phylip (pllAlignmentData * alignmentData, int input)
         }
        memmove (alignmentData->sequenceData[j + 1] + sequenceLength[j + 1], token.lexeme, token.len);
        sequenceLength[j + 1] += token.len;
+      
+      //convert lower case to digits
+      for (int i=0; i<token.len; i++) 
+        if ('a' <= alignmentData->sequenceData[j + 1][i] && 'z' >= alignmentData->sequenceData[j + 1][i]) {
+          alignmentData->sequenceData[j + 1][i] = (char) alignmentData->sequenceData[j + 1][i] - 'a' + '0';
+        }
 
        NEXT_TOKEN
        CONSUME (PLL_TOKEN_WHITESPACE)
