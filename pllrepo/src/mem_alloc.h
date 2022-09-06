@@ -22,10 +22,17 @@
 
 
 #if defined WIN32 || defined _WIN32 || defined __WIN32__
-    #define rax_posix_memalign(ptr,alignment,size) *(ptr) = _aligned_malloc((size),(alignment))
-    #define rax_malloc(size) _aligned_malloc((size), PLL_BYTE_ALIGNMENT)
-    void *rax_calloc(size_t count, size_t size);
-    #define rax_free _aligned_free
+    #if (defined(__MINGW32__) || defined(__clang__)) && defined(BINARY32)
+        #define rax_posix_memalign(ptr,alignment,size) *(ptr) = __mingw_aligned_malloc((size),(alignment))
+        #define rax_malloc(size) __mingw_aligned_malloc((size), PLL_BYTE_ALIGNMENT)
+        void *rax_calloc(size_t count, size_t size);
+        #define rax_free __mingw_aligned_free
+    #else
+        #define rax_posix_memalign(ptr,alignment,size) *(ptr) = _aligned_malloc((size),(alignment))
+        #define rax_malloc(size) _aligned_malloc((size), PLL_BYTE_ALIGNMENT)
+        void *rax_calloc(size_t count, size_t size);
+        #define rax_free _aligned_free
+    #endif
 #elif (defined(__SSE3) || defined(__AVX))
     #define rax_posix_memalign posix_memalign
     #define rax_malloc malloc
@@ -49,6 +56,8 @@
 //
 //void *rax_malloc_aligned(size_t size);
 
+char *my_strndup(const char *s, size_t n);
+char *user_define_strtok_r (char * s, const char * delim, char **save_ptr);
 
 #if 0
 // using the following contraption to trigger a compile-time error does not work on some gcc versions. It will trigger a confising linker error in the best case, so it is deativated.

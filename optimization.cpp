@@ -17,7 +17,7 @@
 //#include "tools.h"
 
 
-using namespace std;
+// using namespace std;
 
 const double ERROR_X = 1.0e-4;
 
@@ -91,7 +91,7 @@ double tt;
 void nrerror(const char *error_text)
 /* Numerical Recipes standard error handler */
 {
-	cerr << "NUMERICAL ERROR: " << error_text << endl;
+	std::cerr << "NUMERICAL ERROR: " << error_text << std::endl;
 	//exit(1);
 	throw error_text;
 }
@@ -604,7 +604,7 @@ double Optimization::minimizeMultiDimen(double guess[], int ndim, double lower[]
 				guess[i] = random_double() * (upper[i] - lower[i])/3 + lower[i];
 			}
 		} while (false);
-		cout << "Restart estimation at the boundary... " << std::endl;
+		std::cout << "Restart estimation at the boundary... " << std::endl;
 	} while (count < MAX_ITER);
 	if (count > 1) {
 		for (i = 1; i <= ndim; i++)
