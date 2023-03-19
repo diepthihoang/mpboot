@@ -1,0 +1,27 @@
+name: Release Mpboot
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    permissions:
+      contents: [write, read]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup cmake
+      uses: jwlawson/actions-setup-cmake@v1.13
+      with:
+        cmake-version: '3.16.x'
+
+    - name: Run cmake
+      run: cmake . -DIQTREE_FLAGS=sse4 -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
+
+    - name: Build
+      run: make
+    
+    - uses: actions/upload-artifact@v3
+      with:
+        name: build
+        path: mpboot
