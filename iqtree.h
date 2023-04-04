@@ -112,6 +112,10 @@ public:
 
     void createPLLPartition(Params &params, ostream &pllPartitionFileHandle);
 
+    void convertToChars(string &pllAlnStr);
+
+    void convertBackToDigits(string &pllAlnStr);
+
     void initializePLL(Params &params);
 
     void initializeModel(Params &params);

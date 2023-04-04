@@ -411,6 +411,11 @@ extern int NNI_MAX_NR_STEP;
         program parameters, everything is specified here
  */
 struct Params {
+        
+        /**
+	 *  Number of starting row
+	 */
+        int numStartRow;
 
 	/**
 	 *  Number of starting parsimony trees

@@ -1048,7 +1048,6 @@ pllPartitionsValidate (pllQueue * parts, pllAlignmentData * alignmentData)
 
   /* pllBoolean array for marking that a site was assigned a partition */
   used = (char *) rax_calloc (alignmentData->sequenceLength, sizeof (char));
-
   /* traverse all partitions and their respective regions and mark sites */
   for (elm = parts->head; elm; elm = elm->next)
    {
@@ -1900,9 +1899,7 @@ int pllLoadAlignment (pllInstance * tr, pllAlignmentData * alignmentData, partit
 pllInstance * pllCreateInstance (pllInstanceAttr * attr)
 {
   pllInstance * tr;
-
   if (attr->rateHetModel != PLL_GAMMA && attr->rateHetModel != PLL_CAT) return NULL;
-
   tr = (pllInstance *) rax_calloc (1, sizeof (pllInstance));
 
   tr->threadID          = 0;

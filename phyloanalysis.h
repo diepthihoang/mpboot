@@ -33,6 +33,10 @@ class IQTree;
 	main function to carry out phylogenetic inference
 	@param params program parameters
 */
+/**
+ * add remainRow (todo)
+*/
+
 void runPhyloAnalysis(Params &params);
 
 void runTreeReconstruction(Params &params, string &original_model,
@@ -115,6 +119,11 @@ void printSiteParsimonyUserTree(Params &params);
  * reorder pattern in the alignment by decreasing order of parsimony score
  * By this, uninformative sites will all be shifted to the end of the alignment.
  */
+
+/**
+ * add k new row to a tree (todo)
+ */
+
 void optimizeAlignment(IQTree * & tree, Params & params);
 
 void testCompConsensus(const char * infile, const char * outfile, Params *params);

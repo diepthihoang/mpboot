@@ -135,8 +135,10 @@ pllInitAlignmentData (int sequenceCount, int sequenceLength)
 
    
    /** TODO */
+  //  printf("run into\n");
    alignmentData               =  (pllAlignmentData *) rax_malloc (sizeof (pllAlignmentData));
    alignmentData->sequenceData = (unsigned char **) rax_malloc ((sequenceCount + 1) * sizeof (unsigned char *));
+  //  printf("crashed\n");
    //mem = (void *) rax_malloc (sizeof (unsigned char) * (sequenceLength + 1) * sequenceCount);
    //TUNG
    mem = (unsigned char *)rax_malloc(sizeof(unsigned char) * (sequenceLength + 1) * sequenceCount);
@@ -281,7 +283,6 @@ read_phylip_header (int * inp, int * sequenceCount, int * sequenceLength)
 
   NEXT_TOKEN
   CONSUME(PLL_TOKEN_WHITESPACE | PLL_TOKEN_NEWLINE)
-
   if (token.tokenType != PLL_TOKEN_NUMBER) return (0);
 
   *sequenceCount = atoi (token.lexeme);
@@ -293,7 +294,6 @@ read_phylip_header (int * inp, int * sequenceCount, int * sequenceLength)
   *sequenceLength = atoi (token.lexeme);
 
   *inp = input;
-
   return (*sequenceCount && *sequenceLength);
 }
 

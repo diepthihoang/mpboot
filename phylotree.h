@@ -275,8 +275,9 @@ public:
     void init();
 
     /**
-            destructor
+        destructor
      */
+
     virtual ~PhyloTree();
 
     /**
@@ -1326,6 +1327,8 @@ public:
     double approxOneBranch(PhyloNode *node, PhyloNode *dad, double b0);
 
     void approxAllBranches(PhyloNode *node = NULL, PhyloNode *dad = NULL);
+
+    void addRemainRow(const vector<string>& remainRowName, const vector<string>& remainRow, const vector<int>& perm, const vector<int> &permCol);
 
 protected:
 

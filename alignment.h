@@ -58,7 +58,7 @@ public:
             @param sequence_type type of the sequence, either "BIN", "DNA", "AA", or NULL
             @param intype (OUT) input format of the file
      */
-    Alignment(char *filename, char *sequence_type, InputType &intype);
+    Alignment(char *filename, char *sequence_type, InputType &intype, int numStartRow = 1000000000);
 
     /**
             destructor
@@ -99,7 +99,7 @@ public:
             @param sequence_type type of the sequence, either "BIN", "DNA", "AA", or NULL
             @return 1 on success, 0 on failure
      */
-    int readPhylip(char *filename, char *sequence_type);
+    int readPhylip(char *filename, char *sequence_type, int numStartRow = 1000000000);
 
     /**
             read the alignment in FASTA format
@@ -601,6 +601,12 @@ public:
      */
     int n_informative_patterns;
     int n_informative_sites;
+
+    std::vector<std::string> remainName, remainSeq, saveCol;
+
+    void addToAlignmentNewSeq(const string& newName, const string& newSeq, const vector<int> &permCol);
+
+    vector<int> findPermCol();
 
 protected:
 

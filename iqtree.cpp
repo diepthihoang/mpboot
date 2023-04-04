@@ -522,6 +522,32 @@ void IQTree::createPLLPartition(Params &params, ostream &pllPartitionFileHandle)
 
 extern void initializeCostMatrix();
 
+void IQTree::convertToChars(string &pllAlnStr) {
+    int endlCnt = 0, spaceCnt = 0;
+    for(auto &i : pllAlnStr) {
+        if(i == '\n') {
+            spaceCnt = 0;
+            ++endlCnt;
+        }
+        else if(i == ' ' || i == '\t') ++spaceCnt;
+        else if(spaceCnt > 0 && endlCnt > 0 && i >= '0' && i <= '9')
+            i = i - '0' + 'a';
+    }
+}
+
+void IQTree::convertBackToDigits(string &pllAlnStr) {
+    int endlCnt = 0, spaceCnt = 0;
+    for(auto &i : pllAlnStr) {
+        if(i == '\n') {
+            spaceCnt = 0;
+            ++endlCnt;
+        }
+        else if(i == ' ' || i == '\t') ++spaceCnt;
+        else if(spaceCnt > 0 && endlCnt > 0 && i >= 'a' && i <= 'z')
+            i = i - 'a' + '0';
+    }
+}
+
 void IQTree::initializePLL(Params &params) {
     pllAttr.rateHetModel = PLL_GAMMA;
     pllAttr.fastScaling = PLL_FALSE;
@@ -539,6 +565,8 @@ void IQTree::initializePLL(Params &params) {
 
     /* Create a PLL instance */
     pllInst = pllCreateInstance(&pllAttr);
+    //assert(pllInst != NULL);
+
 
     /* Read in the alignment file */
     stringstream pllAln;
@@ -548,7 +576,15 @@ void IQTree::initializePLL(Params &params) {
 		aln->printPhylip(pllAln);
 	}
 	string pllAlnStr = pllAln.str();
+    // cout << "run into\n";
+    // Change 
+    // convertToChars(pllAlnStr);
+
     pllAlignment = pllParsePHYLIPString(pllAlnStr.c_str(), pllAlnStr.length());
+    //cout << pllAlnStr.c_str() << "\n";
+
+    // convertBackToDigits(pllAlnStr);
+    //cout << pllAlnStr.c_str() << "\n";
 
     /* Read in the partition information */
     // BQM: to avoid printing file
@@ -556,6 +592,7 @@ void IQTree::initializePLL(Params &params) {
     createPLLPartition(params, pllPartitionFileHandle);
     pllQueue *partitionInfo = pllPartitionParseString(pllPartitionFileHandle.str().c_str());
 
+    //printf("WHAT'S GOING ON WHEN WE INITIALIZE PLL ???\n");
     /* Validate the partitions */
     if (!pllPartitionsValidate(partitionInfo, pllAlignment)) {
         outError("pllPartitionsValidate");
@@ -1609,7 +1646,6 @@ double IQTree::doTreeSearch() {
 
 	double cur_correlation = 0.0;
 	int ratchet_iter_count = 0;
-
 	/*====================================================
 	 * MAIN LOOP OF THE IQ-TREE ALGORITHM
 	 *====================================================*/
@@ -1701,7 +1737,6 @@ double IQTree::doTreeSearch() {
 			ratchet_iter_count++;
         }
 
-
     	/*----------------------------------------
     	 * Perturb the tree
     	 *---------------------------------------*/
@@ -1776,11 +1811,12 @@ double IQTree::doTreeSearch() {
 					curScore = optimizeAllBranches(params->numSmoothTree, TOL_LIKELIHOOD, PLL_NEWZPERCYCLE);
 					perturbScore = curScore;
 				}
-			}
+			} //printf("It's running here\n");
 		}
     	/*----------------------------------------
     	 * Optimize tree with NNI
     	 *---------------------------------------*/
+
         int nni_count = 0;
         int nni_steps = 0;
 
@@ -2054,7 +2090,8 @@ double IQTree::doTreeSearch() {
 string IQTree::doNNISearch(int& nniCount, int& nniSteps) {
 	string treeString;
 	if(params->maximum_parsimony && params->spr_parsimony && (params->snni || params->pll)){ // SPR for mpars
-		if(on_opt_btree){
+		
+        if(on_opt_btree){
 			if (pllPartitions){
 				myPartitionsDestroy(pllPartitions);
 				pllPartitions = NULL;
@@ -2064,6 +2101,7 @@ string IQTree::doNNISearch(int& nniCount, int& nniSteps) {
 				pllAlignment = NULL;
 			}
 			if (pllInst){
+                //cout << "Vi day la mot bai hat vui, day la mot bai hat khong buon\n";
 				pllDestroyInstance(pllInst);
 				pllInst = NULL;
 			}
@@ -2072,6 +2110,7 @@ string IQTree::doNNISearch(int& nniCount, int& nniSteps) {
 			PatternComp pcomp;
 			sort(aln->begin(), aln->end(), pcomp);
 			aln->updateSitePatternAfterOptimized();
+            
 
 			initializePLL(*params); // because the set of patterns might be a subset of the orig
 			pllNewickTree *btree = pllNewickParseString(getTreeString().c_str());
@@ -2084,7 +2123,7 @@ string IQTree::doNNISearch(int& nniCount, int& nniSteps) {
 				doSegmenting();
 				pllRepsSegments = reps_segments;
 				pllSegmentUpper = segment_upper;
-			}
+			} 
 		}
 
 //		if(false){
@@ -2109,8 +2148,11 @@ string IQTree::doNNISearch(int& nniCount, int& nniSteps) {
 			int max_spr_rad = params->spr_maxtrav;
 			if(on_opt_btree && params->opt_btree_nni) params->spr_maxtrav = 1;
 
+            //printf("do NNI Search !!!!!");
+
 			pllNewickTree *sprStartTree = pllNewickParseString(treeString1.c_str());
 			assert(sprStartTree != NULL);
+            assert(pllInst != NULL);
 			pllTreeInitTopologyNewick(pllInst, sprStartTree, PLL_FALSE);
 
 			pllOptimizeSprParsimony(pllInst, pllPartitions, params->spr_mintrav, max_spr_rad, this);

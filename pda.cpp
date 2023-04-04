@@ -2315,7 +2315,7 @@ int main(int argc, char *argv[])
 #endif
 	//cout << "sizeof(int)=" << sizeof(int) << endl;
 	cout << endl << endl;
-
+	
 	precomputeFitchInfo();
 
 	cout.precision(3);
