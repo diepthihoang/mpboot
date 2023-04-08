@@ -2530,38 +2530,7 @@ void runPhyloAnalysis(Params &params)
 		// call main tree reconstruction
 		runTreeReconstruction(params, original_model, *tree, model_info);
 
-		// add more K row to this tree
-		string saveTreeString = tree->bestTreeString;
-		int k = alignment->remainSeq.size();
-		IQTree resTree;
-		vector<int> perm;
-		for (int i = 0; i < k; ++i)
-			perm.push_back(i);
-		vector<int> permCol = alignment->findPermCol();
-		int bestScore = (int)1e9 + 7;
-		int timer = 0;
-		IQTree newTree, bestTree;
-		do
-		{
-			// my_random_shuffle(perm.begin(), perm.end());
-			++timer;
-			if (timer > 100)
-				break;
-			(newTree).copyPhyloTree(tree);
-			newTree.aln = new Alignment;
-			newTree.aln->copyAlignment(tree->aln);
-			newTree.addRemainRow(alignment->remainName, alignment->remainSeq, perm, permCol);
-			int curScore = newTree.computeParsimonyScore();
-			if (curScore < bestScore)
-			{
-				bestScore = curScore;
-				bestTree.copyPhyloTree(&newTree);
-			}
-			delete newTree.aln;
-			newTree.aln = NULL;
-		} while (next_permutation(perm.begin(), perm.end()));
-		cout << "best tree parsimony found: ";
-		cout << bestScore << '\n';
+		addMoreRowIQTree(tree, alignment);
 
 		if (params.gbo_replicates && params.online_bootstrap)
 		{
@@ -2636,9 +2605,9 @@ void runPhyloAnalysis(Params &params)
 		// the classical non-parameter bootstrap (SBS)
 		runStandardBootstrap(params, original_model, alignment, tree);
 	}
-
 	delete tree;
 	delete alignment;
+	// delete fullTree;
 }
 
 void printSiteParsimonyUserTree(Params &params)
@@ -3170,4 +3139,83 @@ void optimizeAlignment(IQTree *&tree, Params &params)
 	////	tree->setAlignment(alignment);
 	//	IQTree * tree1 = new IQTree(alignment);
 	//	tree = tree1;
+}
+
+int addMoreRowIQTree(IQTree *tree, Alignment *alignment)
+{
+	// add more K row to this tree
+	string saveTreeString = tree->bestTreeString;
+	int k = alignment->remainSeq.size();
+	IQTree resTree;
+	vector<int> perm;
+	for (int i = 0; i < k; ++i)
+		perm.push_back(i);
+	vector<int> permCol = alignment->findPermCol();
+	int bestScore = (int)1e9 + 7;
+	int timer = 0;
+	IQTree newTree, bestTree;
+	do
+	{
+		// my_random_shuffle(perm.begin(), perm.end());
+		++timer;
+		if (timer > 100)
+			break;
+		(newTree).copyPhyloTree(tree);
+		newTree.aln = new Alignment;
+		newTree.aln->copyAlignment(tree->aln);
+		newTree.addRemainRow(alignment->remainName, alignment->remainSeq, perm, permCol);
+		newTree.initializeAllPartialPars();
+		newTree.clearAllPartialLH();
+		// cout << newTree.computeParsimonyScore() << " " << newTree.computeParsimony() << '\n';
+		int curScore = newTree.computeParsimonyScore();
+		if (curScore < bestScore)
+		{
+			bestScore = curScore;
+			bestTree.copyPhyloTree(&newTree);
+		}
+		delete newTree.aln;
+		newTree.aln = NULL;
+	} while (next_permutation(perm.begin(), perm.end()));
+	cout << "best tree parsimony found after add more k rows: ";
+	cout << bestScore << '\n';
+	return bestScore;
+}
+
+int addMoreRowSPR(IQTree *tree, Alignment *alignment, Params &params)
+{
+	tree->initializePLL(params);
+	int k = alignment->remainSeq.size();
+	IQTree resTree;
+	vector<int> perm;
+	for (int i = 0; i < k; ++i)
+		perm.push_back(i);
+	vector<int> permCol = alignment->findPermCol();
+	int bestScore = (int)1e9 + 7;
+	int timer = 0;
+	IQTree newTree, bestTree;
+	do
+	{
+		// my_random_shuffle(perm.begin(), perm.end());
+		++timer;
+		if (timer > 100)
+			break;
+		(newTree).copyPhyloTree(tree);
+		newTree.aln = new Alignment;
+		newTree.aln->copyAlignment(tree->aln);
+		newTree.addRemainRow(alignment->remainName, alignment->remainSeq, perm, permCol);
+		newTree.initializeAllPartialPars();
+		newTree.clearAllPartialLH();
+		// cout << newTree.computeParsimonyScore() << " " << newTree.computeParsimony() << '\n';
+		int curScore = newTree.computeParsimonyScore();
+		if (curScore < bestScore)
+		{
+			bestScore = curScore;
+			bestTree.copyPhyloTree(&newTree);
+		}
+		delete newTree.aln;
+		newTree.aln = NULL;
+	} while (next_permutation(perm.begin(), perm.end()));
+	cout << "best tree parsimony found after add more k rows: ";
+	cout << bestScore << '\n';
+	return bestScore;
 }

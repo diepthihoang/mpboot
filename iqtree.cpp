@@ -4563,3 +4563,47 @@ void IQTree::reinsertIdenticalSeqs(Alignment *orig_aln, StrVector &removed_seqs,
     deleteAllPartialLh();
     clearAllPartialLH();
 }
+
+void IQTree::addRemainRow(const vector<string>& remainRowName, const vector<string>& remainRow, const vector<int>& perm, const vector<int>&permCol) {
+    assert(root);
+    Node *new_taxon;
+    int k = perm.size();
+    int curIdx = aln->getNSeq();
+
+    for(int i = 0; i < k; ++i) {
+        aln->addToAlignmentNewSeq(remainRowName[perm[i]], remainRow[perm[i]], permCol);
+    }
+
+    for (int i = 0; i < k; ++ i) {
+        initializeAllPartialPars();
+        clearAllPartialLH();
+        // // // allocate a new taxon and a new adjacent internal node
+        new_taxon = newNode(curIdx, remainRowName[perm[i]].c_str());
+        ++curIdx;
+        Node *added_node = newNode();
+        added_node->addNeighbor(new_taxon, -1.0);
+        new_taxon->addNeighbor(added_node, -1.0);
+        ((PhyloNeighbor*) added_node->findNeighbor(new_taxon))->partial_pars = newBitsBlock();
+        ((PhyloNeighbor*) new_taxon->findNeighbor(added_node))->partial_pars = newBitsBlock();
+        // // preserve two neighbors
+        added_node->addNeighbor((Node*) 1, -1.0);
+        added_node->addNeighbor((Node*) 2, -1.0);
+        Node *target_node = NULL;
+        Node *target_dad = NULL;
+        int score = addTaxonMPFast(added_node, target_node, target_dad, root->neighbors[0]->node, root);
+        delete[] ((PhyloNeighbor*) new_taxon->findNeighbor(added_node))->partial_pars;
+        delete[] ((PhyloNeighbor*) added_node->findNeighbor(new_taxon))->partial_pars;
+        if (verbose_mode >= VB_MAX)
+            cout << ", score = " << score << endl;
+        // now insert the new node in the middle of the branch node-dad
+        double len = target_dad->findNeighbor(target_node)->length;
+        target_node->updateNeighbor(target_dad, added_node, -1.0);
+        target_dad->updateNeighbor(target_node, added_node, -1.0);
+        added_node->updateNeighbor((Node*) 1, target_node, -1.0);
+        added_node->updateNeighbor((Node*) 2, target_dad, -1.0);
+        // compute the likelihood
+        // clearAllPartialLh();
+        // optimizeAllBranches();
+        // optimizeNNI();
+    }
+}

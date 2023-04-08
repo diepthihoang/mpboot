@@ -3269,14 +3269,10 @@ vector<int> Alignment::findPermCol()
         }
         vector<int> &tmp = patternMap[nptn];
         assert((int)tmp.size() > 0);
-        perm[i] = tmp.back();
+        perm[tmp.back()] = i;
         tmp.pop_back();
     }
-    vector<int> perm2;
-    perm2.assign(getNSite(), 0);
-    for (int i = 0; i < (int)perm.size(); ++i)
-        perm2[perm[i]] = i;
-    return perm2;
+    return perm;
 }
 
 void Alignment::addToAlignmentNewSeq(const string &newName, const string &newSeq, const vector<int> &permCol)

@@ -110,6 +110,8 @@ public:
      */
     virtual void setParams(Params& params);
 
+    void addRemainRow(const vector<string>& remainRowName, const vector<string>& remainRow, const vector<int>& perm, const vector<int>&permCol);
+
     void createPLLPartition(Params &params, ostream &pllPartitionFileHandle);
 
     void convertToChars(string &pllAlnStr);

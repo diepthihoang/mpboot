@@ -131,4 +131,9 @@ void testCompConsensus(const char * infile, const char * outfile, Params *params
 string computeConsensusTreeNoFileIO(StringIntMap& input_trees, IntVector & weight, int max_count,
 		double cutoff, double weight_threshold, Params *params);
 
+//add more K row using IQTree
+int addMoreRowIQTree(IQTree *tree, Alignment *alignment);
+
+//add more K row using sprParsimony
+int addMoreRowSPR(IQTree *tree, Alignment *alignment, Params &params);
 #endif
