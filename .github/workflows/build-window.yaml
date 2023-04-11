@@ -24,10 +24,10 @@ jobs:
     
     - uses: actions/setup-dotnet@v1
     
-    # - name: Setup cmake
-    #   uses: jwlawson/actions-setup-cmake@v1.13
-    #   with:
-    #     cmake-version: '3.16.x'
+    - name: Setup cmake
+      uses: jwlawson/actions-setup-cmake@v1.13
+      with:
+        cmake-version: '3.16.x'
 
     - name: Run cmake
       run: cmake . -G "Visual Studio 12 Win64"
