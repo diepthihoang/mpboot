@@ -9,7 +9,7 @@ jobs:
       matrix:
         chipset_arch: ["sse4", "avx"]
         # os: [ubuntu-latest]
-        os: [window-latest]
+        os: [windows-latest]
     permissions:
       contents: write
     runs-on: ${{ matrix.os }}
