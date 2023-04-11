@@ -1,4 +1,4 @@
-name: Release Mpboot
+name: Release Mpboot Linux
 on:
   workflow_dispatch:
 
@@ -8,8 +8,7 @@ jobs:
       fail-fast: false
       matrix:
         chipset_arch: ["sse4", "avx"]
-        # os: [ubuntu-latest]
-        os: [windows-latest]
+        os: [ubuntu-latest]
     permissions:
       contents: write
     runs-on: ${{ matrix.os }}

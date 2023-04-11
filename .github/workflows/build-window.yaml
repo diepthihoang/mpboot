@@ -1,0 +1,41 @@
+name: Release Mpboot Window
+on:
+  workflow_dispatch:
+# Windows example usages:
+# cmake -G "Visual Studio 12" <source_dir>			(32-bit SSE3 version, compiled with MSVC)
+# cmake -G "Visual Studio 12 Win64" <source_dir>	(64-bit SSE3 version, compiled with MSVC)
+# cmake -G "Visual Studio 12 Win64" -T "Intel C++ Compiler XE 15.0" <source_dir>		(64-bit SSE3 version, compiled with ICC)
+# cmake -G "Visual Studio 12 Win64" -T "Intel C++ Compiler XE 15.0" -DIQTREE_FLAGS="avx" <source_dir>		(64-bit AVX version, compiled with ICC)
+# cmake -G "Visual Studio 12 Win64" -T "Intel C++ Compiler XE 15.0" -DIQTREE_FLAGS="omp" <source_dir>		(64-bit SSE3+OpenMP version, compiled with ICC)
+# cmake -G "Visual Studio 12 Win64" -T "Intel C++ Compiler XE 15.0" -DIQTREE_FLAGS="avx omp" <source_dir>	(64-bit AVX+OpenMP version, compiled with ICC)
+#
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        chipset_arch: ["sse3"]
+        os: [windows-latest]
+    permissions:
+      contents: write
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v3
+    
+    - uses: actions/setup-dotnet@v1
+    
+    # - name: Setup cmake
+    #   uses: jwlawson/actions-setup-cmake@v1.13
+    #   with:
+    #     cmake-version: '3.16.x'
+
+    - name: Run cmake
+      run: cmake . -G "Visual Studio 12 Win64"
+
+    - name: Build
+      run: make
+    
+    - uses: actions/upload-artifact@v3
+      with:
+        name: mpboot-${{ matrix.chipset_arch }}-${{ matrix.os }}
+        path: mpboot*
