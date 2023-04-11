@@ -8,7 +8,8 @@ jobs:
       fail-fast: false
       matrix:
         chipset_arch: ["sse4", "avx"]
-        os: [ubuntu-latest]
+        # os: [ubuntu-latest]
+        os: [window-latest]
     permissions:
       contents: write
     runs-on: ${{ matrix.os }}
