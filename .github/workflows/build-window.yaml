@@ -28,7 +28,7 @@ jobs:
         cmake-version: '3.21.x'
 
     - name: Run cmake
-      run: cmake . cmake -G "MinGW Makefiles" -DIQTREE_FLAGS=${{ matrix.chipset_arch }}
+      run: cmake . -G "MinGW Makefiles" -DIQTREE_FLAGS=${{ matrix.chipset_arch }}
 
     - name: Build
       run: make
