@@ -51,5 +51,8 @@ void convertNewickToNexus(Params &params);
 // act as pllAlignmentRemoveDups of PLL but for sorted alignment of IQTREE
 extern void pllSortedAlignmentRemoveDups (pllAlignmentData * alignmentData, partitionList * pl); /* Diep added */
 
+// add more row using pll core 
+void _pllAddMoreRow(pllInstance *tr, partitionList *pr);
+
 
 #endif /* SPRPARSIMONY_H_ */

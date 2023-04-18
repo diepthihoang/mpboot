@@ -2273,8 +2273,7 @@ int pllGetInstRateMatrix (partitionList * pr, int model, double * outBuffer)
       If set to \b PLL_TRUE then the branch lengths will be reset to the default
       value.
 */
-void
-pllTreeInitTopologyNewick (pllInstance * tr, pllNewickTree * newick, int useDefaultz)
+void pllTreeInitTopologyNewick (pllInstance * tr, pllNewickTree * newick, int useDefaultz)
 {
   linkTaxa (tr, newick, tr->nameHash && checkTreeInclusion (tr, newick));
 

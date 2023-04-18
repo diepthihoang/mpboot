@@ -2532,6 +2532,8 @@ void runPhyloAnalysis(Params &params)
 
 		addMoreRowIQTree(tree, alignment);
 
+		// addMoreRowSPR(tree, alignment, params);
+
 		if (params.gbo_replicates && params.online_bootstrap)
 		{
 			if (params.print_ufboot_trees)
@@ -3158,7 +3160,7 @@ int addMoreRowIQTree(IQTree *tree, Alignment *alignment)
 	{
 		// my_random_shuffle(perm.begin(), perm.end());
 		++timer;
-		if (timer > 100)
+		if (timer > 30)
 			break;
 		(newTree).copyPhyloTree(tree);
 		newTree.aln = new Alignment;
@@ -3197,25 +3199,37 @@ int addMoreRowSPR(IQTree *tree, Alignment *alignment, Params &params)
 	{
 		// my_random_shuffle(perm.begin(), perm.end());
 		++timer;
-		if (timer > 100)
+		if (timer > 10)
 			break;
+
 		(newTree).copyPhyloTree(tree);
 		newTree.aln = new Alignment;
 		newTree.aln->copyAlignment(tree->aln);
-		newTree.addRemainRow(alignment->remainName, alignment->remainSeq, perm, permCol);
-		newTree.initializeAllPartialPars();
-		newTree.clearAllPartialLH();
-		// cout << newTree.computeParsimonyScore() << " " << newTree.computeParsimony() << '\n';
-		int curScore = newTree.computeParsimonyScore();
-		if (curScore < bestScore)
-		{
-			bestScore = curScore;
-			bestTree.copyPhyloTree(&newTree);
-		}
+
+		string treeString = tree->getTreeString();
+		pllNewickTree *newick = pllNewickParseString(treeString.c_str());
+		pllTreeInitTopologyNewick(newTree.pllInst, newick, PLL_TRUE);
+		pllNewickParseDestroy(&newick);
+		//        pllInitModel(iqtree.pllInst, iqtree.pllPartitions, iqtree.pllAlignment);
+		pllInitModel(newTree.pllInst, newTree.pllPartitions);
+
+		newTree.addRemainRowSPR(alignment->remainName, alignment->remainSeq, perm, permCol, params);
+		cout << newTree.pllInst->mxtips << " ";
+		cout << newTree.pllInst->ntips << '\n';
+		// newTree.initializeAllPartialPars();
+		// newTree.clearAllPartialLH();
+		// // cout << newTree.computeParsimonyScore() << " " << newTree.computeParsimony() << '\n';
+		// int curScore = newTree.computeParsimonyScore();
+		// if (curScore < bestScore)
+		// {
+		// 	bestScore = curScore;
+		// 	bestTree.copyPhyloTree(&newTree);
+		// }
 		delete newTree.aln;
 		newTree.aln = NULL;
 	} while (next_permutation(perm.begin(), perm.end()));
-	cout << "best tree parsimony found after add more k rows: ";
+	cout << '\n';
+	cout << "best tree parsimony found after add more k rows using SPR core: ";
 	cout << bestScore << '\n';
 	return bestScore;
 }

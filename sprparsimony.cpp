@@ -3762,6 +3762,73 @@ pllSortedAlignmentRemoveDups (pllAlignmentData * alignmentData, partitionList * 
   rax_free (memptr);
 }
 
+void _pllAddMoreRow(pllInstance *tr, partitionList *pr)
+{
+  nodeptr
+    p,
+    f;
+
+  int
+    i,
+    nextsp,
+    *perm        = (int *)rax_malloc((size_t)(tr->mxtips - tr->ntips + 1) * sizeof(int));
+
+  unsigned int
+    randomMP,
+    startMP;
+
+  assert(!tr->constrained);
+
+  tr->nextnode = tr->mxtips + 1;
+
+  f = tr->start;
+
+  int sta = tr->ntips;
+
+  bestTreeScoreHits = 1;
+
+  while(tr->ntips < tr->mxtips)
+    {
+      nodeptr q;
+
+      tr->bestParsimony = INT_MAX;
+      nextsp = ++(tr->ntips);
+      p = tr->nodep[perm[nextsp - sta]];
+      q = tr->nodep[(tr->nextnode)++ -sta];
+      p->back = q;
+      q->back = p;
+
+      if(tr->grouped)
+        {
+          int
+            number = p->back->number;
+
+          tr->constraintVector[number] = -9;
+        }
+
+      stepwiseAddition(tr, pr, q, f->back);
+//      cout << "tr->ntips = " << tr->ntips << endl;
+
+      {
+        nodeptr
+          r = tr->insertNode->back;
+
+        int counter = 4;
+
+        hookupDefault(q->next,       tr->insertNode);
+        hookupDefault(q->next->next, r);
+
+        computeTraversalInfoParsimony(q, tr->ti, &counter, tr->mxtips, PLL_FALSE, 0);
+        tr->ti[0] = counter;
+
+        newviewParsimonyIterativeFast(tr, pr, 0);
+      }
+    }
+
+    cout << evaluateParsimonyIterativeFast(tr, pr, PLL_FALSE) << '\n';
+  
+}
+
 /* Diep end */
 
 

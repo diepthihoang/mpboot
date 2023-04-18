@@ -4607,3 +4607,19 @@ void IQTree::addRemainRow(const vector<string>& remainRowName, const vector<stri
         // optimizeNNI();
     }
 }
+
+void IQTree::addRemainRowSPR(const vector<string>& remainRowName, const vector<string>& remainRow, const vector<int>& perm, const vector<int>&permCol, Params &params)
+{
+    assert(root);
+    Node *new_taxon;
+    int k = perm.size();
+    int curIdx = aln->getNSeq();
+    int cntSeq = curIdx;
+
+    for(int i = 0; i < k; ++i) {
+        aln->addToAlignmentNewSeq(remainRowName[perm[i]], remainRow[perm[i]], permCol);
+    }
+    initializePLL(params);
+    pllInst->ntips = cntSeq;
+    _pllAddMoreRow(pllInst, pllPartitions);
+}
