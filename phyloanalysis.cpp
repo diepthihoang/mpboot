@@ -3204,17 +3204,17 @@ int addMoreRowSPR(IQTree *tree, Alignment *alignment, Params &params)
 		(newTree).copyPhyloTree(tree);
 		newTree.aln = new Alignment;
 		newTree.aln->copyAlignment(tree->aln);
-		
+
 		int score = newTree.addRemainRowSPR(alignment->remainName, alignment->remainSeq, perm, permCol, params);
-		if(score < bestScore)
+		if (score < bestScore)
 		{
-			score = bestScore;
+			bestScore = score;
 		}
 		delete newTree.aln;
 		newTree.aln = NULL;
 	} while (next_permutation(perm.begin(), perm.end()));
 	cout << '\n';
-	cout << "best tree parsimony found after add more k rows using SPR core: ";
+	cout << "Best tree parsimony found after add more k rows using SPR core: ";
 	cout << bestScore << '\n';
 	return bestScore;
 }

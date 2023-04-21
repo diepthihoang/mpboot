@@ -4628,8 +4628,8 @@ int IQTree::addRemainRowSPR(const vector<string>& remainRowName, const vector<st
     pllNewickParseDestroy(&newick);
     _allocateParsimonyDataStructures(pllInst, pllPartitions, false);
 	pllInst->ntips = params.numStartRow;
-	_pllAddMoreRow(pllInst, pllPartitions);
+	int score = _pllAddMoreRow(pllInst, pllPartitions);
 	_pllFreeParsimonyDataStructures(pllInst, pllPartitions);
     delete newick;
-    return -1;
+    return score;
 }
