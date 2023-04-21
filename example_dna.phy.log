@@ -1,0 +1,10 @@
+MPBoot version 1.1.1 for Mac OS X 64-bit built Apr 18 2023
+Copyright (c) 2016 Diep Thi Hoang, Le Sy Vinh, Tomas Flouri, Alexandros Stamatakis, Arndt von Haeseler and Bui Quang Minh.
+
+Host:    MacBook-Pro-cua-Pham.local (SSE4.2, 8 GB RAM)
+Command: ./mpboot -s example_dna.phy -start_row 13 -vv
+Seed:    630383 (Using SPRNG - Scalable Parallel Random Number Generator)
+Time:    Tue Apr 18 16:06:13 2023
+Kernel:  SSE3
+
+Reading alignment file example_dna.phy ... ERROR: Cannot read file example_dna.phy

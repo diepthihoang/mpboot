@@ -3762,8 +3762,19 @@ pllSortedAlignmentRemoveDups (pllAlignmentData * alignmentData, partitionList * 
   rax_free (memptr);
 }
 
-void _pllAddMoreRow(pllInstance *tr, partitionList *pr)
+void _pllComputeRandomizedStepwiseAdditionMoreRow(pllInstance * tr, partitionList * partitions, IQTree *_iqtree)
 {
+  doing_stepwise_addition = true;
+	iqtree = _iqtree; // update pointer to IQTree
+	_pllAddMoreRow(tr, partitions);
+	doing_stepwise_addition = false;
+//	cout << "Done free..." << endl;
+}
+
+int _pllAddMoreRow(pllInstance *tr, partitionList *pr)
+{
+  cout << "tree parsimony before add row: " << evaluateParsimony(tr, pr, tr->start, 1, 0) << '\n';
+  cout << tr->mxtips << " " << tr->ntips << '\n';
   nodeptr
     p,
     f;
@@ -3771,30 +3782,29 @@ void _pllAddMoreRow(pllInstance *tr, partitionList *pr)
   int
     i,
     nextsp,
-    *perm        = (int *)rax_malloc((size_t)(tr->mxtips - tr->ntips + 1) * sizeof(int));
-
+    len = tr->mxtips - tr->ntips + 1;
   unsigned int
     randomMP,
     startMP;
 
   assert(!tr->constrained);
 
-  tr->nextnode = tr->mxtips + 1;
+  int inner_used = tr->ntips - 2;
+  tr->nextnode = tr->mxtips + inner_used + 1;
 
   f = tr->start;
 
-  int sta = tr->ntips;
-
   bestTreeScoreHits = 1;
+
+  nodeptr q;
 
   while(tr->ntips < tr->mxtips)
     {
-      nodeptr q;
 
       tr->bestParsimony = INT_MAX;
       nextsp = ++(tr->ntips);
-      p = tr->nodep[perm[nextsp - sta]];
-      q = tr->nodep[(tr->nextnode)++ -sta];
+      p = tr->nodep[nextsp];
+      q = tr->nodep[(tr->nextnode)++];
       p->back = q;
       q->back = p;
 
@@ -3818,15 +3828,18 @@ void _pllAddMoreRow(pllInstance *tr, partitionList *pr)
         hookupDefault(q->next,       tr->insertNode);
         hookupDefault(q->next->next, r);
 
-        computeTraversalInfoParsimony(q, tr->ti, &counter, tr->mxtips, PLL_FALSE, 0);
+        computeTraversalInfoParsimony(q, tr->ti, &counter, tr->mxtips, 0, 0);
         tr->ti[0] = counter;
 
         newviewParsimonyIterativeFast(tr, pr, 0);
       }
     }
-
-    cout << evaluateParsimonyIterativeFast(tr, pr, PLL_FALSE) << '\n';
-  
+    int counter = 4;
+    computeTraversalInfoParsimony(q, tr->ti, &counter, tr->mxtips, PLL_FALSE, 0);
+    int score = evaluateParsimony(tr, pr, tr->start, 1, 0);
+    cout << "tree parismony after add row: " << score << '\n';
+    cout << '\n';
+    return score;
 }
 
 /* Diep end */

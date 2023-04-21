@@ -4608,10 +4608,9 @@ void IQTree::addRemainRow(const vector<string>& remainRowName, const vector<stri
     }
 }
 
-void IQTree::addRemainRowSPR(const vector<string>& remainRowName, const vector<string>& remainRow, const vector<int>& perm, const vector<int>&permCol, Params &params)
+int IQTree::addRemainRowSPR(const vector<string>& remainRowName, const vector<string>& remainRow, const vector<int>& perm, const vector<int>&permCol, Params &params)
 {
     assert(root);
-    Node *new_taxon;
     int k = perm.size();
     int curIdx = aln->getNSeq();
     int cntSeq = curIdx;
@@ -4619,7 +4618,18 @@ void IQTree::addRemainRowSPR(const vector<string>& remainRowName, const vector<s
     for(int i = 0; i < k; ++i) {
         aln->addToAlignmentNewSeq(remainRowName[perm[i]], remainRow[perm[i]], permCol);
     }
+
     initializePLL(params);
-    pllInst->ntips = cntSeq;
-    _pllAddMoreRow(pllInst, pllPartitions);
+    string treeString = getTreeString();
+    pllNewickTree *newick = pllNewickParseString(treeString.c_str());
+    newick->tips = aln->getNSeq();
+    newick->nodes = newick->tips * 2 - 2;
+    pllTreeInitTopologyNewick(pllInst, newick, PLL_FALSE);
+    pllNewickParseDestroy(&newick);
+    _allocateParsimonyDataStructures(pllInst, pllPartitions, false);
+	pllInst->ntips = params.numStartRow;
+	_pllAddMoreRow(pllInst, pllPartitions);
+	_pllFreeParsimonyDataStructures(pllInst, pllPartitions);
+    delete newick;
+    return -1;
 }

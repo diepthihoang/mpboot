@@ -2532,7 +2532,7 @@ void runPhyloAnalysis(Params &params)
 
 		addMoreRowIQTree(tree, alignment);
 
-		// addMoreRowSPR(tree, alignment, params);
+		addMoreRowSPR(tree, alignment, params);
 
 		if (params.gbo_replicates && params.online_bootstrap)
 		{
@@ -3178,14 +3178,13 @@ int addMoreRowIQTree(IQTree *tree, Alignment *alignment)
 		delete newTree.aln;
 		newTree.aln = NULL;
 	} while (next_permutation(perm.begin(), perm.end()));
-	cout << "best tree parsimony found after add more k rows: ";
+	cout << "\nBest tree parsimony found after add more k rows: ";
 	cout << bestScore << '\n';
 	return bestScore;
 }
 
 int addMoreRowSPR(IQTree *tree, Alignment *alignment, Params &params)
 {
-	tree->initializePLL(params);
 	int k = alignment->remainSeq.size();
 	IQTree resTree;
 	vector<int> perm;
@@ -3199,32 +3198,18 @@ int addMoreRowSPR(IQTree *tree, Alignment *alignment, Params &params)
 	{
 		// my_random_shuffle(perm.begin(), perm.end());
 		++timer;
-		if (timer > 10)
+		if (timer > 30)
 			break;
 
 		(newTree).copyPhyloTree(tree);
 		newTree.aln = new Alignment;
 		newTree.aln->copyAlignment(tree->aln);
-
-		string treeString = tree->getTreeString();
-		pllNewickTree *newick = pllNewickParseString(treeString.c_str());
-		pllTreeInitTopologyNewick(newTree.pllInst, newick, PLL_TRUE);
-		pllNewickParseDestroy(&newick);
-		//        pllInitModel(iqtree.pllInst, iqtree.pllPartitions, iqtree.pllAlignment);
-		pllInitModel(newTree.pllInst, newTree.pllPartitions);
-
-		newTree.addRemainRowSPR(alignment->remainName, alignment->remainSeq, perm, permCol, params);
-		cout << newTree.pllInst->mxtips << " ";
-		cout << newTree.pllInst->ntips << '\n';
-		// newTree.initializeAllPartialPars();
-		// newTree.clearAllPartialLH();
-		// // cout << newTree.computeParsimonyScore() << " " << newTree.computeParsimony() << '\n';
-		// int curScore = newTree.computeParsimonyScore();
-		// if (curScore < bestScore)
-		// {
-		// 	bestScore = curScore;
-		// 	bestTree.copyPhyloTree(&newTree);
-		// }
+		
+		int score = newTree.addRemainRowSPR(alignment->remainName, alignment->remainSeq, perm, permCol, params);
+		if(score < bestScore)
+		{
+			score = bestScore;
+		}
 		delete newTree.aln;
 		newTree.aln = NULL;
 	} while (next_permutation(perm.begin(), perm.end()));

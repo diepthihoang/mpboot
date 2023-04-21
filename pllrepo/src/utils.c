@@ -3579,7 +3579,6 @@ int pllInitModel (pllInstance * tr, partitionList * partitions)
 #endif
   
   //initializePartitions (tr, tr, partitions, partitions, 0, 0);
-  
   initModel (tr, ef, partitions);
   pllEmpiricalFrequenciesDestroy (&ef, partitions->numberOfPartitions);
 

@@ -16,7 +16,7 @@
  */
 void _pllComputeRandomizedStepwiseAdditionParsimonyTree(pllInstance * tr, partitionList * partitions, int sprDist, IQTree *_iqtree);
 
-void _allocateParsimonyDataStructures(pllInstance *tr, partitionList *pr);
+void _allocateParsimonyDataStructures(pllInstance *tr, partitionList *pr, int perSiteScores);
 void _pllFreeParsimonyDataStructures(pllInstance *tr, partitionList *pr);
 
 /**
@@ -52,7 +52,9 @@ void convertNewickToNexus(Params &params);
 extern void pllSortedAlignmentRemoveDups (pllAlignmentData * alignmentData, partitionList * pl); /* Diep added */
 
 // add more row using pll core 
-void _pllAddMoreRow(pllInstance *tr, partitionList *pr);
+int _pllAddMoreRow(pllInstance *tr, partitionList *pr);
+
+void _pllComputeRandomizedStepwiseAdditionMoreRow(pllInstance * tr, partitionList * partitions, IQTree *_iqtree);
 
 
 #endif /* SPRPARSIMONY_H_ */

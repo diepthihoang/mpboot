@@ -112,7 +112,7 @@ public:
 
     void addRemainRow(const vector<string>& remainRowName, const vector<string>& remainRow, const vector<int>& perm, const vector<int>&permCol);
 
-    void addRemainRowSPR(const vector<string>& remainRowName, const vector<string>& remainRow, const vector<int>& perm, const vector<int>&permCol, Params &param);
+    int addRemainRowSPR(const vector<string>& remainRowName, const vector<string>& remainRow, const vector<int>& perm, const vector<int>&permCol, Params &params);
 
     void createPLLPartition(Params &params, ostream &pllPartitionFileHandle);
 
