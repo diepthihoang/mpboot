@@ -134,6 +134,9 @@ string computeConsensusTreeNoFileIO(StringIntMap& input_trees, IntVector & weigh
 //add more K row using IQTree
 int addMoreRowIQTree(IQTree *tree, Alignment *alignment);
 
-//add more K row using sprParsimony
+//add more K row using sprParsimony 
 int addMoreRowSPR(IQTree *tree, Alignment *alignment, Params &params);
+
+//add more k row using sprParmony hill climbing
+int addMoreRowHillClimBing(IQTree *tree, Alignment *alignment, Params &params, const vector<int> &permCol, const vector<int> &perm);
 #endif

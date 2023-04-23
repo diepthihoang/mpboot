@@ -3183,6 +3183,7 @@ int addMoreRowIQTree(IQTree *tree, Alignment *alignment)
 	return bestScore;
 }
 
+const double e = 2.7182818;
 int addMoreRowSPR(IQTree *tree, Alignment *alignment, Params &params)
 {
 	int k = alignment->remainSeq.size();
@@ -3191,30 +3192,64 @@ int addMoreRowSPR(IQTree *tree, Alignment *alignment, Params &params)
 	for (int i = 0; i < k; ++i)
 		perm.push_back(i);
 	vector<int> permCol = alignment->findPermCol();
-	int bestScore = (int)1e9 + 7;
+
+	int bestScore = (int)1e9 + 7, curScore = (int)1e9 + 7;
+	int bestScoreHit = 0;
+	int maxDist = max(1, k / 20);
+	int maxLoop = 100;
+	double t_o = 100;
+	double t_s = 0.0001;
+	double alpha = (t_o - t_s) / (maxLoop * k * maxDist * t_s);
+	double sum = 0;
 	int timer = 0;
-	IQTree newTree, bestTree;
-	do
+
+	for(int loop = 1; loop <= maxLoop; ++loop)
 	{
-		// my_random_shuffle(perm.begin(), perm.end());
-		++timer;
-		if (timer > 30)
-			break;
-
-		(newTree).copyPhyloTree(tree);
-		newTree.aln = new Alignment;
-		newTree.aln->copyAlignment(tree->aln);
-
-		int score = newTree.addRemainRowSPR(alignment->remainName, alignment->remainSeq, perm, permCol, params);
-		if (score < bestScore)
+		for(int i = 0; i < (int)perm.size(); ++i)
 		{
-			bestScore = score;
+			for(int j = i + 1; j <= min((int)perm.size() - 1, i + maxDist); ++j)
+			{
+				++timer;
+				vector<int> newPerm = perm;
+				swap(newPerm[i], newPerm[j]);
+				int newScore = addMoreRowHillClimBing(tree, alignment, params, permCol, newPerm);
+				if(newScore < curScore)
+				{
+					bestScore = min(bestScore, newScore);
+					curScore = newScore;
+					perm = newPerm;
+					bestScoreHit = 1;
+				}
+				else if(newScore == curScore)
+				{
+					if(newScore == bestScore) ++bestScoreHit;
+					if((double)rand() / RAND_MAX >= 1.0 / bestScoreHit)
+						perm = newPerm, curScore = newScore;
+				}
+				else 
+				{
+					double t = t_o / (1.0 + alpha * timer);
+					if((double)rand() / RAND_MAX >= pow(e, -newScore / (t * sum / (timer - 1))))
+						perm = newPerm, curScore = newScore;
+				}
+				sum += newScore;
+			}
 		}
-		delete newTree.aln;
-		newTree.aln = NULL;
-	} while (next_permutation(perm.begin(), perm.end()));
+	};
 	cout << '\n';
 	cout << "Best tree parsimony found after add more k rows using SPR core: ";
 	cout << bestScore << '\n';
 	return bestScore;
+}
+
+int addMoreRowHillClimBing(IQTree *tree, Alignment *alignment, Params &params, const vector<int> &permCol, const vector<int> &perm)
+{
+	IQTree newTree;
+	(newTree).copyPhyloTree(tree);
+	newTree.aln = new Alignment;
+	newTree.aln->copyAlignment(tree->aln);
+	int score = newTree.addRemainRowSPR(alignment->remainName, alignment->remainSeq, perm, permCol, params);
+	delete newTree.aln;
+	newTree.aln = NULL;
+	return score;
 }

@@ -54,5 +54,4 @@ extern void pllSortedAlignmentRemoveDups (pllAlignmentData * alignmentData, part
 // add more row using pll core 
 int _pllAddMoreRow(pllInstance *tr, partitionList *pr);
 
-
 #endif /* SPRPARSIMONY_H_ */
