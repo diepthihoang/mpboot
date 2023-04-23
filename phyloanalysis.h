@@ -137,6 +137,9 @@ int addMoreRowIQTree(IQTree *tree, Alignment *alignment);
 //add more K row using sprParsimony 
 int addMoreRowSPR(IQTree *tree, Alignment *alignment, Params &params);
 
-//add more k row using sprParmony hill climbing
-int addMoreRowHillClimBing(IQTree *tree, Alignment *alignment, Params &params, const vector<int> &permCol, const vector<int> &perm);
+//hill climbing to update candidates like mpboot
+int updatePermutation(IQTree *tree, Alignment *alignment, Params &params, const vector<int> permCol, vector<vector<int> > &candidates, vector<int> &candidateScore);
+
+//compute parsimony score after add more k row
+int computeParsimonyPermutation(IQTree *tree, Alignment *alignment, Params &params, const vector<int> &permCol, const vector<int> &perm);
 #endif

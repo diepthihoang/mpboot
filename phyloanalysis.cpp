@@ -3188,61 +3188,191 @@ int addMoreRowSPR(IQTree *tree, Alignment *alignment, Params &params)
 {
 	int k = alignment->remainSeq.size();
 	IQTree resTree;
-	vector<int> perm;
-	for (int i = 0; i < k; ++i)
-		perm.push_back(i);
 	vector<int> permCol = alignment->findPermCol();
+	int bestScore;
 
-	int bestScore = (int)1e9 + 7, curScore = (int)1e9 + 7;
-	int bestScoreHit = 0;
-	int maxDist = max(1, k / 20);
-	int maxLoop = 100;
-	double t_o = 100;
-	double t_s = 0.0001;
-	double alpha = (t_o - t_s) / (maxLoop * k * maxDist * t_s);
-	double sum = 0;
-	int timer = 0;
-
-	for(int loop = 1; loop <= maxLoop; ++loop)
+	if(k <= 5)
 	{
-		for(int i = 0; i < (int)perm.size(); ++i)
+		int bestScore = (int)1e9 + 7;
+
+		vector<int> perm;
+		for(int i = 0; i < k; ++i)
+			perm.push_back(i);
+		do 
 		{
-			for(int j = i + 1; j <= min((int)perm.size() - 1, i + maxDist); ++j)
+			int newScore = computeParsimonyPermutation(tree, alignment, params, permCol, perm);
+			bestScore = min(bestScore, newScore);
+		}while(next_permutation(perm.begin(), perm.end()));
+
+		cout << '\n';
+		cout << "Best tree parsimony found after add more k rows using SPR core: ";
+		cout << bestScore << '\n';
+		return bestScore;
+	}
+
+	int numCandidate = 5;
+	vector<vector<int> > candidates;
+	vector<int> candidateScore;
+
+	// init 100 permutation
+	for(int id = 1; id <= 100; ++id)
+	{
+		vector<int> perm;
+		for (int i = 0; i < k; ++i)
+			perm.push_back(i);
+		my_random_shuffle(perm.begin(), perm.end());
+		int maxLoop = 10;
+		int maxDist = max(1, k / 20);
+		int maxLen = max(2, k / 20);
+		int bestScoreHit = 1;
+		int curScore = computeParsimonyPermutation(tree, alignment, params, permCol, perm);
+		for(int loop = 1; loop <= maxLoop; ++loop)
+		{
+			// rand 2..maxLen
+			int len = 2 + rand()%(maxLen - 1);
+			// rand 0..k-len
+			int l = rand()%(k - len);
+			int r = l + len - 1;
+			for(int i = 0; i < k; ++i)
 			{
-				++timer;
-				vector<int> newPerm = perm;
-				swap(newPerm[i], newPerm[j]);
-				int newScore = addMoreRowHillClimBing(tree, alignment, params, permCol, newPerm);
+				if(l <= i && i <= r)
+					continue;
+				if(min(abs(i - l), abs(i - r)) > maxDist)
+					continue;
+				vector<int> newPerm;
+				for(int j = 0; j <= i; ++j)
+				{
+					if(l <= j && j <= r)
+						continue;
+					newPerm.push_back(perm[j]);
+				}
+				for(int j = l; j <= r; ++j)
+					newPerm.push_back(perm[j]);
+				for(int j = i + 1; j < k; ++j)
+				{
+					if(l <= j && j <= r)
+						continue;
+					newPerm.push_back(perm[j]);
+				}
+				assert((int)newPerm.size() == k);
+				int newScore = computeParsimonyPermutation(tree, alignment, params, permCol, newPerm);
+
 				if(newScore < curScore)
 				{
-					bestScore = min(bestScore, newScore);
 					curScore = newScore;
 					perm = newPerm;
 					bestScoreHit = 1;
 				}
 				else if(newScore == curScore)
 				{
-					if(newScore == bestScore) ++bestScoreHit;
 					if((double)rand() / RAND_MAX >= 1.0 / bestScoreHit)
-						perm = newPerm, curScore = newScore;
+						perm = newPerm;
+					++bestScoreHit;
 				}
-				else 
-				{
-					double t = t_o / (1.0 + alpha * timer);
-					if((double)rand() / RAND_MAX >= pow(e, -newScore / (t * sum / (timer - 1))))
-						perm = newPerm, curScore = newScore;
-				}
-				sum += newScore;
 			}
 		}
-	};
+
+		candidates.push_back(perm);
+		candidateScore.push_back(curScore);
+		if((int)candidates.size() > numCandidate)
+		{
+			int choice = 0;
+			for(int i = 0; i < (int)candidates.size(); ++i)
+			{
+				if(candidateScore[i] > candidateScore[choice])
+					choice = i;
+				else if(candidateScore[i] == candidateScore[choice])
+				{
+					if(rand()%2 == 1)
+						choice = i;
+				}
+			}
+			candidates.erase(candidates.begin() + choice);
+			candidateScore.erase(candidateScore.begin() + choice);
+		}
+	}
+
+	bestScore = updatePermutation(tree, alignment, params, permCol, candidates, candidateScore);
+	
 	cout << '\n';
 	cout << "Best tree parsimony found after add more k rows using SPR core: ";
 	cout << bestScore << '\n';
 	return bestScore;
 }
 
-int addMoreRowHillClimBing(IQTree *tree, Alignment *alignment, Params &params, const vector<int> &permCol, const vector<int> &perm)
+int updatePermutation(IQTree *tree, Alignment *alignment, Params &params, const vector<int> permCol, vector<vector<int> > &candidates, vector<int> &candidateScore)
+{
+	cout << "we are here\n";
+	assert((int)candidates.size() > 0);
+	// main loop
+	int cnt = 0;
+	while(true)
+	{
+		int id = rand()%((int)candidates.size());
+		vector<int> perm = candidates[id];
+		int curScore = candidateScore[id];
+		int k = (int)perm.size();
+		int bestScoreHit = 1;
+		int maxDist = max(1, k / 20);
+		int maxLoop = 100;
+		for(int loop = 1; loop <= maxLoop; ++loop)
+		{
+			for(int i = 0; i < k; ++i)
+			{
+				for(int j = i + 1; j <= min(k - 1, i + maxDist); ++j)
+				{
+					swap(perm[i], perm[j]);
+					int newScore = computeParsimonyPermutation(tree, alignment, params, permCol, perm);
+					if(newScore < curScore)
+					{
+						curScore = newScore;
+						bestScoreHit = 1;
+					}
+					else if(newScore == curScore)
+					{
+						++bestScoreHit;
+						if((double)rand() / RAND_MAX < 1.0 / bestScoreHit) // not accept
+							swap(perm[i], perm[j]);
+					}
+					else 
+						swap(perm[i], perm[j]);
+				}
+			}
+		}
+		
+		if(curScore == candidateScore[id])
+			++cnt;
+		else 
+			cnt = 1;
+		
+		candidates.push_back(perm);
+		candidateScore.push_back(curScore);
+		cout << curScore << " " << candidateScore[id] << " " << cnt << '\n';
+		int choice = 0;
+		for(int i = 0; i < (int)candidates.size(); ++i)
+		{
+			if(candidateScore[i] > candidateScore[choice])
+				choice = i;
+			else if(candidateScore[i] == candidateScore[choice])
+			{
+				if(rand()%2 == 1)
+					choice = i;
+			}
+		}
+		candidates.erase(candidates.begin() + choice);
+		candidateScore.erase(candidateScore.begin() + choice);
+
+		if(cnt == 10)
+			break;
+	}
+
+	int bestScore = candidateScore[0];
+	for(int i = 0; i < (int)candidateScore.size(); ++i)
+		bestScore = min(bestScore, candidateScore[i]);
+	return bestScore;
+}
+
+int computeParsimonyPermutation(IQTree *tree, Alignment *alignment, Params &params, const vector<int> &permCol, const vector<int> &perm)
 {
 	IQTree newTree;
 	(newTree).copyPhyloTree(tree);
