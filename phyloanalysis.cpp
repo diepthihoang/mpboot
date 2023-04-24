@@ -2532,7 +2532,7 @@ void runPhyloAnalysis(Params &params)
 
 		addMoreRowIQTree(tree, alignment);
 
-		addMoreRowSPR(tree, alignment, params);
+		addMoreRowPLL(tree, alignment, params);
 
 		if (params.gbo_replicates && params.online_bootstrap)
 		{
@@ -3184,7 +3184,7 @@ int addMoreRowIQTree(IQTree *tree, Alignment *alignment)
 }
 
 const double e = 2.7182818;
-int addMoreRowSPR(IQTree *tree, Alignment *alignment, Params &params)
+int addMoreRowPLL(IQTree *tree, Alignment *alignment, Params &params)
 {
 	int k = alignment->remainSeq.size();
 	IQTree resTree;
@@ -3205,7 +3205,7 @@ int addMoreRowSPR(IQTree *tree, Alignment *alignment, Params &params)
 		}while(next_permutation(perm.begin(), perm.end()));
 
 		cout << '\n';
-		cout << "Best tree parsimony found after add more k rows using SPR core: ";
+		cout << "Best tree parsimony found after add more k rows using PLL core: ";
 		cout << bestScore << '\n';
 		return bestScore;
 	}
@@ -3269,7 +3269,7 @@ int addMoreRowSPR(IQTree *tree, Alignment *alignment, Params &params)
 						perm = newPerm;
 					++bestScoreHit;
 				}
-			}
+			} 
 		}
 
 		candidates.push_back(perm);
@@ -3295,7 +3295,7 @@ int addMoreRowSPR(IQTree *tree, Alignment *alignment, Params &params)
 	bestScore = updatePermutation(tree, alignment, params, permCol, candidates, candidateScore);
 	
 	cout << '\n';
-	cout << "Best tree parsimony found after add more k rows using SPR core: ";
+	cout << "Best tree parsimony found after add more k rows using PLL core: ";
 	cout << bestScore << '\n';
 	return bestScore;
 }

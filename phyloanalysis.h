@@ -134,8 +134,8 @@ string computeConsensusTreeNoFileIO(StringIntMap& input_trees, IntVector & weigh
 //add more K row using IQTree
 int addMoreRowIQTree(IQTree *tree, Alignment *alignment);
 
-//add more K row using sprParsimony 
-int addMoreRowSPR(IQTree *tree, Alignment *alignment, Params &params);
+//add more K row using PLL core 
+int addMoreRowPLL(IQTree *tree, Alignment *alignment, Params &params);
 
 //hill climbing to update candidates like mpboot
 int updatePermutation(IQTree *tree, Alignment *alignment, Params &params, const vector<int> permCol, vector<vector<int> > &candidates, vector<int> &candidateScore);
