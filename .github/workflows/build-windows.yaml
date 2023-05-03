@@ -56,7 +56,7 @@ jobs:
     - name: Release
       uses: softprops/action-gh-release@v1
       with:
-        files: mpboot-${{ matrix.chipset_arch }}-${{ matrix.os }}-${{ inputs.version }}.zip
+        files: mpboot-${{ matrix.chipset_arch }}-${{ matrix.os }}-${{ inputs.version }}.7z
         tag_name: ${{ inputs.version }}
         draft: true
         append_body: true
