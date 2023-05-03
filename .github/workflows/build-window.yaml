@@ -20,7 +20,7 @@ jobs:
       run: |
         mkdir tdm 
         cd tdm
-        curl -OutFile tdm64-gcc.exe -Uri https://github.com/jmeubank/tdm-gcc/releases/download/v10.3.0-tdm64-2/tdm64-gcc-10.3.0-2.exe
+        curl -LJ -o tdm64-gcc.exe https://github.com/jmeubank/tdm-gcc/releases/download/v10.3.0-tdm64-2/tdm64-gcc-10.3.0-2.exe
         7z e tdm64-gcc.exe
         mkdir install
         forfiles /M *.tar.xz /C "CMD /c arc -folder-safe=false unarchive @path install"
