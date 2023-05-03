@@ -11,12 +11,12 @@ jobs:
   windows:
     permissions:
       contents: write
-    uses: .github/workflows/build-windows.yaml@mpboot
+    uses: ./.github/workflows/build-windows.yml
     with:
       version: ${{ inputs.version }}
   ubuntu:
     permissions:
       contents: write
-    uses: .github/workflows/build-windows.yaml@mpboot
+    uses: ./.github/workflows/build-ubuntu.yml
     with:
       version: ${{ inputs.version }}
