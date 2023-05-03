@@ -1,0 +1,18 @@
+name: Release Mpboot
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        required: true
+        type: string
+        description: Sematic versioning
+
+jobs:
+  windows:
+    uses: aqaurius6666/mpboot/.github/workflows/build-windows.yaml@mpboot
+    with:
+      version: ${{ inputs.version }}
+  ubuntu:
+    uses: aqaurius6666/mpboot/.github/workflows/build-windows.yaml@mpboot
+    with:
+      version: ${{ inputs.version }}

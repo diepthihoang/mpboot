@@ -1,6 +1,13 @@
 name: Release Mpboot Linux
 on:
   workflow_dispatch:
+  
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+        description: Sematic versioning
 
 jobs:
   build:
@@ -28,5 +35,13 @@ jobs:
     
     - uses: actions/upload-artifact@v3
       with:
-        name: mpboot-${{ matrix.chipset_arch }}-${{ matrix.os }}
+        name: mpboot-${{ matrix.chipset_arch }}-${{ matrix.os }}-${{ inputs.version }}
         path: mpboot*
+
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: mpboot-${{ matrix.chipset_arch }}-${{ matrix.os }}-${{ inputs.version }}.zip
+        tag_name: ${{ inputs.version }}
+        draft: true
+        append_body: true

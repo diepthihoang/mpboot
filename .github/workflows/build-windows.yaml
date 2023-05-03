@@ -2,6 +2,13 @@ name: Release Mpboot Window
 on:
   workflow_dispatch:
 
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+        description: Sematic versioning
+        
 jobs:
   build:
     strategy:
@@ -39,7 +46,13 @@ jobs:
     - name: Build
       run: make
     
-    - uses: actions/upload-artifact@v3
+    - name: Zip build artifact
+      run: zip -r mpboot-${{ matrix.chipset_arch }}-${{ matrix.os }}-${{ inputs.version }}.zip mpboot*
+
+    - name: Release
+      uses: softprops/action-gh-release@v1
       with:
-        name: mpboot-${{ matrix.chipset_arch }}-${{ matrix.os }}
-        path: mpboot*
+        files: mpboot-${{ matrix.chipset_arch }}-${{ matrix.os }}-${{ inputs.version }}.zip
+        tag_name: ${{ inputs.version }}
+        draft: true
+        append_body: true
