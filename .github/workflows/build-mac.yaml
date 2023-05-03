@@ -1,7 +1,11 @@
 name: Release Mpboot Mac
 on:
   workflow_dispatch:
-  
+    inputs:
+      version:
+        required: true
+        type: string
+        description: Sematic versioning
   workflow_call:
     inputs:
       version:
