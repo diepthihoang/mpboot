@@ -26,7 +26,9 @@ jobs:
         forfiles /M *.tar.xz /C "cmd /C 7z x @file -y"
         forfiles /M *.tar /C "cmd /C 7z x @file -oinstall -y"
         setx /M PATH "%PATH%;.\install\bin"
-
+    - name: test tdm-gcc
+      run: gcc --version 
+      
     - name: Run cmake
       run: cmake . -G "MinGW Makefiles" -DIQTREE_FLAGS=${{ matrix.chipset_arch }}
 
