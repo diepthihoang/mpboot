@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        chipset_arch: ["avx"]
+        chipset_arch: ["sse4", "avx"]
         os: [windows-latest]
     permissions:
       contents: write
