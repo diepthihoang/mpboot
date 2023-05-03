@@ -27,7 +27,7 @@ jobs:
         forfiles /M *.tar /C "cmd /C 7z x @file -oinstall -y"
         cd install
         cd bin
-        echo "$PWD" >> $GITHUB_PATH
+        echo "$PWD"
     - name: test tdm-gcc
       run: |
         gcc --version
