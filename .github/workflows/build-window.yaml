@@ -23,9 +23,9 @@ jobs:
         curl -LJ -o tdm64-gcc.exe https://github.com/jmeubank/tdm-gcc/releases/download/v10.3.0-tdm64-2/tdm64-gcc-10.3.0-2.exe
         7z e tdm64-gcc.exe
         mkdir install
-        forfiles /M *.tar.xz /C "CMD /c arc -folder-safe=false unarchive @path install"
-        cd ..
-        setx /M path "%PATH%;$PWD\tdm\install\bin"
+        forfiles /M *.tar.xz /C "cmd /C 7z x @file -y"
+        forfiles /M *.tar /C "cmd /C 7z x @file -oinstall -y"
+        setx /M PATH "%PATH%;.\install\bin"
 
     - name: Run cmake
       run: cmake . -G "MinGW Makefiles" -DIQTREE_FLAGS=${{ matrix.chipset_arch }}
