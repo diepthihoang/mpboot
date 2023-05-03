@@ -20,3 +20,9 @@ jobs:
     uses: ./.github/workflows/build-ubuntu.yaml
     with:
       version: ${{ inputs.version }}
+  mac:
+    permissions:
+      contents: write
+    uses: ./.github/workflows/build-mac.yaml
+    with:
+      version: ${{ inputs.version }}
