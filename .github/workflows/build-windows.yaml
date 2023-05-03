@@ -47,7 +47,7 @@ jobs:
       run: make
     
     - name: Zip build artifact
-      run: zip -r mpboot-${{ matrix.chipset_arch }}-${{ matrix.os }}-${{ inputs.version }}.zip mpboot*
+      run: 7z a mpboot-${{ matrix.chipset_arch }}-${{ matrix.os }}-${{ inputs.version }}.7z mpboot*
 
     - name: Release
       uses: softprops/action-gh-release@v1
