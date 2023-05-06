@@ -1,0 +1,62 @@
+name: Release Mpboot Window
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        required: true
+        type: string
+        description: Sematic versioning
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+        description: Sematic versioning
+        
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        chipset_arch: ["sse4", "avx"]
+        os: [windows-latest]
+    permissions:
+      contents: write
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v3
+
+
+    - name: install tdm-gcc (v10.3.0)
+      run: |
+        mkdir tdm 
+        cd tdm
+        curl -LJ -o tdm64-gcc.exe https://github.com/jmeubank/tdm-gcc/releases/download/v10.3.0-tdm64-2/tdm64-gcc-10.3.0-2.exe
+        7z e tdm64-gcc.exe
+        mkdir install
+        forfiles /M *.tar.xz /C "cmd /C 7z x @file -y"
+        forfiles /M *.tar /C "cmd /C 7z x @file -oinstall -y"
+        cd install
+        cd bin
+        echo "$PWD"
+    - name: test tdm-gcc
+      run: |
+        gcc --version
+        echo $env:PATH 
+
+    - name: Run cmake
+      run: cmake . -G "MinGW Makefiles" -DIQTREE_FLAGS=${{ matrix.chipset_arch }} -DCMAKE_CXX_COMPILER="D:/a/mpboot/mpboot/tdm/install/bin/g++.exe" -DCMAKE_C_COMPILER="D:/a/mpboot/mpboot/tdm/install/bin/gcc.exe"
+
+    - name: Build
+      run: make
+    
+    - name: Zip build artifact
+      run: 7z a mpboot-${{ matrix.chipset_arch }}-${{ matrix.os }}-${{ inputs.version }}.7z mpboot*
+
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: mpboot-${{ matrix.chipset_arch }}-${{ matrix.os }}-${{ inputs.version }}.7z
+        tag_name: ${{ inputs.version }}
+        draft: true
+        append_body: true

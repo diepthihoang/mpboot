@@ -1,0 +1,49 @@
+name: Release Mpboot Mac
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        required: true
+        type: string
+        description: Sematic versioning
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+        description: Sematic versioning
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        chipset_arch: ["sse4", "avx"]
+        os: [macos-latest]
+    permissions:
+      contents: write
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup cmake
+      uses: jwlawson/actions-setup-cmake@v1.13
+      with:
+        cmake-version: '3.16.x'
+
+    - name: Run cmake
+      run: cmake . -DIQTREE_FLAGS=${{ matrix.chipset_arch }}
+
+    - name: Build
+      run: make
+    
+    - name: Zip build artifact
+      run: zip -r mpboot-${{ matrix.chipset_arch }}-${{ matrix.os }}-${{ inputs.version }}.zip mpboot*
+
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: mpboot-${{ matrix.chipset_arch }}-${{ matrix.os }}-${{ inputs.version }}.zip
+        tag_name: ${{ inputs.version }}
+        draft: true
+        append_body: true
