@@ -3145,6 +3145,7 @@ void optimizeAlignment(IQTree *&tree, Params &params)
 
 int addMoreRowIQTree(IQTree *tree, Alignment *alignment)
 {
+	auto startTime = getCPUTime();
 	// add more K row to this tree
 	string saveTreeString = tree->bestTreeString;
 	int k = alignment->remainSeq.size();
@@ -3180,12 +3181,14 @@ int addMoreRowIQTree(IQTree *tree, Alignment *alignment)
 	} while (next_permutation(perm.begin(), perm.end()));
 	cout << "\nBest tree parsimony found after add more k rows: ";
 	cout << bestScore << '\n';
+	cout << "Time: " << getCPUTime() - startTime << " seconds\n";
 	return bestScore;
 }
 
 const double e = 2.7182818;
 int addMoreRowPLL(IQTree *tree, Alignment *alignment, Params &params)
 {
+	auto startTime = getCPUTime();
 	int k = alignment->remainSeq.size();
 	IQTree resTree;
 	vector<int> permCol = alignment->findPermCol();
@@ -3194,6 +3197,7 @@ int addMoreRowPLL(IQTree *tree, Alignment *alignment, Params &params)
 	if(k <= 5)
 	{
 		int bestScore = (int)1e9 + 7;
+		vector<int> bestPerm;
 
 		vector<int> perm;
 		for(int i = 0; i < k; ++i)
@@ -3201,12 +3205,14 @@ int addMoreRowPLL(IQTree *tree, Alignment *alignment, Params &params)
 		do 
 		{
 			int newScore = computeParsimonyPermutation(tree, alignment, params, permCol, perm);
+			if(bestScore > newScore)
+				bestPerm = perm;
 			bestScore = min(bestScore, newScore);
 		}while(next_permutation(perm.begin(), perm.end()));
-
 		cout << '\n';
 		cout << "Best tree parsimony found after add more k rows using PLL core: ";
 		cout << bestScore << '\n';
+		cout << "Time: " << getCPUTime() - startTime << " seconds\n";
 		return bestScore;
 	}
 
@@ -3293,10 +3299,10 @@ int addMoreRowPLL(IQTree *tree, Alignment *alignment, Params &params)
 	}
 
 	bestScore = updatePermutation(tree, alignment, params, permCol, candidates, candidateScore);
-	
 	cout << '\n';
 	cout << "Best tree parsimony found after add more k rows using PLL core: ";
 	cout << bestScore << '\n';
+	cout << "Time: " << getCPUTime() - startTime << " seconds\n";
 	return bestScore;
 }
 
@@ -3314,7 +3320,7 @@ int updatePermutation(IQTree *tree, Alignment *alignment, Params &params, const 
 		int k = (int)perm.size();
 		int bestScoreHit = 1;
 		int maxDist = max(1, k / 20);
-		int maxLoop = 100;
+		int maxLoop = 10;
 		for(int loop = 1; loop <= maxLoop; ++loop)
 		{
 			for(int i = 0; i < k; ++i)
@@ -3347,7 +3353,7 @@ int updatePermutation(IQTree *tree, Alignment *alignment, Params &params, const 
 		
 		candidates.push_back(perm);
 		candidateScore.push_back(curScore);
-		cout << curScore << " " << candidateScore[id] << " " << cnt << '\n';
+		// cout << curScore << " " << candidateScore[id] << " " << cnt << '\n';
 		int choice = 0;
 		for(int i = 0; i < (int)candidates.size(); ++i)
 		{

@@ -3895,7 +3895,7 @@ int _pllAddMoreRow(pllInstance *tr, partitionList *pr)
 
     stepwiseAddition(tr, pr, q, f->back);
     //      cout << "tr->ntips = " << tr->ntips << endl;
-
+    // cout << tr->insertNode->number << '\n';
     {
       nodeptr
           r = tr->insertNode->back;
@@ -3909,6 +3909,7 @@ int _pllAddMoreRow(pllInstance *tr, partitionList *pr)
       tr->ti[0] = counter;
 
       newviewParsimonyIterativeFast(tr, pr, 0);
+      // cout << evaluateParsimony(tr, pr, tr->start, 1, 0) << '\n';
     }
   }
   int score = evaluateParsimony(tr, pr, tr->start, 1, 0);
