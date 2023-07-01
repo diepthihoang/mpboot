@@ -13,6 +13,7 @@
 #define PHYLONODE_H
 
 #include "node.h"
+#include "mutation.h"
 
 typedef short int UBYTE;
 
@@ -42,6 +43,7 @@ public:
         partial_lh_computed = 0;
         lh_scale_factor = 0.0;
         partial_pars = NULL;
+        mutations.clear();
     }
 
     /**
@@ -55,6 +57,7 @@ public:
         partial_lh_computed = 0;
         lh_scale_factor = 0.0;
         partial_pars = NULL;
+        mutations.clear();
     }
 
     /**
@@ -76,6 +79,8 @@ public:
         @param dad dad of this neighbor
      */
     void clearForwardPartialLh(Node *dad);
+
+    std::vector<Mutation> mutations;
 
 private:
 

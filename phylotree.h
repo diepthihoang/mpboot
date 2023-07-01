@@ -31,6 +31,7 @@
 #include "optimization.h"
 #include "model/rateheterogeneity.h"
 #include "phyloanalysis.h"
+#include "mutation.h"
 
 const double MIN_BRANCH_LEN = 0.000001; // NEVER TOUCH THIS CONSTANT AGAIN PLEASE!
 const double MAX_BRANCH_LEN = 100.0;
@@ -296,6 +297,17 @@ public:
                 in the alignment into account
                 @param tree the tree to copy
          */
+
+        bool add_row;
+        UINT *save_states_dad;
+        // init mutation for calculate
+        void initMutation(vector<int> &permCol);
+
+        // compute mutation for a branch
+        void computeMutationBranch(vector<int> &permCol, PhyloNeighbor *dad_branch, PhyloNode *dad, int *branch_subst = NULL);
+
+        void computePartialMutation(UINT *states_dad, vector<int> &permCol, PhyloNeighbor *dad_branch, PhyloNode *dad);
+
         virtual void copyTree(MTree *tree);
         /**
                 copy the sub-tree structure into this tree

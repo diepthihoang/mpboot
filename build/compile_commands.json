@@ -1,0 +1,890 @@
+[
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/alignment.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/alignment.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/alignment.cpp",
+  "output": "CMakeFiles/mpboot.dir/alignment.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/alignmentpairwise.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/alignmentpairwise.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/alignmentpairwise.cpp",
+  "output": "CMakeFiles/mpboot.dir/alignmentpairwise.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/circularnetwork.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/circularnetwork.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/circularnetwork.cpp",
+  "output": "CMakeFiles/mpboot.dir/circularnetwork.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/eigendecomposition.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/eigendecomposition.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/eigendecomposition.cpp",
+  "output": "CMakeFiles/mpboot.dir/eigendecomposition.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/greedy.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/greedy.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/greedy.cpp",
+  "output": "CMakeFiles/mpboot.dir/greedy.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/gss.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/gss.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/gss.cpp",
+  "output": "CMakeFiles/mpboot.dir/gss.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/guidedbootstrap.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/guidedbootstrap.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/guidedbootstrap.cpp",
+  "output": "CMakeFiles/mpboot.dir/guidedbootstrap.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/gurobiwrapper.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/gurobiwrapper.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/gurobiwrapper.cpp",
+  "output": "CMakeFiles/mpboot.dir/gurobiwrapper.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/gzstream.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/gzstream.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/gzstream.cpp",
+  "output": "CMakeFiles/mpboot.dir/gzstream.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/hashsplitset.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/hashsplitset.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/hashsplitset.cpp",
+  "output": "CMakeFiles/mpboot.dir/hashsplitset.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/iqtree.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/iqtree.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/iqtree.cpp",
+  "output": "CMakeFiles/mpboot.dir/iqtree.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/maalignment.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/maalignment.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/maalignment.cpp",
+  "output": "CMakeFiles/mpboot.dir/maalignment.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/matree.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/matree.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/matree.cpp",
+  "output": "CMakeFiles/mpboot.dir/matree.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/mexttree.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/mexttree.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/mexttree.cpp",
+  "output": "CMakeFiles/mpboot.dir/mexttree.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/mpdablock.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/mpdablock.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/mpdablock.cpp",
+  "output": "CMakeFiles/mpboot.dir/mpdablock.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/msetsblock.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/msetsblock.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/msetsblock.cpp",
+  "output": "CMakeFiles/mpboot.dir/msetsblock.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/msplitsblock.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/msplitsblock.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/msplitsblock.cpp",
+  "output": "CMakeFiles/mpboot.dir/msplitsblock.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/mtree.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/mtree.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/mtree.cpp",
+  "output": "CMakeFiles/mpboot.dir/mtree.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/mtreeset.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/mtreeset.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/mtreeset.cpp",
+  "output": "CMakeFiles/mpboot.dir/mtreeset.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/ncbitree.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/ncbitree.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/ncbitree.cpp",
+  "output": "CMakeFiles/mpboot.dir/ncbitree.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/ngs.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/ngs.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/ngs.cpp",
+  "output": "CMakeFiles/mpboot.dir/ngs.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/node.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/node.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/node.cpp",
+  "output": "CMakeFiles/mpboot.dir/node.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/optimization.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/optimization.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/optimization.cpp",
+  "output": "CMakeFiles/mpboot.dir/optimization.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/parsmultistate.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/parsmultistate.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/parsmultistate.cpp",
+  "output": "CMakeFiles/mpboot.dir/parsmultistate.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/pattern.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/pattern.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/pattern.cpp",
+  "output": "CMakeFiles/mpboot.dir/pattern.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/pda.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/pda.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/pda.cpp",
+  "output": "CMakeFiles/mpboot.dir/pda.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/pdnetwork.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/pdnetwork.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/pdnetwork.cpp",
+  "output": "CMakeFiles/mpboot.dir/pdnetwork.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/pdtree.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/pdtree.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/pdtree.cpp",
+  "output": "CMakeFiles/mpboot.dir/pdtree.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/pdtreeset.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/pdtreeset.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/pdtreeset.cpp",
+  "output": "CMakeFiles/mpboot.dir/pdtreeset.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/phyloanalysis.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/phyloanalysis.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/phyloanalysis.cpp",
+  "output": "CMakeFiles/mpboot.dir/phyloanalysis.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/phylonode.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/phylonode.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/phylonode.cpp",
+  "output": "CMakeFiles/mpboot.dir/phylonode.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/phylosupertree.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/phylosupertree.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/phylosupertree.cpp",
+  "output": "CMakeFiles/mpboot.dir/phylosupertree.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/phylotree.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/phylotree.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/phylotree.cpp",
+  "output": "CMakeFiles/mpboot.dir/phylotree.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/phylotreesse.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/phylotreesse.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/phylotreesse.cpp",
+  "output": "CMakeFiles/mpboot.dir/phylotreesse.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/pruning.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/pruning.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/pruning.cpp",
+  "output": "CMakeFiles/mpboot.dir/pruning.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/split.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/split.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/split.cpp",
+  "output": "CMakeFiles/mpboot.dir/split.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/splitgraph.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/splitgraph.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/splitgraph.cpp",
+  "output": "CMakeFiles/mpboot.dir/splitgraph.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/splitset.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/splitset.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/splitset.cpp",
+  "output": "CMakeFiles/mpboot.dir/splitset.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/stoprule.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/stoprule.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/stoprule.cpp",
+  "output": "CMakeFiles/mpboot.dir/stoprule.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/superalignment.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/superalignment.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/superalignment.cpp",
+  "output": "CMakeFiles/mpboot.dir/superalignment.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/superalignmentpairwise.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/superalignmentpairwise.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/superalignmentpairwise.cpp",
+  "output": "CMakeFiles/mpboot.dir/superalignmentpairwise.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/supernode.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/supernode.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/supernode.cpp",
+  "output": "CMakeFiles/mpboot.dir/supernode.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/tinatree.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/tinatree.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/tinatree.cpp",
+  "output": "CMakeFiles/mpboot.dir/tinatree.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/tools.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/tools.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/tools.cpp",
+  "output": "CMakeFiles/mpboot.dir/tools.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/whtest_wrapper.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/whtest_wrapper.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/whtest_wrapper.cpp",
+  "output": "CMakeFiles/mpboot.dir/whtest_wrapper.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/lpwrapper.c.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/lpwrapper.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/lpwrapper.c",
+  "output": "CMakeFiles/mpboot.dir/lpwrapper.c.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/nnisearch.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/nnisearch.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/nnisearch.cpp",
+  "output": "CMakeFiles/mpboot.dir/nnisearch.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/phylosupertreeplen.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/phylosupertreeplen.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/phylosupertreeplen.cpp",
+  "output": "CMakeFiles/mpboot.dir/phylosupertreeplen.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/phylotesting.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/phylotesting.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/phylotesting.cpp",
+  "output": "CMakeFiles/mpboot.dir/phylotesting.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/ecopd.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/ecopd.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/ecopd.cpp",
+  "output": "CMakeFiles/mpboot.dir/ecopd.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/ecopdmtreeset.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/ecopdmtreeset.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/ecopdmtreeset.cpp",
+  "output": "CMakeFiles/mpboot.dir/ecopdmtreeset.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/graph.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/graph.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/graph.cpp",
+  "output": "CMakeFiles/mpboot.dir/graph.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/candidateset.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/candidateset.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/candidateset.cpp",
+  "output": "CMakeFiles/mpboot.dir/candidateset.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/checkpoint.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/checkpoint.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/checkpoint.cpp",
+  "output": "CMakeFiles/mpboot.dir/checkpoint.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/parstree.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/parstree.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/parstree.cpp",
+  "output": "CMakeFiles/mpboot.dir/parstree.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/sprparsimony.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/sprparsimony.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/sprparsimony.cpp",
+  "output": "CMakeFiles/mpboot.dir/sprparsimony.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/test.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/test.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/test.cpp",
+  "output": "CMakeFiles/mpboot.dir/test.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/mpboot.dir/mutation.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/mutation.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/mutation.cpp",
+  "output": "CMakeFiles/mpboot.dir/mutation.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/pllrepo/src",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/pll.dir/alignment.c.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/pllrepo/src/alignment.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/pllrepo/src/alignment.c",
+  "output": "pllrepo/src/CMakeFiles/pll.dir/alignment.c.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/pllrepo/src",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/pll.dir/bipartitionList.c.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/pllrepo/src/bipartitionList.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/pllrepo/src/bipartitionList.c",
+  "output": "pllrepo/src/CMakeFiles/pll.dir/bipartitionList.c.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/pllrepo/src",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/pll.dir/evaluateGenericSpecial.c.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/pllrepo/src/evaluateGenericSpecial.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/pllrepo/src/evaluateGenericSpecial.c",
+  "output": "pllrepo/src/CMakeFiles/pll.dir/evaluateGenericSpecial.c.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/pllrepo/src",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/pll.dir/evaluatePartialGenericSpecial.c.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/pllrepo/src/evaluatePartialGenericSpecial.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/pllrepo/src/evaluatePartialGenericSpecial.c",
+  "output": "pllrepo/src/CMakeFiles/pll.dir/evaluatePartialGenericSpecial.c.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/pllrepo/src",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/pll.dir/fastDNAparsimony.c.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/pllrepo/src/fastDNAparsimony.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/pllrepo/src/fastDNAparsimony.c",
+  "output": "pllrepo/src/CMakeFiles/pll.dir/fastDNAparsimony.c.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/pllrepo/src",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/pll.dir/hardware.c.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/pllrepo/src/hardware.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/pllrepo/src/hardware.c",
+  "output": "pllrepo/src/CMakeFiles/pll.dir/hardware.c.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/pllrepo/src",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/pll.dir/hash.c.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/pllrepo/src/hash.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/pllrepo/src/hash.c",
+  "output": "pllrepo/src/CMakeFiles/pll.dir/hash.c.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/pllrepo/src",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/pll.dir/lexer.c.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/pllrepo/src/lexer.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/pllrepo/src/lexer.c",
+  "output": "pllrepo/src/CMakeFiles/pll.dir/lexer.c.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/pllrepo/src",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/pll.dir/makenewzGenericSpecial.c.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/pllrepo/src/makenewzGenericSpecial.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/pllrepo/src/makenewzGenericSpecial.c",
+  "output": "pllrepo/src/CMakeFiles/pll.dir/makenewzGenericSpecial.c.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/pllrepo/src",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/pll.dir/models.c.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/pllrepo/src/models.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/pllrepo/src/models.c",
+  "output": "pllrepo/src/CMakeFiles/pll.dir/models.c.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/pllrepo/src",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/pll.dir/newick.c.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/pllrepo/src/newick.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/pllrepo/src/newick.c",
+  "output": "pllrepo/src/CMakeFiles/pll.dir/newick.c.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/pllrepo/src",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/pll.dir/newviewGenericSpecial.c.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/pllrepo/src/newviewGenericSpecial.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/pllrepo/src/newviewGenericSpecial.c",
+  "output": "pllrepo/src/CMakeFiles/pll.dir/newviewGenericSpecial.c.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/pllrepo/src",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/pll.dir/optimizeModel.c.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/pllrepo/src/optimizeModel.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/pllrepo/src/optimizeModel.c",
+  "output": "pllrepo/src/CMakeFiles/pll.dir/optimizeModel.c.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/pllrepo/src",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/pll.dir/parsePartition.c.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/pllrepo/src/parsePartition.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/pllrepo/src/parsePartition.c",
+  "output": "pllrepo/src/CMakeFiles/pll.dir/parsePartition.c.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/pllrepo/src",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/pll.dir/queue.c.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/pllrepo/src/queue.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/pllrepo/src/queue.c",
+  "output": "pllrepo/src/CMakeFiles/pll.dir/queue.c.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/pllrepo/src",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/pll.dir/randomTree.c.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/pllrepo/src/randomTree.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/pllrepo/src/randomTree.c",
+  "output": "pllrepo/src/CMakeFiles/pll.dir/randomTree.c.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/pllrepo/src",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/pll.dir/recom.c.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/pllrepo/src/recom.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/pllrepo/src/recom.c",
+  "output": "pllrepo/src/CMakeFiles/pll.dir/recom.c.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/pllrepo/src",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/pll.dir/restartHashTable.c.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/pllrepo/src/restartHashTable.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/pllrepo/src/restartHashTable.c",
+  "output": "pllrepo/src/CMakeFiles/pll.dir/restartHashTable.c.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/pllrepo/src",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/pll.dir/searchAlgo.c.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/pllrepo/src/searchAlgo.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/pllrepo/src/searchAlgo.c",
+  "output": "pllrepo/src/CMakeFiles/pll.dir/searchAlgo.c.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/pllrepo/src",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/pll.dir/ssort.c.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/pllrepo/src/ssort.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/pllrepo/src/ssort.c",
+  "output": "pllrepo/src/CMakeFiles/pll.dir/ssort.c.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/pllrepo/src",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/pll.dir/stack.c.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/pllrepo/src/stack.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/pllrepo/src/stack.c",
+  "output": "pllrepo/src/CMakeFiles/pll.dir/stack.c.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/pllrepo/src",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/pll.dir/topologies.c.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/pllrepo/src/topologies.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/pllrepo/src/topologies.c",
+  "output": "pllrepo/src/CMakeFiles/pll.dir/topologies.c.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/pllrepo/src",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/pll.dir/trash.c.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/pllrepo/src/trash.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/pllrepo/src/trash.c",
+  "output": "pllrepo/src/CMakeFiles/pll.dir/trash.c.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/pllrepo/src",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/pll.dir/treeIO.c.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/pllrepo/src/treeIO.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/pllrepo/src/treeIO.c",
+  "output": "pllrepo/src/CMakeFiles/pll.dir/treeIO.c.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/pllrepo/src",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/pll.dir/utils.c.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/pllrepo/src/utils.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/pllrepo/src/utils.c",
+  "output": "pllrepo/src/CMakeFiles/pll.dir/utils.c.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/ncl",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/ncl.dir/nxsassumptionsblock.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/ncl/nxsassumptionsblock.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/ncl/nxsassumptionsblock.cpp",
+  "output": "ncl/CMakeFiles/ncl.dir/nxsassumptionsblock.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/ncl",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/ncl.dir/nxsblock.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/ncl/nxsblock.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/ncl/nxsblock.cpp",
+  "output": "ncl/CMakeFiles/ncl.dir/nxsblock.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/ncl",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/ncl.dir/nxscharactersblock.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/ncl/nxscharactersblock.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/ncl/nxscharactersblock.cpp",
+  "output": "ncl/CMakeFiles/ncl.dir/nxscharactersblock.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/ncl",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/ncl.dir/nxsdatablock.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/ncl/nxsdatablock.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/ncl/nxsdatablock.cpp",
+  "output": "ncl/CMakeFiles/ncl.dir/nxsdatablock.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/ncl",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/ncl.dir/nxsdiscretedatum.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/ncl/nxsdiscretedatum.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/ncl/nxsdiscretedatum.cpp",
+  "output": "ncl/CMakeFiles/ncl.dir/nxsdiscretedatum.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/ncl",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/ncl.dir/nxsdiscretematrix.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/ncl/nxsdiscretematrix.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/ncl/nxsdiscretematrix.cpp",
+  "output": "ncl/CMakeFiles/ncl.dir/nxsdiscretematrix.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/ncl",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/ncl.dir/nxsdistancedatum.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/ncl/nxsdistancedatum.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/ncl/nxsdistancedatum.cpp",
+  "output": "ncl/CMakeFiles/ncl.dir/nxsdistancedatum.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/ncl",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/ncl.dir/nxsdistancesblock.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/ncl/nxsdistancesblock.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/ncl/nxsdistancesblock.cpp",
+  "output": "ncl/CMakeFiles/ncl.dir/nxsdistancesblock.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/ncl",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/ncl.dir/nxsemptyblock.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/ncl/nxsemptyblock.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/ncl/nxsemptyblock.cpp",
+  "output": "ncl/CMakeFiles/ncl.dir/nxsemptyblock.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/ncl",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/ncl.dir/nxsexception.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/ncl/nxsexception.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/ncl/nxsexception.cpp",
+  "output": "ncl/CMakeFiles/ncl.dir/nxsexception.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/ncl",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/ncl.dir/nxsreader.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/ncl/nxsreader.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/ncl/nxsreader.cpp",
+  "output": "ncl/CMakeFiles/ncl.dir/nxsreader.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/ncl",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/ncl.dir/nxssetreader.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/ncl/nxssetreader.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/ncl/nxssetreader.cpp",
+  "output": "ncl/CMakeFiles/ncl.dir/nxssetreader.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/ncl",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/ncl.dir/nxsstring.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/ncl/nxsstring.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/ncl/nxsstring.cpp",
+  "output": "ncl/CMakeFiles/ncl.dir/nxsstring.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/ncl",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/ncl.dir/nxstaxablock.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/ncl/nxstaxablock.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/ncl/nxstaxablock.cpp",
+  "output": "ncl/CMakeFiles/ncl.dir/nxstaxablock.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/ncl",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/ncl.dir/nxstoken.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/ncl/nxstoken.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/ncl/nxstoken.cpp",
+  "output": "ncl/CMakeFiles/ncl.dir/nxstoken.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/ncl",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/ncl.dir/nxstreesblock.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/ncl/nxstreesblock.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/ncl/nxstreesblock.cpp",
+  "output": "ncl/CMakeFiles/ncl.dir/nxstreesblock.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/whtest",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/whtest.dir/eigen.c.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/whtest/eigen.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/whtest/eigen.c",
+  "output": "whtest/CMakeFiles/whtest.dir/eigen.c.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/whtest",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/whtest.dir/eigen_sym.c.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/whtest/eigen_sym.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/whtest/eigen_sym.c",
+  "output": "whtest/CMakeFiles/whtest.dir/eigen_sym.c.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/whtest",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/whtest.dir/random.c.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/whtest/random.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/whtest/random.c",
+  "output": "whtest/CMakeFiles/whtest.dir/random.c.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/whtest",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/whtest.dir/weisslambda.c.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/whtest/weisslambda.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/whtest/weisslambda.c",
+  "output": "whtest/CMakeFiles/whtest.dir/weisslambda.c.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/whtest",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/whtest.dir/weisslambda_sub.c.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/whtest/weisslambda_sub.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/whtest/weisslambda_sub.c",
+  "output": "whtest/CMakeFiles/whtest.dir/weisslambda_sub.c.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/whtest",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/whtest.dir/whtest.c.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/whtest/whtest.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/whtest/whtest.c",
+  "output": "whtest/CMakeFiles/whtest.dir/whtest.c.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/whtest",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/whtest.dir/whtest_sub.c.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/whtest/whtest_sub.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/whtest/whtest_sub.c",
+  "output": "whtest/CMakeFiles/whtest.dir/whtest_sub.c.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/sprng",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/sprng.dir/lcg64.c.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/sprng/lcg64.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/sprng/lcg64.c",
+  "output": "sprng/CMakeFiles/sprng.dir/lcg64.c.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/sprng",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/sprng.dir/makeseed.c.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/sprng/makeseed.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/sprng/makeseed.c",
+  "output": "sprng/CMakeFiles/sprng.dir/makeseed.c.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/sprng",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/sprng.dir/memory.c.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/sprng/memory.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/sprng/memory.c",
+  "output": "sprng/CMakeFiles/sprng.dir/memory.c.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/sprng",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/sprng.dir/store.c.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/sprng/store.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/sprng/store.c",
+  "output": "sprng/CMakeFiles/sprng.dir/store.c.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/sprng",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/sprng.dir/primes-lcg64.c.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/sprng/primes-lcg64.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/sprng/primes-lcg64.c",
+  "output": "sprng/CMakeFiles/sprng.dir/primes-lcg64.c.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/sprng",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/sprng.dir/checkid.c.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/sprng/checkid.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/sprng/checkid.c",
+  "output": "sprng/CMakeFiles/sprng.dir/checkid.c.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/zlibstatic.dir/adler32.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/zlib-1.2.7/adler32.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/zlib-1.2.7/adler32.c",
+  "output": "zlib-1.2.7/CMakeFiles/zlibstatic.dir/adler32.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/zlibstatic.dir/compress.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/zlib-1.2.7/compress.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/zlib-1.2.7/compress.c",
+  "output": "zlib-1.2.7/CMakeFiles/zlibstatic.dir/compress.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/zlibstatic.dir/crc32.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/zlib-1.2.7/crc32.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/zlib-1.2.7/crc32.c",
+  "output": "zlib-1.2.7/CMakeFiles/zlibstatic.dir/crc32.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/zlibstatic.dir/deflate.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/zlib-1.2.7/deflate.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/zlib-1.2.7/deflate.c",
+  "output": "zlib-1.2.7/CMakeFiles/zlibstatic.dir/deflate.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/zlibstatic.dir/gzclose.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/zlib-1.2.7/gzclose.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/zlib-1.2.7/gzclose.c",
+  "output": "zlib-1.2.7/CMakeFiles/zlibstatic.dir/gzclose.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/zlibstatic.dir/gzlib.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/zlib-1.2.7/gzlib.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/zlib-1.2.7/gzlib.c",
+  "output": "zlib-1.2.7/CMakeFiles/zlibstatic.dir/gzlib.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/zlibstatic.dir/gzread.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/zlib-1.2.7/gzread.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/zlib-1.2.7/gzread.c",
+  "output": "zlib-1.2.7/CMakeFiles/zlibstatic.dir/gzread.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/zlibstatic.dir/gzwrite.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/zlib-1.2.7/gzwrite.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/zlib-1.2.7/gzwrite.c",
+  "output": "zlib-1.2.7/CMakeFiles/zlibstatic.dir/gzwrite.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/zlibstatic.dir/inflate.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/zlib-1.2.7/inflate.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/zlib-1.2.7/inflate.c",
+  "output": "zlib-1.2.7/CMakeFiles/zlibstatic.dir/inflate.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/zlibstatic.dir/infback.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/zlib-1.2.7/infback.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/zlib-1.2.7/infback.c",
+  "output": "zlib-1.2.7/CMakeFiles/zlibstatic.dir/infback.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/zlibstatic.dir/inftrees.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/zlib-1.2.7/inftrees.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/zlib-1.2.7/inftrees.c",
+  "output": "zlib-1.2.7/CMakeFiles/zlibstatic.dir/inftrees.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/zlibstatic.dir/inffast.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/zlib-1.2.7/inffast.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/zlib-1.2.7/inffast.c",
+  "output": "zlib-1.2.7/CMakeFiles/zlibstatic.dir/inffast.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/zlibstatic.dir/trees.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/zlib-1.2.7/trees.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/zlib-1.2.7/trees.c",
+  "output": "zlib-1.2.7/CMakeFiles/zlibstatic.dir/trees.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/zlibstatic.dir/uncompr.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/zlib-1.2.7/uncompr.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/zlib-1.2.7/uncompr.c",
+  "output": "zlib-1.2.7/CMakeFiles/zlibstatic.dir/uncompr.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7",
+  "command": "/usr/bin/clang -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7 -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/zlibstatic.dir/zutil.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/zlib-1.2.7/zutil.c",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/zlib-1.2.7/zutil.c",
+  "output": "zlib-1.2.7/CMakeFiles/zlibstatic.dir/zutil.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/vectorclass",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/vectorclass.dir/instrset_detect.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/vectorclass/instrset_detect.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/vectorclass/instrset_detect.cpp",
+  "output": "vectorclass/CMakeFiles/vectorclass.dir/instrset_detect.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/model",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/model.dir/modelgtr.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/model/modelgtr.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/model/modelgtr.cpp",
+  "output": "model/CMakeFiles/model.dir/modelgtr.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/model",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/model.dir/modelbin.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/model/modelbin.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/model/modelbin.cpp",
+  "output": "model/CMakeFiles/model.dir/modelbin.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/model",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/model.dir/modeldna.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/model/modeldna.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/model/modeldna.cpp",
+  "output": "model/CMakeFiles/model.dir/modeldna.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/model",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/model.dir/modelfactory.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/model/modelfactory.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/model/modelfactory.cpp",
+  "output": "model/CMakeFiles/model.dir/modelfactory.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/model",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/model.dir/modelnonrev.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/model/modelnonrev.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/model/modelnonrev.cpp",
+  "output": "model/CMakeFiles/model.dir/modelnonrev.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/model",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/model.dir/modelprotein.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/model/modelprotein.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/model/modelprotein.cpp",
+  "output": "model/CMakeFiles/model.dir/modelprotein.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/model",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/model.dir/modelset.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/model/modelset.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/model/modelset.cpp",
+  "output": "model/CMakeFiles/model.dir/modelset.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/model",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/model.dir/modelsubst.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/model/modelsubst.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/model/modelsubst.cpp",
+  "output": "model/CMakeFiles/model.dir/modelsubst.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/model",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/model.dir/partitionmodel.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/model/partitionmodel.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/model/partitionmodel.cpp",
+  "output": "model/CMakeFiles/model.dir/partitionmodel.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/model",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/model.dir/rategamma.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/model/rategamma.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/model/rategamma.cpp",
+  "output": "model/CMakeFiles/model.dir/rategamma.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/model",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/model.dir/rategammainvar.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/model/rategammainvar.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/model/rategammainvar.cpp",
+  "output": "model/CMakeFiles/model.dir/rategammainvar.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/model",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/model.dir/rateheterogeneity.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/model/rateheterogeneity.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/model/rateheterogeneity.cpp",
+  "output": "model/CMakeFiles/model.dir/rateheterogeneity.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/model",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/model.dir/rateinvar.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/model/rateinvar.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/model/rateinvar.cpp",
+  "output": "model/CMakeFiles/model.dir/rateinvar.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/model",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/model.dir/ratemeyerdiscrete.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/model/ratemeyerdiscrete.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/model/ratemeyerdiscrete.cpp",
+  "output": "model/CMakeFiles/model.dir/ratemeyerdiscrete.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/model",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/model.dir/ratemeyerhaeseler.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/model/ratemeyerhaeseler.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/model/ratemeyerhaeseler.cpp",
+  "output": "model/CMakeFiles/model.dir/ratemeyerhaeseler.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/model",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/model.dir/ratekategory.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/model/ratekategory.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/model/ratekategory.cpp",
+  "output": "model/CMakeFiles/model.dir/ratekategory.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/model",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/model.dir/ratefree.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/model/ratefree.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/model/ratefree.cpp",
+  "output": "model/CMakeFiles/model.dir/ratefree.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/model",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/model.dir/ratefreeinvar.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/model/ratefreeinvar.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/model/ratefreeinvar.cpp",
+  "output": "model/CMakeFiles/model.dir/ratefreeinvar.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/model",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/model.dir/modelcodon.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/model/modelcodon.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/model/modelcodon.cpp",
+  "output": "model/CMakeFiles/model.dir/modelcodon.cpp.o"
+},
+{
+  "directory": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/model",
+  "command": "/usr/bin/clang++ -DIQ_TREE -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build -I/Users/phamtrung/Desktop/Code/Mpboot/mpboot/build/zlib-1.2.7  -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7 -o CMakeFiles/model.dir/modelmorphology.cpp.o -c /Users/phamtrung/Desktop/Code/Mpboot/mpboot/model/modelmorphology.cpp",
+  "file": "/Users/phamtrung/Desktop/Code/Mpboot/mpboot/model/modelmorphology.cpp",
+  "output": "model/CMakeFiles/model.dir/modelmorphology.cpp.o"
+}
+]

@@ -2478,6 +2478,7 @@ void Alignment::copyAlignment(Alignment *aln)
         Pattern pat = aln->at(ptn_id);
         addPattern(pat, site);
     }
+    saveCol = aln->saveCol;
     verbose_mode = save_mode;
     countConstSite();
     buildSeqStates();

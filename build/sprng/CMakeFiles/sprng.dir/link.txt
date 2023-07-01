@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsprng.a CMakeFiles/sprng.dir/lcg64.c.o CMakeFiles/sprng.dir/makeseed.c.o CMakeFiles/sprng.dir/memory.c.o CMakeFiles/sprng.dir/store.c.o "CMakeFiles/sprng.dir/primes-lcg64.c.o" CMakeFiles/sprng.dir/checkid.c.o
+/usr/bin/ranlib libsprng.a

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libwhtest.a CMakeFiles/whtest.dir/eigen.c.o CMakeFiles/whtest.dir/eigen_sym.c.o CMakeFiles/whtest.dir/random.c.o CMakeFiles/whtest.dir/weisslambda.c.o CMakeFiles/whtest.dir/weisslambda_sub.c.o CMakeFiles/whtest.dir/whtest.c.o CMakeFiles/whtest.dir/whtest_sub.c.o
+/usr/bin/ranlib libwhtest.a

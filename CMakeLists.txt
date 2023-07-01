@@ -400,6 +400,7 @@ checkpoint.cpp
 parstree.cpp
 sprparsimony.cpp
 test.cpp
+mutation.cpp
 )
 
 ##################################################################

@@ -131,15 +131,19 @@ void testCompConsensus(const char * infile, const char * outfile, Params *params
 string computeConsensusTreeNoFileIO(StringIntMap& input_trees, IntVector & weight, int max_count,
 		double cutoff, double weight_threshold, Params *params);
 
-//add more K row using IQTree
+// add more K row using IQTree
 int addMoreRowIQTree(IQTree *tree, Alignment *alignment);
 
-//add more K row using PLL core 
+// add more K row using PLL core 
 int addMoreRowPLL(IQTree *tree, Alignment *alignment, Params &params);
 
-//hill climbing to update candidates like mpboot
+// hill climbing to update candidates like mpboot
 int updatePermutation(IQTree *tree, Alignment *alignment, Params &params, const vector<int> permCol, vector<vector<int> > &candidates, vector<int> &candidateScore);
 
-//compute parsimony score after add more k row
+// compute parsimony score after add more k row
 int computeParsimonyPermutation(IQTree *tree, Alignment *alignment, Params &params, const vector<int> &permCol, const vector<int> &perm);
+
+// add more K row using mutation like usher
+void addMoreRowMutation(IQTree *tree, Alignment *alignment);
+
 #endif
