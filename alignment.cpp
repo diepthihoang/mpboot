@@ -427,7 +427,12 @@ Alignment::Alignment(char *filename, char *sequence_type, InputType &intype, int
             cout << "Phylip format detected" << endl;
             readPhylip(filename, sequence_type, numStartRow);
         }
-        else
+        else if (intype == IN_VCF)
+        {
+            cout << "VCF format detected" << endl;
+            readVCF(filename, sequence_type);
+        }
+        else 
         {
             outError("Unknown sequence format, please use PHYLIP, FASTA, or NEXUS format");
         }
@@ -1400,6 +1405,88 @@ int Alignment::buildPattern(StrVector &sequences, char *sequence_type, int nseq,
     if (err_str.str() != "")
         throw err_str.str();
     return 1;
+}
+
+void split(const string &s, vector<string> &elems, const string &delim)
+{
+    elems.clear();
+    size_t pos = 0;
+    size_t len = s.length();
+    size_t delim_len = delim.length();
+    if (delim_len == 0)
+    {
+        elems.push_back(s);
+        return;
+    }
+    while (pos < len)
+    {
+        size_t find_pos = s.find(delim, pos);
+        if (find_pos == string::npos)
+        {
+            elems.push_back(s.substr(pos));
+            return;
+        }
+        elems.push_back(s.substr(pos, find_pos - pos));
+        pos = find_pos + delim_len;
+    }
+}
+
+int Alignment::readVCF(char *filename, char* sequence_type) {
+    StrVector sequences;
+    ifstream in;
+    in.exceptions(ios::failbit | ios::badbit);
+    in.open(filename);
+    int nseq = 1; // reference sequence
+    int nsite = 0;
+    int seq_id = 0;
+    string line;
+    in.exceptions(ios::badbit);
+
+    for (; !in.eof();) {
+        getline(in, line);
+        if (line == "") continue;
+        vector<string> words;
+        split(line, words, "\t");
+        if (words.size() == 1) continue;
+        if (words[1] == "POS") {
+            // Sample names start from the 10th word in the header
+            for (int j = 9; j < words.size(); j ++) {
+                seq_names.push_back(words[j]);
+                nseq ++;
+            }
+            sequences.resize(nseq, "");
+        } else {
+            if (words.size() != 8 + nseq) 
+                throw "Number of columns in VCF file is not consistent";
+            if (seq_names.size() < nseq) seq_names.push_back(words[0]);
+            vector<string> alleles;
+            int variant_pos = std::stoi(words[1]);        
+            split(words[4], alleles, ",");
+            for (int j = 9; j < words.size(); ++ j) {
+                if (isdigit(words[j][0])) {
+                    int allele_id = std::stoi(words[j]); 
+                    if (allele_id > 0) {
+                        std::string allele = alleles[allele_id-1];
+                        sequences[j - 9].push_back(allele[0]);
+                    } else {
+                        sequences[j - 9].push_back(words[3][0]);
+                    }
+                } else {
+                    // not a mutation
+                    sequences[j - 9].push_back('-');
+                }
+            }
+            sequences.back().push_back(words[3][0]);
+            ++ nsite;
+        }
+    }
+
+    in.clear();
+    // set the failbit again
+    in.exceptions(ios::failbit | ios::badbit);
+    in.close();
+
+    return buildPattern(sequences, sequence_type, nseq, nsite);;
 }
 
 int Alignment::readPhylip(char *filename, char *sequence_type, int numStartRow)

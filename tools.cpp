@@ -3510,11 +3510,14 @@ InputType detectInputFile(char *input_file)
 		{
 			in >> ch;
 		} while (ch <= 32 && !in.eof() && count++ < 20);
+		char tmp = 'N';
+		in >> tmp;
 		in.close();
 		switch (ch)
 		{
 		case '#':
-			return IN_NEXUS;
+			if (tmp == 'N') return IN_NEXUS;
+			return IN_VCF;
 		case '(':
 			return IN_NEWICK;
 		case '[':

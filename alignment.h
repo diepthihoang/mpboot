@@ -608,6 +608,8 @@ public:
 
     vector<int> findPermCol();
 
+    int readVCF(char *filename, char* sequence_type);
+
 protected:
 
 
