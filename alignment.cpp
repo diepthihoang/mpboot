@@ -1431,6 +1431,7 @@ void split(const string &s, vector<string> &elems, const string &delim)
     }
 }
 
+//Viet
 int Alignment::readVCF(char *filename, char* sequence_type) {
     StrVector sequences;
     ifstream in;
