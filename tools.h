@@ -343,6 +343,7 @@ enum InputType
         IN_NEXUS,
         IN_FASTA,
         IN_PHYLIP,
+        IN_VCF,
         IN_OTHER
 };
 
