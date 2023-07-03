@@ -1480,7 +1480,12 @@ int Alignment::readVCF(char *filename, char* sequence_type) {
             ++ nsite;
         }
     }
-
+    saveCol.assign((int)sequences[0].length(), "");
+    for (int i = 0; i < (int)sequences.size(); ++i)
+    {
+        for (int j = 0; j < (int)sequences[i].length(); ++j)
+            saveCol[j] += sequences[i][j];
+    }
     in.clear();
     // set the failbit again
     in.exceptions(ios::failbit | ios::badbit);
