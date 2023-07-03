@@ -3402,11 +3402,15 @@ void addMoreRowMutation(IQTree* tree, Alignment* alignment)
 	newTree.aln = new Alignment;
 	newTree.aln->copyAlignment(tree->aln);
 	newTree.aln->ungroupSitePattern();
-	newTree.save_states_dad = new UINT[newTree.aln->size() + 1];
+	newTree.save_branch_states_dad = new UINT[newTree.aln->size() + 1];
+	newTree.save_branch_fitch_result = new UINT[newTree.aln->size() + 1];
 	newTree.add_row = true;
 	cout << "tree parsimony before add k rows: " << tree->computeParsimony() << " " << newTree.computeParsimony() << '\n';
 	cout << "ungroup alignment: " << tree->aln->size() << " " << newTree.aln->size() << '\n';
+	newTree.computeParsimony();
 	vector<int> permCol = newTree.aln->findPermCol();
 	newTree.initMutation(permCol);
+
+	cout << "newtree's parsimony score: " << newTree.computeParsimonyScoreMutation() << " " << newTree.computeParsimony() << '\n';
 	cout << "we still alive !\n";
 }

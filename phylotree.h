@@ -299,7 +299,7 @@ public:
          */
 
         bool add_row;
-        UINT *save_states_dad;
+        UINT *save_branch_states_dad, *save_branch_fitch_result;
         // init mutation for calculate
         void initMutation(vector<int> &permCol);
 
@@ -307,6 +307,13 @@ public:
         void computeMutationBranch(vector<int> &permCol, PhyloNeighbor *dad_branch, PhyloNode *dad, int *branch_subst = NULL);
 
         void computePartialMutation(UINT *states_dad, vector<int> &permCol, PhyloNeighbor *dad_branch, PhyloNode *dad);
+
+        // compute parsimony score using mutation
+        int computeParsimonyScoreMutation();
+        
+        int computeParsimonyBranchMutation(PhyloNeighbor *dad_branch, PhyloNode *dad, int *branch_subst = NULL);
+
+        int computePartialParsimonyMutation(PhyloNeighbor *dad_branch, PhyloNode *dad);
 
         virtual void copyTree(MTree *tree);
         /**
