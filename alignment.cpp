@@ -1443,6 +1443,7 @@ int Alignment::readVCF(char* filename, char* sequence_type, int numStartRow) {
     int seq_id = 0;
     string line;
     in.exceptions(ios::badbit);
+    vector<string> missingSamplesNames;
 
     for (; !in.eof();) {
         getline(in, line);
@@ -1454,9 +1455,7 @@ int Alignment::readVCF(char* filename, char* sequence_type, int numStartRow) {
             // Sample names start from the 10th word in the header
             for (int j = 9; j < words.size(); j++) {
                 if (j - 9 >= numStartRow) {
-                    Mutation tmp;
-                    // tmp.chrom = words[j]; de y cho nay
-                    missingSamples.push_back(tmp);
+                    missingSamplesNames.push_back(words[j]);
                 }
                 else {
                     seq_names.push_back(words[j]);
@@ -1464,31 +1463,33 @@ int Alignment::readVCF(char* filename, char* sequence_type, int numStartRow) {
                 }
             }
             sequences.resize(nseq, "");
+            missingSamples.resize(missingSamplesNames.size());
         }
         else {
             if (words.size() != 8 + nseq + missingSamples.size())
                 throw "Number of columns in VCF file is not consistent";
             if (seq_names.size() < nseq) seq_names.push_back(words[0]);
             vector<string> alleles;
-            int variant_pos = std::stoi(words[1]);
+            Mutation cur_mut;
+            int variant_pos = std::stoi(words[1]); cur_mut.position = variant_pos;
             split(words[4], alleles, ",");
+            cur_mut.ref_name = words[0];
+            cur_mut.ref_nuc = words[3][0];
             for (int j = 9; j < words.size(); ++j) {
                 if (isdigit(words[j][0])) {
                     int allele_id = std::stoi(words[j]);
                     if (allele_id > 0) {
                         std::string allele = alleles[allele_id - 1];
                         if (j - 9 >= numStartRow) {
-                            missingSamples[j - 9 - numStartRow].mut_nuc = allele[0];
-                        }
-                        else {
+                            cur_mut.mut_nuc = allele[0];
+                        } else {
                             sequences[j - 9].push_back(allele[0]);
                         }
                     }
                     else {
                         if (j - 9 >= numStartRow) {
-                            missingSamples[j - 9 - numStartRow].mut_nuc = words[3][0];
-                        }
-                        else {
+                            cur_mut.mut_nuc = words[3][0];
+                        } else {
                             sequences[j - 9].push_back(words[3][0]);
                         }
                     }
@@ -1496,21 +1497,22 @@ int Alignment::readVCF(char* filename, char* sequence_type, int numStartRow) {
                 else {
                     // not a mutation
                     if (j - 9 >= numStartRow) {
-                        missingSamples[j - 9 - numStartRow].is_missing = true;
-                    }
-                    else {
+                        cur_mut.mut_nuc = 'N';
+                    } else {
                         sequences[j - 9].push_back('-');
                     }
                 }
 
                 if (j - 9 >= numStartRow) {
-                    missingSamples[j - 9 - numStartRow].ref_nuc = words[3][0];
+                    cur_mut.name = missingSamplesNames[j - 9 - numStartRow];
+                    missingSamples[j - 9 - numStartRow].push_back(cur_mut);
                 }
             }
             ++nsite;
             sequences.back().push_back(words[3][0]);
         }
     }
+
     saveCol.assign((int)sequences[0].length(), "");
     for (int i = 0; i < (int)sequences.size(); ++i)
     {
