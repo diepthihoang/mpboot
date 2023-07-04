@@ -9,7 +9,7 @@
 #include <stack>
 #include <algorithm>
 #include <cassert>
-#include <map>
+#include "phylonode.h"
 // Forward declaration of structs from usher_graph
 struct Missing_Sample;
 
@@ -82,7 +82,8 @@ class CandidateNode
 {
     public:
         std::string missing_sample;
-        MutationNode* node;
+        PhyloNode* node;
+        PhyloNeighbor *node_branch;
         std::vector<Mutation>* missing_sample_mutations;
 
         int* best_set_difference;
@@ -93,7 +94,8 @@ class CandidateNode
         size_t distance;
         size_t* best_distance;
         size_t* num_best;
-        MutationNode** best_node;
+        PhyloNode** best_node;
+        PhyloNeighbor** best_node_branch;
 
         std::vector<bool>* node_has_unique;
         std::vector<size_t>* best_j_vec;

@@ -3411,6 +3411,40 @@ void addMoreRowMutation(IQTree* tree, Alignment* alignment)
 	vector<int> permCol = newTree.aln->findPermCol();
 	newTree.initMutation(permCol);
 
+	vector<int> MutationNode;
+	// bo sung sau
+
+	vector<pair<PhyloNode *, PhyloNeighbor *> > bfs = newTree.breadth_first_expansion();
+
+	for(int i = 0; i < (int)MutationNode.size(); ++i)
+	{
+		CandidateNode inp;
+		size_t total_nodes = bfs.size();
+		// Stores the excess mutations to place the sample at each
+		// node of the tree in DFS order. When placement is as a
+		// child, it only contains parsimony-increasing mutations in
+		// the sample. When placement is as a sibling, it contains
+		// parsimony-increasing mutations as well as the mutations
+		// on the placed node in common with the new sample. Note
+		// guaranteed to be corrrect only for optimal nodes since
+		// the mapper can terminate the search early for non-optimal
+		// nodes
+		std::vector<std::vector<Mutation>> node_excess_mutations(total_nodes);
+		// Stores the imputed mutations for ambiguous bases in the
+		// sampled in order to place the sample at each node of the
+		// tree in DFS order. Again, guaranteed to be corrrect only
+		// for pasrimony-optimal nodes
+		std::vector<std::vector<Mutation>> node_imputed_mutations(total_nodes);
+
+	
+		for(int j = 0; j < (int)bfs.size(); ++j)
+		{
+			inp.node = bfs[j].first;
+			inp.node_branch = bfs[j].second;
+
+		}
+	}
+
 	cout << "newtree's parsimony score: " << newTree.computeParsimonyScoreMutation() << " " << newTree.computeParsimony() << '\n';
 	cout << "we still alive !\n";
 }

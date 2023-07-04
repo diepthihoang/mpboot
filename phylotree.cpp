@@ -5473,5 +5473,33 @@ int PhyloTree::computeParsimonyScoreMutation()
     return parsimonyScore;
 }
 
+vector<pair<PhyloNode*, PhyloNeighbor*> > PhyloTree::breadth_first_expansion()
+{
+    assert(root->isLeaf());
+	PhyloNeighbor* nei = ((PhyloNeighbor*)root->neighbors[0]);
+    current_it = nei;
+    assert(current_it);
+    current_it_back = (PhyloNeighbor*)nei->node->findNeighbor(root);
+    assert(current_it_back);
+
+    vector<pair<PhyloNode*, PhyloNeighbor*> > bfs;
+    queue<pair<PhyloNode*, PhyloNeighbor*> > q;
+    q.push(make_pair((PhyloNode *)nei->node, (PhyloNeighbor *)nei->node->findNeighbor(root)));
+
+    while(q.size())
+    {
+        PhyloNode *node = q.front().first;
+        PhyloNeighbor *node_branch = q.front().second;
+        PhyloNode *dad = (PhyloNode *)node_branch->node;
+        q.pop();
+        bfs.push_back(make_pair(node, node_branch));
+        FOR_NEIGHBOR_IT(node, dad, it)
+        {
+            q.push(make_pair((PhyloNode *)(*it)->node, (PhyloNeighbor *)(*it)->node->findNeighbor(node)));
+        }
+    }
+    return bfs;
+}
+
 
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  

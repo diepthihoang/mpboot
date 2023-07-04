@@ -315,6 +315,8 @@ public:
 
         int computePartialParsimonyMutation(PhyloNeighbor *dad_branch, PhyloNode *dad);
 
+        std::vector<std::pair<PhyloNode*, PhyloNeighbor*> > breadth_first_expansion();
+
         virtual void copyTree(MTree *tree);
         /**
                 copy the sub-tree structure into this tree
