@@ -21,7 +21,7 @@ struct Missing_Sample;
 
 struct Mutation
 {
-    std::string chrom;
+    std::string name, ref_name;
     int position;
     int ref_nuc;
     int par_nuc;
@@ -34,7 +34,7 @@ struct Mutation
     inline Mutation copy() const
     {
         Mutation m;
-        m.chrom = chrom;
+        m.name = name;
         m.position = position;
         m.ref_nuc = ref_nuc;
         m.par_nuc = par_nuc;
@@ -44,7 +44,7 @@ struct Mutation
     }
     Mutation()
     {
-        chrom = "";
+        name = "";
         is_missing = false;
     }
     inline bool is_masked() const
@@ -76,5 +76,36 @@ public:
     void add_mutation(Mutation mut);
     void clear_mutations();
     void clear_annotations();
+};
+
+class CandidateNode
+{
+    public:
+        std::string missing_sample;
+        MutationNode* node;
+        std::vector<Mutation>* missing_sample_mutations;
+
+        int* best_set_difference;
+        int* set_difference;
+        size_t* best_node_num_leaves;
+        size_t j;
+        size_t* best_j;
+        size_t distance;
+        size_t* best_distance;
+        size_t* num_best;
+        MutationNode** best_node;
+
+        std::vector<bool>* node_has_unique;
+        std::vector<size_t>* best_j_vec;
+
+        bool* has_unique;
+
+        std::vector<Mutation>* excess_mutations;
+        std::vector<Mutation>* imputed_mutations;
+
+        CandidateNode () {
+            distance = 0;
+            best_distance = &distance;
+        }
 };
 #endif
