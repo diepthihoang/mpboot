@@ -82,6 +82,12 @@ public:
 
     std::vector<Mutation> mutations;
 
+    int num_leaves, distance;
+
+    void clear_mutations();
+
+    void add_mutation(Mutation mut);
+
 private:
 
     /**
@@ -169,6 +175,8 @@ public:
         tell that all partial likelihood vectors (in reverse direction) below this node are not computed
      */
     void clearReversePartialLh(PhyloNode *dad);
+
+    PhyloNode *dad;
 };
 
 
@@ -177,5 +185,36 @@ public:
  */
 typedef vector<PhyloNode*> PhyloNodeVector;
 
+class CandidateNode
+{
+    public:
+        std::string missing_sample;
+        PhyloNode* node;
+        PhyloNeighbor *node_branch;
+        std::vector<Mutation>* missing_sample_mutations;
+
+        int* best_set_difference;
+        int* set_difference;
+        size_t* best_node_num_leaves;
+        size_t distance;
+        size_t* best_distance;
+        size_t j;
+        size_t* best_j;
+        size_t* num_best;
+        PhyloNode* best_node;
+        PhyloNeighbor* best_node_branch;
+
+        std::vector<bool>* node_has_unique;
+        std::vector<size_t>* best_j_vec;
+
+        bool* has_unique;
+
+        std::vector<Mutation>* excess_mutations;
+        std::vector<Mutation>* imputed_mutations;
+
+        CandidateNode() {
+            
+        }
+};
 
 #endif

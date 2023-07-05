@@ -9,9 +9,8 @@
 #include <stack>
 #include <algorithm>
 #include <cassert>
-#include "phylonode.h"
+// #include "phylonode.h"
 // Forward declaration of structs from usher_graph
-struct Missing_Sample;
 
 #if SAVE_PROFILE == 1
 #define TIMEIT() InstrumentationTimer timer##__LINE__(__PRETTY_FUNCTION__);
@@ -55,59 +54,13 @@ struct Mutation
 
 class MutationNode
 {
-public:
-    size_t level;
-    float branch_length;
-    std::string identifier;
-    std::vector<std::string> clade_annotations;
-    MutationNode *parent;
-    std::vector<MutationNode *> children;
-    std::vector<Mutation> mutations;
-    size_t dfs_idx;
-    size_t dfs_end_idx;
-
-    bool is_leaf();
-    bool is_root();
-
-    MutationNode();
-    MutationNode(std::string id, float l);
-    MutationNode(std::string id, MutationNode *p, float l);
-
-    void add_mutation(Mutation mut);
-    void clear_mutations();
-    void clear_annotations();
-};
-
-class CandidateNode
-{
     public:
-        std::string missing_sample;
-        PhyloNode* node;
-        PhyloNeighbor *node_branch;
-        std::vector<Mutation>* missing_sample_mutations;
+        std::string name;
+        std::vector<Mutation> mutations;
 
-        int* best_set_difference;
-        int* set_difference;
-        size_t* best_node_num_leaves;
-        size_t j;
-        size_t* best_j;
-        size_t distance;
-        size_t* best_distance;
-        size_t* num_best;
-        PhyloNode** best_node;
-        PhyloNeighbor** best_node_branch;
+        MutationNode();
 
-        std::vector<bool>* node_has_unique;
-        std::vector<size_t>* best_j_vec;
-
-        bool* has_unique;
-
-        std::vector<Mutation>* excess_mutations;
-        std::vector<Mutation>* imputed_mutations;
-
-        CandidateNode () {
-            distance = 0;
-            best_distance = &distance;
-        }
+        void add_mutation(Mutation mut);
+        void clear_mutations();
 };
 #endif

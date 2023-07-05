@@ -12,29 +12,6 @@
 // A:1,C:2,G:4,T:8
 MutationNode::MutationNode()
 {
-    level = 0;
-    identifier = "";
-    parent = NULL;
-    branch_length = -1.0;
-    clade_annotations.clear();
-    mutations.clear();
-}
-
-MutationNode::MutationNode(std::string id, float len)
-{
-    identifier = id;
-    parent = NULL;
-    level = 1;
-    branch_length = len;
-    mutations.clear();
-}
-
-MutationNode::MutationNode(std::string id, MutationNode *p, float len)
-{
-    identifier = id;
-    parent = p;
-    level = p->level + 1;
-    branch_length = len;
     mutations.clear();
 }
 
@@ -86,9 +63,4 @@ void MutationNode::add_mutation(Mutation mut)
 void MutationNode::clear_mutations()
 {
     mutations.clear();
-}
-
-void MutationNode::clear_annotations()
-{
-    clade_annotations.clear();
 }

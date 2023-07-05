@@ -19,6 +19,52 @@ void PhyloNeighbor::clearForwardPartialLh(Node *dad) {
 			((PhyloNeighbor*)*it)->clearForwardPartialLh(node);
 }
 
+void PhyloNeighbor::clear_mutations()
+{
+	mutations.clear();
+}
+
+void PhyloNeighbor::add_mutation(Mutation mut)
+{
+    auto iter = std::lower_bound(mutations.begin(), mutations.end(), mut);
+    // check if mutation at the same position has occured before
+    if ((iter != mutations.end()) && (iter->position == mut.position))
+    {
+        // update to new allele
+        if (iter->par_nuc != mut.mut_nuc)
+        {
+            iter->mut_nuc = mut.mut_nuc;
+        }
+        // reversal mutation
+        else
+        {
+            if (iter->mut_nuc != mut.par_nuc)
+            {
+                printf("ERROR: add_mutation: consecutive mutations at same position "
+                                "disagree on nuc -- called out of order?\n");
+                exit(1);
+            }
+            std::vector<Mutation> tmp;
+            for (auto m : mutations)
+            {
+                if (m.position != iter->position)
+                {
+                    tmp.emplace_back(m.copy());
+                }
+            }
+            mutations.clear();
+            for (auto m : tmp)
+            {
+                mutations.emplace_back(m.copy());
+            }
+        }
+    }
+    // new mutation
+    else
+    {
+        mutations.insert(iter, mut);
+    }
+}
 
 void PhyloNode::clearReversePartialLh(PhyloNode *dad) {
 	PhyloNeighbor *node_nei = (PhyloNeighbor*)findNeighbor(dad);

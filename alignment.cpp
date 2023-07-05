@@ -1078,6 +1078,46 @@ char Alignment::convertStateBack(char state)
     }
 }
 
+int Alignment::getMutationFromState(char state)
+{
+    int value = convertState(state, SEQ_DNA);
+    switch (value)
+    {
+    case 0:
+        return 1;
+    case 1:
+        return 2;
+    case 2:
+        return 4;
+    case 3:
+        return 8;
+    case 1 + 4 + 3:
+        return 1 + 4;
+    case 2 + 8 + 3:
+        return 2 + 8;
+    case 1 + 8 + 3:
+        return 1 + 8;
+    case 2 + 4 + 3:
+        return 2 + 4;
+    case 1 + 2 + 3:
+        return 1 + 2;
+    case 4 + 8 + 3:
+        return 4 + 8;
+    case 2 + 4 + 8 + 3:
+        return 2 + 4 + 8;
+    case 1 + 2 + 8 + 3:
+        return 1 + 2 + 8;
+    case 1 + 4 + 8 + 3:
+        return 1 + 4 + 8;
+    case 1 + 2 + 4 + 3:
+        return 1 + 2 + 4;
+    
+    default:
+        return 15;
+        break;
+    }
+}
+
 string Alignment::convertStateBackStr(char state)
 {
     string str;
@@ -1474,21 +1514,21 @@ int Alignment::readVCF(char* filename, char* sequence_type, int numStartRow) {
             int variant_pos = std::stoi(words[1]); cur_mut.position = variant_pos;
             split(words[4], alleles, ",");
             cur_mut.ref_name = words[0];
-            cur_mut.ref_nuc = words[3][0];
+            cur_mut.ref_nuc = getMutationFromState(words[3][0]);
             for (int j = 9; j < words.size(); ++j) {
                 if (isdigit(words[j][0])) {
                     int allele_id = std::stoi(words[j]);
                     if (allele_id > 0) {
                         std::string allele = alleles[allele_id - 1];
                         if (j - 9 >= numStartRow) {
-                            cur_mut.mut_nuc = allele[0];
+                            cur_mut.mut_nuc = getMutationFromState(allele[0]);
                         } else {
                             sequences[j - 9].push_back(allele[0]);
                         }
                     }
                     else {
                         if (j - 9 >= numStartRow) {
-                            cur_mut.mut_nuc = words[3][0];
+                            cur_mut.mut_nuc = getMutationFromState(words[3][0]);
                         } else {
                             sequences[j - 9].push_back(words[3][0]);
                         }
@@ -1497,7 +1537,7 @@ int Alignment::readVCF(char* filename, char* sequence_type, int numStartRow) {
                 else {
                     // not a mutation
                     if (j - 9 >= numStartRow) {
-                        cur_mut.mut_nuc = 'N';
+                        cur_mut.mut_nuc = getMutationFromState('N');
                     } else {
                         sequences[j - 9].push_back('-');
                     }
@@ -1505,6 +1545,10 @@ int Alignment::readVCF(char* filename, char* sequence_type, int numStartRow) {
 
                 if (j - 9 >= numStartRow) {
                     cur_mut.name = missingSamplesNames[j - 9 - numStartRow];
+                    if(cur_mut.mut_nuc == 15)
+                        cur_mut.is_missing = true;
+                    assert((cur_mut.ref_nuc & (cur_mut.ref_nuc-1)) == 0);
+                    // cout << cur_mut.mut_nuc << " " << cur_mut.ref_nuc << '\n';
                     missingSamples[j - 9 - numStartRow].push_back(cur_mut);
                 }
             }

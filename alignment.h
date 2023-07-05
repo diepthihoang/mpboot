@@ -145,6 +145,8 @@ public:
 
         void buildStateMap(char* map, SeqType seq_type);
 
+        int getMutationFromState(char state);
+
         virtual char convertState(char state, SeqType seq_type);
 
         /**

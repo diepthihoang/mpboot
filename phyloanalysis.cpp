@@ -3410,16 +3410,22 @@ void addMoreRowMutation(IQTree* tree, Alignment* alignment)
 	newTree.computeParsimony();
 	vector<int> permCol = newTree.aln->findPermCol();
 	newTree.initMutation(permCol);
-
-	vector<int> MutationNode;
-	// bo sung sau
-
-	vector<pair<PhyloNode *, PhyloNeighbor *> > bfs = newTree.breadth_first_expansion();
-
-	for(int i = 0; i < (int)MutationNode.size(); ++i)
+	int num_sample = (int)alignment->missingSamples.size();
+	vector<MutationNode> missingSamples(num_sample);
+	for(int i = 0; i < (int)alignment->missingSamples.size(); ++i)
 	{
-		CandidateNode inp;
-		size_t total_nodes = bfs.size();
+		missingSamples[i].mutations = alignment->missingSamples[i];
+		for(auto m : alignment->missingSamples[i])
+		{
+			assert((m.ref_nuc & (m.ref_nuc-1)) == 0);
+		}
+		missingSamples[i].name = alignment->missingSamples[i][0].name;
+	}
+
+	for(int i = 0; i < (int)missingSamples.size(); ++i)
+	{
+		vector<pair<PhyloNode *, PhyloNeighbor *> > bfs = newTree.breadth_first_expansion();
+		size_t total_nodes = (int)bfs.size();
 		// Stores the excess mutations to place the sample at each
 		// node of the tree in DFS order. When placement is as a
 		// child, it only contains parsimony-increasing mutations in
@@ -3436,15 +3442,38 @@ void addMoreRowMutation(IQTree* tree, Alignment* alignment)
 		// for pasrimony-optimal nodes
 		std::vector<std::vector<Mutation>> node_imputed_mutations(total_nodes);
 
+		bool best_node_has_unique = false;
 	
+		std::vector<bool> node_has_unique(total_nodes, false);
+		size_t best_node_num_leaves = 0;
+		int best_set_difference = (int)1e9+7;
+		size_t best_j = 0;
+		size_t best_distance = (size_t)1e9+7;
+
 		for(int j = 0; j < (int)bfs.size(); ++j)
 		{
+			// cout << "here\n";
+			CandidateNode inp;
 			inp.node = bfs[j].first;
 			inp.node_branch = bfs[j].second;
+			inp.missing_sample_mutations = &missingSamples[i].mutations;
+			inp.excess_mutations = &node_excess_mutations[j];
+			inp.imputed_mutations = &node_imputed_mutations[j];
+			inp.best_node_num_leaves = &best_node_num_leaves;
+			inp.best_set_difference = &best_set_difference;
+			inp.best_j =  &best_j;
+			inp.best_distance = &best_distance;
+			inp.j = j;
+			inp.has_unique = &best_node_has_unique;
+			inp.node_has_unique = &(node_has_unique);
 
+			newTree.calculatePlacementMutation(inp);
+			// assert(best_j = *inp.best_j);
 		}
+		newTree.addNewSample(bfs[best_j].first, bfs[best_j].second, node_excess_mutations[best_j], i, missingSamples[i].name);
+		cout << newTree.computeParsimonyScoreMutation() << '\n';
 	}
 
-	cout << "newtree's parsimony score: " << newTree.computeParsimonyScoreMutation() << " " << newTree.computeParsimony() << '\n';
+	// cout << "newtree's parsimony score: " << newTree.computeParsimonyScoreMutation() << " " << newTree.computeParsimony() << '\n';
 	cout << "we still alive !\n";
 }
