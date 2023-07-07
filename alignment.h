@@ -18,6 +18,7 @@
 #include "tools.h"
 #include "mutation.h"
 
+
 // IMPORTANT: refactor STATE_UNKNOWN
 //const char STATE_UNKNOWN = 126;
 const char STATE_INVALID = 127;
@@ -613,8 +614,11 @@ public:
 
         int readVCF(char* filename, char* sequence_type, int numStartRow);
         vector<vector<Mutation>> missingSamples;
+        vector<vector<Mutation>> existingSamples;
 
 protected:
+
+        void analyzeAlignment();
 
 
         /**
