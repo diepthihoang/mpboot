@@ -18,6 +18,7 @@
 #include "tools.h"
 #include "mutation.h"
 
+
 // IMPORTANT: refactor STATE_UNKNOWN
 //const char STATE_UNKNOWN = 126;
 const char STATE_INVALID = 127;
@@ -615,6 +616,8 @@ public:
         vector<vector<Mutation>> missingSamples, existingSamples;
         vector<int> reference_nuc;
 protected:
+
+        void analyzeAlignment();
 
 
         /**
