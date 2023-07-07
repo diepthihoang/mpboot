@@ -1512,9 +1512,12 @@ int Alignment::readVCF(char* filename, char* sequence_type, int numStartRow) {
             vector<string> alleles;
             Mutation cur_mut, ref_mut;
             int variant_pos = std::stoi(words[1]); cur_mut.position = variant_pos;
+            while((int)reference_nuc.size() < cur_mut.position)
+                reference_nuc.push_back(0);
             split(words[4], alleles, ",");
             cur_mut.ref_name = words[0];
             cur_mut.ref_nuc = getMutationFromState(words[3][0]);
+            reference_nuc[cur_mut.position] = cur_mut.ref_nuc;
 
             for (int j = 9; j < words.size(); ++j) {
                 if (isdigit(words[j][0])) {
@@ -2647,6 +2650,7 @@ void Alignment::copyAlignment(Alignment* aln)
         addPattern(pat, site);
     }
     saveCol = aln->saveCol;
+    reference_nuc = aln->reference_nuc;
     verbose_mode = save_mode;
     countConstSite();
     buildSeqStates();

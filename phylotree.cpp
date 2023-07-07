@@ -5205,6 +5205,7 @@ void PhyloTree::computePartialMutation(UINT* states_dad, vector<int>& permCol, P
                         mut.position = permCol[p];
                         mut.mut_nuc = c1;
                         mut.par_nuc = c;
+                        mut.ref_nuc = aln->reference_nuc[mut.position];
                         node_branch->mutations.push_back(mut);
                     }
                 }
@@ -5256,6 +5257,7 @@ void PhyloTree::computePartialMutation(UINT* states_dad, vector<int>& permCol, P
                         mut_l.position = permCol[p];
                         mut_l.mut_nuc = (1<<c1);
                         mut_l.par_nuc = (1<<c);
+                        mut_l.ref_nuc = aln->reference_nuc[mut_l.position];
                         left_branch->mutations.push_back(mut_l);
                         // cout << "1+" << mut_l.position << " ";
                     }
@@ -5270,6 +5272,7 @@ void PhyloTree::computePartialMutation(UINT* states_dad, vector<int>& permCol, P
                         mut_r.position = permCol[p];
                         mut_r.mut_nuc = (1<<c1);
                         mut_r.par_nuc = (1<<c);
+                        mut_r.ref_nuc = aln->reference_nuc[mut_r.position];
                         right_branch->mutations.push_back(mut_r);
                         // cout << "2+" << mut_r.position << " ";
                     }
@@ -5389,6 +5392,8 @@ void PhyloTree::computeMutationBranch(vector<int>& permCol, PhyloNeighbor* dad_b
                     mut_l.position = permCol[p];
                     mut_l.mut_nuc = (1<<c1);
                     mut_l.par_nuc = (1<<c);
+                    mut_l.ref_nuc = aln->reference_nuc[mut_l.position];
+                    assert(mut_l.ref_nuc > 0 && ((mut_l.ref_nuc & (mut_l.ref_nuc-1)) == 0));
                     assert((mut_l.mut_nuc & (mut_l.mut_nuc - 1)) == 0);
                     dad_branch->mutations.push_back(mut_l);
                     ++tree_pars;
@@ -5404,6 +5409,8 @@ void PhyloTree::computeMutationBranch(vector<int>& permCol, PhyloNeighbor* dad_b
                     mut_r.position = permCol[p];
                     mut_r.mut_nuc = (1<<c1);
                     mut_r.par_nuc = (1<<c);
+                    mut_r.ref_nuc = aln->reference_nuc[mut_r.position];
+                    assert(mut_r.ref_nuc > 0 && ((mut_r.ref_nuc & (mut_r.ref_nuc-1)) == 0));
                     assert((mut_r.mut_nuc & (mut_r.mut_nuc - 1)) == 0);
                     node_branch->mutations.push_back(mut_r);
                     ++tree_pars;
