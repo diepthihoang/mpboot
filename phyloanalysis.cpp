@@ -2534,11 +2534,9 @@ void runPhyloAnalysis(Params& params)
 		// call main tree reconstruction
 		runTreeReconstruction(params, original_model, *tree, model_info);
 
-		// addMoreRowIQTree(tree, alignment);
+		addMoreRowIQTree(tree, alignment);
 
 		// addMoreRowPLL(tree, alignment, params);
-
-		cout << "here we are\n";
 
 		addMoreRowMutation(tree, alignment);
 
@@ -3403,7 +3401,7 @@ void addMoreRowMutation(IQTree* tree, Alignment* alignment)
 	IQTree newTree;
 	(newTree).copyPhyloTree(tree);
 	newTree.aln = new Alignment;
-	newTree.aln->copyAlignment(tree->aln);
+	newTree.aln->copyAlignment(alignment);
 	newTree.aln->ungroupSitePattern();
 	newTree.save_branch_states_dad = new UINT[newTree.aln->size() + 1];
 	newTree.save_branch_fitch_result = new UINT[newTree.aln->size() + 1];
