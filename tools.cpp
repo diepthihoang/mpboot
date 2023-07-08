@@ -27,7 +27,7 @@ VerboseMode verbose_mode;
 		WIN32 does not define gettimeofday() function.
 		Here declare it extra for WIN32 only.
  */
-// #if defined(WIN32) && !defined(HAVE_GETTIMEOFDAY)
+ // #if defined(WIN32) && !defined(HAVE_GETTIMEOFDAY)
 #if defined(WIN32)
 #include <sstream>
 #endif
@@ -49,45 +49,45 @@ VerboseMode verbose_mode;
 		Defining DoubleMatrix methods
  ********************************************************/
 
-/*DoubleMatrix::DoubleMatrix(int arows, int acols) {
-		rows = arows;
-		cols = acols;
-		size =  rows * cols;
-		value = new double[size];
-}
+ /*DoubleMatrix::DoubleMatrix(int arows, int acols) {
+		 rows = arows;
+		 cols = acols;
+		 size =  rows * cols;
+		 value = new double[size];
+ }
 
-void DoubleMatrix::setZero() {
-		memset(value, 0, size * sizeof(double));
-}
+ void DoubleMatrix::setZero() {
+		 memset(value, 0, size * sizeof(double));
+ }
 
 
-DoubleMatrix::~DoubleMatrix() {
-		if (value) delete value;
-		value = NULL;
-}
- */
+ DoubleMatrix::~DoubleMatrix() {
+		 if (value) delete value;
+		 value = NULL;
+ }
+  */
 
-/********************************************************
-		Miscellaneous
- ********************************************************/
+  /********************************************************
+		  Miscellaneous
+   ********************************************************/
 
-/**
-		Output an error to screen, then exit program
-		@param error error message
- */
-/*
-void outError(char *error)
-{
-		cerr << "ERROR: " << error << endl;
-		exit(2);
-}
- */
+   /**
+		   Output an error to screen, then exit program
+		   @param error error message
+	*/
+	/*
+	void outError(char *error)
+	{
+			cerr << "ERROR: " << error << endl;
+			exit(2);
+	}
+	 */
 
-/**
-		Output an error to screen, then exit program
-		@param error error message
- */
-void outError(const char *error)
+	 /**
+			 Output an error to screen, then exit program
+			 @param error error message
+	  */
+void outError(const char* error)
 {
 	cerr << "ERROR: " << error << endl;
 	exit(2);
@@ -102,14 +102,14 @@ void outError(string error)
 	outError(error.c_str());
 }
 
-void outError(const char *error, const char *msg)
+void outError(const char* error, const char* msg)
 {
 	string str = error;
 	str += msg;
 	outError(str);
 }
 
-void outError(const char *error, string msg)
+void outError(const char* error, string msg)
 {
 	string str = error;
 	str += msg;
@@ -120,7 +120,7 @@ void outError(const char *error, string msg)
 		Output a warning message to screen
 		@param error warning message
  */
-void outWarning(const char *warn)
+void outWarning(const char* warn)
 {
 	cerr << "WARNING: " << warn << endl;
 }
@@ -130,7 +130,7 @@ void outWarning(string warn)
 	outWarning(warn.c_str());
 }
 
-double randomLen(Params &params)
+double randomLen(Params& params)
 {
 	double ran = static_cast<double>(random_int(999) + 1) / 1000;
 	double len = -params.mean_len * log(ran);
@@ -213,9 +213,9 @@ bool fileExists(string strFilename)
 	return (blnReturn);
 }
 
-int convert_int(const char *str) throw(string)
+int convert_int(const char* str) throw(string)
 {
-	char *endptr;
+	char* endptr;
 	int i = strtol(str, &endptr, 10);
 
 	if ((i == 0 && endptr == str) || abs(i) == HUGE_VALL || *endptr != 0)
@@ -229,9 +229,9 @@ int convert_int(const char *str) throw(string)
 	return i;
 }
 
-int convert_int(const char *str, int &end_pos) throw(string)
+int convert_int(const char* str, int& end_pos) throw(string)
 {
-	char *endptr;
+	char* endptr;
 	int i = strtol(str, &endptr, 10);
 
 	if ((i == 0 && endptr == str) || abs(i) == HUGE_VALL)
@@ -245,9 +245,9 @@ int convert_int(const char *str, int &end_pos) throw(string)
 	return i;
 }
 
-void convert_int_vec(const char *str, IntVector &vec) throw(string)
+void convert_int_vec(const char* str, IntVector& vec) throw(string)
 {
-	char *beginptr = (char *)str, *endptr;
+	char* beginptr = (char*)str, * endptr;
 	vec.clear();
 	do
 	{
@@ -267,9 +267,9 @@ void convert_int_vec(const char *str, IntVector &vec) throw(string)
 	} while (*endptr != 0);
 }
 
-double convert_double(const char *str) throw(string)
+double convert_double(const char* str) throw(string)
 {
-	char *endptr;
+	char* endptr;
 	double d = strtod(str, &endptr);
 	if ((d == 0.0 && endptr == str) || fabs(d) == HUGE_VALF || *endptr != 0)
 	{
@@ -281,9 +281,9 @@ double convert_double(const char *str) throw(string)
 	return d;
 }
 
-double convert_double(const char *str, int &end_pos) throw(string)
+double convert_double(const char* str, int& end_pos) throw(string)
 {
-	char *endptr;
+	char* endptr;
 	double d = strtod(str, &endptr);
 	if ((d == 0.0 && endptr == str) || fabs(d) == HUGE_VALF)
 	{
@@ -307,10 +307,10 @@ string convert_time(const double sec)
 	return ss.str();
 }
 
-void convert_range(const char *str, int &lower, int &upper, int &step_size) throw(string)
+void convert_range(const char* str, int& lower, int& upper, int& step_size) throw(string)
 {
-	char *endptr;
-	char *beginptr = (char *)str;
+	char* endptr;
+	char* beginptr = (char*)str;
 
 	// parse the lower bound of the range
 	int d = strtol(str, &endptr, 10);
@@ -358,10 +358,10 @@ void convert_range(const char *str, int &lower, int &upper, int &step_size) thro
 	str = beginptr;
 }
 
-void convert_range(const char *str, double &lower, double &upper, double &step_size) throw(string)
+void convert_range(const char* str, double& lower, double& upper, double& step_size) throw(string)
 {
-	char *endptr;
-	char *beginptr = (char *)str;
+	char* endptr;
+	char* beginptr = (char*)str;
 
 	// parse the lower bound of the range
 	double d = strtod(str, &endptr);
@@ -409,7 +409,7 @@ void convert_range(const char *str, double &lower, double &upper, double &step_s
 	str = beginptr;
 }
 
-void readWeightFile(Params &params, int ntaxa, double &scale, StrVector &tax_name, DoubleVector &tax_weight)
+void readWeightFile(Params& params, int ntaxa, double& scale, StrVector& tax_name, DoubleVector& tax_weight)
 {
 	cout << "Reading scale factor and taxa weights file " << params.param_file << " ..." << endl;
 	try
@@ -451,7 +451,7 @@ void readWeightFile(Params &params, int ntaxa, double &scale, StrVector &tax_nam
 	}
 }
 
-void readStringFile(const char *filename, int max_num, StrVector &strv)
+void readStringFile(const char* filename, int max_num, StrVector& strv)
 {
 	try
 	{
@@ -480,7 +480,7 @@ void readStringFile(const char *filename, int max_num, StrVector &strv)
 	}
 }
 
-void readInitTaxaFile(Params &params, int ntaxa, StrVector &tax_name)
+void readInitTaxaFile(Params& params, int ntaxa, StrVector& tax_name)
 {
 	cout << "Reading initial taxa set file " << params.initial_file << " ..." << endl;
 	readStringFile(params.initial_file, ntaxa, tax_name);
@@ -500,13 +500,13 @@ void printString2File(string myString, string filename)
 	}
 }
 
-void readInitAreaFile(Params &params, int nareas, StrVector &area_name)
+void readInitAreaFile(Params& params, int nareas, StrVector& area_name)
 {
 	cout << "Reading initial area file " << params.initial_area_file << " ..." << endl;
 	readStringFile(params.initial_area_file, nareas, area_name);
 }
 
-void readAreasBoundary(char *file_name, MSetsBlock *areas, double *areas_boundary)
+void readAreasBoundary(char* file_name, MSetsBlock* areas, double* areas_boundary)
 {
 
 	try
@@ -544,7 +544,7 @@ void readAreasBoundary(char *file_name, MSetsBlock *areas, double *areas_boundar
 		in.close();
 		cout << "Areas relation matrix was read from " << file_name << endl;
 	}
-	catch (const char *str)
+	catch (const char* str)
 	{
 		outError(str);
 	}
@@ -558,9 +558,9 @@ void readAreasBoundary(char *file_name, MSetsBlock *areas, double *areas_boundar
 	}
 }
 
-void readTaxaSets(char *filename, MSetsBlock *sets)
+void readTaxaSets(char* filename, MSetsBlock* sets)
 {
-	TaxaSetNameVector *allsets = sets->getSets();
+	TaxaSetNameVector* allsets = sets->getSets();
 	try
 	{
 		int count = 0;
@@ -583,7 +583,7 @@ void readTaxaSets(char *filename, MSetsBlock *sets)
 				throw "Number of taxa must be > 0";
 			count++;
 			// allsets->resize(allsets->size()+1);
-			TaxaSetName *myset = new TaxaSetName;
+			TaxaSetName* myset = new TaxaSetName;
 			allsets->push_back(myset);
 			myset->name = "";
 			myset->name += count;
@@ -608,7 +608,7 @@ void readTaxaSets(char *filename, MSetsBlock *sets)
 	{
 		outError(ERR_READ_INPUT);
 	}
-	catch (const char *str)
+	catch (const char* str)
 	{
 		outError(str);
 	}
@@ -618,7 +618,7 @@ void readTaxaSets(char *filename, MSetsBlock *sets)
 	}
 }
 
-void get2RandNumb(const int size, int &first, int &second)
+void get2RandNumb(const int size, int& first, int& second)
 {
 	// pick a random element
 	first = random_int(size);
@@ -631,7 +631,7 @@ void get2RandNumb(const int size, int &first, int &second)
 	}
 }
 
-void parseArg(int argc, char *argv[], Params &params)
+void parseArg(int argc, char* argv[], Params& params)
 {
 	int cnt;
 	params.numStartRow = 1000000000;
@@ -843,7 +843,7 @@ void parseArg(int argc, char *argv[], Params &params)
 	params.reinsert_par = false;
 	params.bestStart = true;
 	params.snni = true; // turn on sNNI default now
-						//    params.autostop = true; // turn on auto stopping rule by default now
+	//    params.autostop = true; // turn on auto stopping rule by default now
 	params.unsuccess_iteration = -1;
 	params.speednni = true; // turn on reduced hill-climbing NNI by default now
 	params.adaptPert = false;
@@ -939,6 +939,10 @@ void parseArg(int argc, char *argv[], Params &params)
 #endif
 				continue;
 			}
+			if (strcmp(argv[cnt], "-analyze_alignment") == 0) {
+				params.analyze_alignment = true;
+				continue;
+			}
 			if (strcmp(argv[cnt], "-start_row") == 0)
 			{
 				++cnt;
@@ -982,7 +986,7 @@ void parseArg(int argc, char *argv[], Params &params)
 				if (cnt >= argc)
 					throw "Use -k <num_taxa>";
 				convert_range(argv[cnt], params.min_size, params.sub_size,
-							  params.step_size);
+					params.step_size);
 				params.k_representative = params.min_size;
 				continue;
 			}
@@ -1000,7 +1004,7 @@ void parseArg(int argc, char *argv[], Params &params)
 				if (cnt >= argc)
 					throw "Use -pp <pd_proportion>";
 				convert_range(argv[cnt], params.min_proportion,
-							  params.pd_proportion, params.step_proportion);
+					params.pd_proportion, params.step_proportion);
 				if (params.pd_proportion < 0 || params.pd_proportion > 1)
 					throw "PD proportion must be between 0 and 1";
 				continue;
@@ -1019,7 +1023,7 @@ void parseArg(int argc, char *argv[], Params &params)
 				if (cnt >= argc)
 					throw "Use -bud <budget>";
 				convert_range(argv[cnt], params.min_budget, params.budget,
-							  params.step_budget);
+					params.step_budget);
 				continue;
 			}
 			if (strcmp(argv[cnt], "-mb") == 0)
@@ -2356,7 +2360,7 @@ void parseArg(int argc, char *argv[], Params &params)
 				if (cnt >= argc)
 					throw "Use -diet <d in %>";
 				convert_range(argv[cnt], params.diet_min, params.diet_max,
-							  params.diet_step);
+					params.diet_step);
 				// params.diet = convert_int(argv[cnt]);
 				continue;
 			}
@@ -3078,7 +3082,7 @@ void parseArg(int argc, char *argv[], Params &params)
 				throw "Not allowed to specify both -o <taxon> and -root";
 		}
 		// try
-		catch (const char *str)
+		catch (const char* str)
 		{
 			outError(str);
 			//} catch (char *str) {
@@ -3157,33 +3161,33 @@ void parseArg(int argc, char *argv[], Params &params)
 	}
 }
 
-extern void printCopyright(ostream &out);
-extern void printCopyrightMP(ostream &out);
+extern void printCopyright(ostream& out);
+extern void printCopyrightMP(ostream& out);
 
-void usage(char *argv[], bool full_command)
+void usage(char* argv[], bool full_command)
 {
 	//    printCopyright(cout);
 	printCopyrightMP(cout); // to print UFBoot-MP info
 
 	cout << "Minimal command-line examples (replace 'mpboot ...' with actual path to executable):" << endl
-		 << endl;
+		<< endl;
 
 	cout << "1. Reconstruct maximum parsimony tree from a sequence alignment" << endl
-		 << "   (example.phy):" << endl
-		 << "     mpboot -s example.phy" << endl
-		 << endl;
+		<< "   (example.phy):" << endl
+		<< "     mpboot -s example.phy" << endl
+		<< endl;
 
 	cout << "2. Reconstruct MP tree and assess branch supports with the MPBoot method" << endl
-		 << "   (1000 replicates):" << endl
-		 << "     mpboot -s example.phy -bb 1000" << endl
-		 << endl;
+		<< "   (1000 replicates):" << endl
+		<< "     mpboot -s example.phy -bb 1000" << endl
+		<< endl;
 
 	cout << "To show all available options: run 'mpboot -h'" << endl
-		 << endl;
+		<< endl;
 
 	cout << "Have a look at the tutorial and manual for more information:" << endl
-		 << "     http://www.cibiv.at/software/mpboot" << endl
-		 << endl;
+		<< "     http://www.cibiv.at/software/mpboot" << endl
+		<< endl;
 
 	//    cout << "Usage: " << argv[0] << " [OPTIONS] <file_name> [<output_file>]" << endl;
 	//    cout << "GENERAL OPTIONS:" << endl;
@@ -3253,127 +3257,127 @@ void usage(char *argv[], bool full_command)
 	exit(0);
 }
 
-void usage_iqtree(char *argv[], bool full_command)
+void usage_iqtree(char* argv[], bool full_command)
 {
 	printCopyright(cout);
 	cout << "Usage: " << argv[0] << " -s <alignment> [OPTIONS] [<treefile>] " << endl
-		 << endl;
+		<< endl;
 	cout << "GENERAL OPTIONS:" << endl
-		 << "  -?                   Printing this help dialog" << endl
-		 << "  -s <alignment>       Input alignment (REQUIRED) in PHYLIP/FASTA/NEXUS format" << endl
-		 << "  -st <data_type>      BIN, DNA, AA, CODON, or MORPH (default: auto-detect)" << endl
-		 << "  -sp <partition_file> Partition model specification in NEXUS format." << endl
-		 << "                       For single model use the -m option (see below)" << endl
-		 << "  -z <trees_file>      Compute log-likelihoods for all trees in the given file" << endl
-		 << "  <treefile>           Initial tree for tree reconstruction (default: MP)" << endl
-		 << "  -o <outgroup_taxon>  Outgroup taxon name for writing .treefile" << endl
-		 << "  -pre <PREFIX>        Using <PREFIX> for output files (default: alignment name)" << endl
+		<< "  -?                   Printing this help dialog" << endl
+		<< "  -s <alignment>       Input alignment (REQUIRED) in PHYLIP/FASTA/NEXUS format" << endl
+		<< "  -st <data_type>      BIN, DNA, AA, CODON, or MORPH (default: auto-detect)" << endl
+		<< "  -sp <partition_file> Partition model specification in NEXUS format." << endl
+		<< "                       For single model use the -m option (see below)" << endl
+		<< "  -z <trees_file>      Compute log-likelihoods for all trees in the given file" << endl
+		<< "  <treefile>           Initial tree for tree reconstruction (default: MP)" << endl
+		<< "  -o <outgroup_taxon>  Outgroup taxon name for writing .treefile" << endl
+		<< "  -pre <PREFIX>        Using <PREFIX> for output files (default: alignment name)" << endl
 #ifdef _OPENMP
-		 << "  -omp <#cpu_cores>    Number of cores/threads to use (default: all cores)" << endl
+		<< "  -omp <#cpu_cores>    Number of cores/threads to use (default: all cores)" << endl
 #endif
-		 << "  -seed <number>       Random seed number, normally used for debugging purpose" << endl
-		 << "  -v, -vv, -vvv        Verbose mode, printing more messages to screen" << endl
-		 << endl
-		 << "NEW STOCHASTIC TREE SEARCH ALGORITHM:" << endl
-		 << "  -pll                 Use phylogenetic likelihood library (PLL) (default: off)" << endl
-		 << "  -numpars <number>    Number of initial parsimony trees (default: 100)" << endl
-		 << "  -toppars <number>    Number of best parsimony trees (default: 20)" << endl
-		 << "  -numcand <number>    Size of the candidate tree set (defaut: 5)" << endl
-		 << "  -pers <perturbation> Perturbation strength for randomized NNI (default: 0.5)" << endl
-		 << "  -numstop <number>    Number of unsuccessful iterations to stop (default: 100)" << endl
-		 << "  -n <#iterations>     Fix number of iterations to <#iterations> (default: auto)" << endl
-		 << "  -iqp                 Use the IQP tree perturbation (default: randomized NNI)" << endl
-		 << "  -iqpnni              Switch back to the old IQPNNI tree search algorithm" << endl
-		 << endl
-		 << "ULTRAFAST BOOTSTRAP:" << endl
-		 << "  -bb <#replicates>    Ultrafast bootstrap (>=1000)" << endl
-		 //            << "  -n <#iterations>     Minimum number of iterations (default: 100)" << endl
-		 << "  -nm <#iterations>    Maximum number of iterations (default: 1000)" << endl
-		 << "  -nstep <#iterations> #Iterations for UFBoot stopping rule (default: 100)" << endl
-		 << "  -bcor <min_corr>     Minimum correlation coefficient (default: 0.99)" << endl
-		 << "  -beps <epsilon>      RELL epsilon to break tie (default: 0.5)" << endl
-		 << endl
-		 << "STANDARD NON-PARAMETRIC BOOTSTRAP:" << endl
-		 << "  -b <#replicates>     Bootstrap + ML tree + consensus tree (>=100)" << endl
-		 << "  -bc <#replicates>    Bootstrap + consensus tree" << endl
-		 << "  -bo <#replicates>    Bootstrap only" << endl
-		 << "  -t <threshold>       Minimum bootstrap support [0...1) for consensus tree" << endl
-		 << endl
-		 << "SINGLE BRANCH TEST:" << endl
-		 << "  -alrt <#replicates>  SH-like approximate likelihood ratio test (SH-aLRT)" << endl
-		 << "  -lbp <#replicates>   Fast local bootstrap probabilities" << endl
-		 << endl
-		 << "SUBSTITUTION MODEL:" << endl
-		 << "  -m <model_name>" << endl
-		 << "                  DNA: HKY (default), JC, F81, K2P, K3P, K81uf, TN/TrN, TNef," << endl
-		 << "                       TIM, TIMef, TVM, TVMef, SYM, GTR, or 6-digit model" << endl
-		 << "                       specification (e.g., 010010 = HKY)" << endl
-		 << "              Protein: WAG (default), Poisson, cpREV, mtREV, Dayhoff, mtMAM," << endl
-		 << "                       JTT, LG, mtART, mtZOA, VT, rtREV, DCMut, PMB, HIVb," << endl
-		 << "                       HIVw, JTTDCMut, FLU, Blosum62" << endl
-		 << "               Binary: JC2 (default), GTR2" << endl
-		 << "                Codon: GY (default), ECM, MG" << endl
-		 << "       Morphology/SNP: MK (default), ORDERED" << endl
-		 << "      Model selection: TEST or TESTONLY to auto-select the best-fit model." << endl
-		 << "                       TESTONLY will stop the run after model selection" << endl
-		 << "            Otherwise: Name of file containing user-model parameters" << endl
-		 << "                       (rate parameters and state frequencies)" << endl
-		 << "  -m <model_name>+F or +FO or +FU or +FQ (default: auto)" << endl
-		 << "                       counted, optimized, user-defined, equal state frequency" << endl
-		 << "  -m <model_name>+F1x4 or +F3x4 or +F3x4C" << endl
-		 << "                       Codon frequencies" << endl
-		 << "  -m <model_name>+ASC  Ascertainment bias correction for morphological/SNP data" << endl
-		 << endl
-		 << "RATE HETEROGENEITY:" << endl
-		 << "  -m <model_name>+I or +G[n] or +I+G[n]" << endl
-		 << "                       Invar, Gamma, or Invar+Gamma rates. 'n' is number of" << endl
-		 << "                       categories for Gamma rates (default: n=4)" << endl
-		 << "  -a <Gamma_shape>     Gamma shape parameter for site rates (default: estimate)" << endl
-		 << "  -gmedian             Computing mean for Gamma rate category (default: mean)" << endl
-		 << "  -i <p_invar>         Proportion of invariable sites (default: estimate)" << endl
-		 << "  -mh                  Computing site-specific rates to .mhrate file using" << endl
-		 << "                       Meyer & von Haeseler (2003) method" << endl
-		 //<< "  -c <#categories>     Number of Gamma rate categories (default: 4)" << endl
-		 << endl
-		 << "TEST OF MODEL HOMOGENEITY:" << endl
-		 << "  -m WHTEST            Testing model (GTR+G) homogeneity assumption using" << endl
-		 << "                       Weiss & von Haeseler (2003) method" << endl
-		 << "  -ns <#simulations>   #Simulations to obtain null-distribution (default: 1000)" << endl
-		 //            << endl << "TREE INFERENCE:" << endl
-		 //            << "  -p <probability>     IQP: Probability of deleting leaves (default: auto)" << endl
-		 //            << "  -k <#representative> IQP: Size of representative leaf set (default: 4)" << endl
-		 //            << "  -n <#iterations>     Number of iterations  (default: auto)" << endl
-		 //            << "  -sr <#iterations>    Stopping rule with max. #iterations (default: off)" << endl
-		 //            << "  -sc <confidence>     Confidence value for stopping rule (default: 0.95)" << endl
-		 //            << "  -spc <level>         Confidence level for NNI adaptive search (default 0.95)" << endl
-		 //            << "  -sp_iter <number>    #iterations before NNI adaptive heuristic is started" << endl
-		 //            << "  -lmd <lambda>        lambda parameter for the PhyML search (default 0.75)" << endl
-		 //            << "  -nosse               Disable SSE instructions" << endl
-		 //            << "  -wt                  Writing all intermediate trees into .treels file" << endl
-		 //            << "  -d <file>            Reading genetic distances from file (default: JC)" << endl
-		 //            << "  -fixbr               Fix branch lengths of <treefile>" << endl
-		 //            << "  -seed <number>       Random seed number, normally used for debugging purpose" << endl
-		 //            << "  -v, -vv, -vvv        Verbose mode, printing more messages to screen" << endl
-		 << endl
-		 << "CONSENSUS RECONSTRUCTION:" << endl
-		 << "  <tree_file>          Set of input trees for consensus reconstruction" << endl
-		 << "  -t <threshold>       Min split support in range [0,1]. 0.5 for majority-rule" << endl
-		 << "                       consensus (default: 0, i.e. extended consensus)" << endl
-		 << "  -bi <burnin>         Discarding <burnin> trees at beginning of <treefile>" << endl
-		 << "  -con                 Computing consensus tree to .contree file" << endl
-		 << "  -net                 Computing consensus network to .nex file" << endl
-		 << "  -sup <target_tree>   Assigning support values for <target_tree> to .suptree" << endl
-		 << endl
-		 << "ROBINSON-FOULDS DISTANCE:" << endl
-		 << "  -rf_all              Computing all-to-all RF distances of trees in <treefile>" << endl
-		 << "  -rf <treefile2>      Computing all RF distances between two sets of trees" << endl
-		 << "                       stored in <treefile> and <treefile2>" << endl
-		 << "  -rf_adj              Computing RF distances of adjacent trees in <treefile>" << endl
-		 << endl
-		 << "TREE TOPOLOGY TEST:" << endl
-		 << "  -zb <#replicates>    BP,KH,SH,ELW tests with RELL for trees passed via -z" << endl
-		 << "  -zw                  Also performing weighted-KH and weighted-SH tests" << endl
-		 << endl;
+		<< "  -seed <number>       Random seed number, normally used for debugging purpose" << endl
+		<< "  -v, -vv, -vvv        Verbose mode, printing more messages to screen" << endl
+		<< endl
+		<< "NEW STOCHASTIC TREE SEARCH ALGORITHM:" << endl
+		<< "  -pll                 Use phylogenetic likelihood library (PLL) (default: off)" << endl
+		<< "  -numpars <number>    Number of initial parsimony trees (default: 100)" << endl
+		<< "  -toppars <number>    Number of best parsimony trees (default: 20)" << endl
+		<< "  -numcand <number>    Size of the candidate tree set (defaut: 5)" << endl
+		<< "  -pers <perturbation> Perturbation strength for randomized NNI (default: 0.5)" << endl
+		<< "  -numstop <number>    Number of unsuccessful iterations to stop (default: 100)" << endl
+		<< "  -n <#iterations>     Fix number of iterations to <#iterations> (default: auto)" << endl
+		<< "  -iqp                 Use the IQP tree perturbation (default: randomized NNI)" << endl
+		<< "  -iqpnni              Switch back to the old IQPNNI tree search algorithm" << endl
+		<< endl
+		<< "ULTRAFAST BOOTSTRAP:" << endl
+		<< "  -bb <#replicates>    Ultrafast bootstrap (>=1000)" << endl
+		//            << "  -n <#iterations>     Minimum number of iterations (default: 100)" << endl
+		<< "  -nm <#iterations>    Maximum number of iterations (default: 1000)" << endl
+		<< "  -nstep <#iterations> #Iterations for UFBoot stopping rule (default: 100)" << endl
+		<< "  -bcor <min_corr>     Minimum correlation coefficient (default: 0.99)" << endl
+		<< "  -beps <epsilon>      RELL epsilon to break tie (default: 0.5)" << endl
+		<< endl
+		<< "STANDARD NON-PARAMETRIC BOOTSTRAP:" << endl
+		<< "  -b <#replicates>     Bootstrap + ML tree + consensus tree (>=100)" << endl
+		<< "  -bc <#replicates>    Bootstrap + consensus tree" << endl
+		<< "  -bo <#replicates>    Bootstrap only" << endl
+		<< "  -t <threshold>       Minimum bootstrap support [0...1) for consensus tree" << endl
+		<< endl
+		<< "SINGLE BRANCH TEST:" << endl
+		<< "  -alrt <#replicates>  SH-like approximate likelihood ratio test (SH-aLRT)" << endl
+		<< "  -lbp <#replicates>   Fast local bootstrap probabilities" << endl
+		<< endl
+		<< "SUBSTITUTION MODEL:" << endl
+		<< "  -m <model_name>" << endl
+		<< "                  DNA: HKY (default), JC, F81, K2P, K3P, K81uf, TN/TrN, TNef," << endl
+		<< "                       TIM, TIMef, TVM, TVMef, SYM, GTR, or 6-digit model" << endl
+		<< "                       specification (e.g., 010010 = HKY)" << endl
+		<< "              Protein: WAG (default), Poisson, cpREV, mtREV, Dayhoff, mtMAM," << endl
+		<< "                       JTT, LG, mtART, mtZOA, VT, rtREV, DCMut, PMB, HIVb," << endl
+		<< "                       HIVw, JTTDCMut, FLU, Blosum62" << endl
+		<< "               Binary: JC2 (default), GTR2" << endl
+		<< "                Codon: GY (default), ECM, MG" << endl
+		<< "       Morphology/SNP: MK (default), ORDERED" << endl
+		<< "      Model selection: TEST or TESTONLY to auto-select the best-fit model." << endl
+		<< "                       TESTONLY will stop the run after model selection" << endl
+		<< "            Otherwise: Name of file containing user-model parameters" << endl
+		<< "                       (rate parameters and state frequencies)" << endl
+		<< "  -m <model_name>+F or +FO or +FU or +FQ (default: auto)" << endl
+		<< "                       counted, optimized, user-defined, equal state frequency" << endl
+		<< "  -m <model_name>+F1x4 or +F3x4 or +F3x4C" << endl
+		<< "                       Codon frequencies" << endl
+		<< "  -m <model_name>+ASC  Ascertainment bias correction for morphological/SNP data" << endl
+		<< endl
+		<< "RATE HETEROGENEITY:" << endl
+		<< "  -m <model_name>+I or +G[n] or +I+G[n]" << endl
+		<< "                       Invar, Gamma, or Invar+Gamma rates. 'n' is number of" << endl
+		<< "                       categories for Gamma rates (default: n=4)" << endl
+		<< "  -a <Gamma_shape>     Gamma shape parameter for site rates (default: estimate)" << endl
+		<< "  -gmedian             Computing mean for Gamma rate category (default: mean)" << endl
+		<< "  -i <p_invar>         Proportion of invariable sites (default: estimate)" << endl
+		<< "  -mh                  Computing site-specific rates to .mhrate file using" << endl
+		<< "                       Meyer & von Haeseler (2003) method" << endl
+		//<< "  -c <#categories>     Number of Gamma rate categories (default: 4)" << endl
+		<< endl
+		<< "TEST OF MODEL HOMOGENEITY:" << endl
+		<< "  -m WHTEST            Testing model (GTR+G) homogeneity assumption using" << endl
+		<< "                       Weiss & von Haeseler (2003) method" << endl
+		<< "  -ns <#simulations>   #Simulations to obtain null-distribution (default: 1000)" << endl
+		//            << endl << "TREE INFERENCE:" << endl
+		//            << "  -p <probability>     IQP: Probability of deleting leaves (default: auto)" << endl
+		//            << "  -k <#representative> IQP: Size of representative leaf set (default: 4)" << endl
+		//            << "  -n <#iterations>     Number of iterations  (default: auto)" << endl
+		//            << "  -sr <#iterations>    Stopping rule with max. #iterations (default: off)" << endl
+		//            << "  -sc <confidence>     Confidence value for stopping rule (default: 0.95)" << endl
+		//            << "  -spc <level>         Confidence level for NNI adaptive search (default 0.95)" << endl
+		//            << "  -sp_iter <number>    #iterations before NNI adaptive heuristic is started" << endl
+		//            << "  -lmd <lambda>        lambda parameter for the PhyML search (default 0.75)" << endl
+		//            << "  -nosse               Disable SSE instructions" << endl
+		//            << "  -wt                  Writing all intermediate trees into .treels file" << endl
+		//            << "  -d <file>            Reading genetic distances from file (default: JC)" << endl
+		//            << "  -fixbr               Fix branch lengths of <treefile>" << endl
+		//            << "  -seed <number>       Random seed number, normally used for debugging purpose" << endl
+		//            << "  -v, -vv, -vvv        Verbose mode, printing more messages to screen" << endl
+		<< endl
+		<< "CONSENSUS RECONSTRUCTION:" << endl
+		<< "  <tree_file>          Set of input trees for consensus reconstruction" << endl
+		<< "  -t <threshold>       Min split support in range [0,1]. 0.5 for majority-rule" << endl
+		<< "                       consensus (default: 0, i.e. extended consensus)" << endl
+		<< "  -bi <burnin>         Discarding <burnin> trees at beginning of <treefile>" << endl
+		<< "  -con                 Computing consensus tree to .contree file" << endl
+		<< "  -net                 Computing consensus network to .nex file" << endl
+		<< "  -sup <target_tree>   Assigning support values for <target_tree> to .suptree" << endl
+		<< endl
+		<< "ROBINSON-FOULDS DISTANCE:" << endl
+		<< "  -rf_all              Computing all-to-all RF distances of trees in <treefile>" << endl
+		<< "  -rf <treefile2>      Computing all RF distances between two sets of trees" << endl
+		<< "                       stored in <treefile> and <treefile2>" << endl
+		<< "  -rf_adj              Computing RF distances of adjacent trees in <treefile>" << endl
+		<< endl
+		<< "TREE TOPOLOGY TEST:" << endl
+		<< "  -zb <#replicates>    BP,KH,SH,ELW tests with RELL for trees passed via -z" << endl
+		<< "  -zw                  Also performing weighted-KH and weighted-SH tests" << endl
+		<< endl;
 
 	cout << "GENERATING RANDOM TREES:" << endl;
 	cout << "  -r <num_taxa>        Create a random tree under Yule-Harding model." << endl;
@@ -3385,12 +3389,12 @@ void usage_iqtree(char *argv[], bool full_command)
 	cout << "                       min, mean, and max branch lengths of random trees." << endl;
 
 	cout << endl
-		 << "MISCELLANEOUS:" << endl
-		 << "  -wt                  Write locally optimal trees into .treels file" << endl
-		 << "  -fixbr               Fix branch lengths of <treefile>." << endl
-		 << "                       Used with -n 0 to compute log-likelihood of <treefile>" << endl
-		 << "  -wsl                 Writing site log-likelihoods to .sitelh file" << endl
-		 << "  -wslg                Writing site log-likelihoods per Gamma category" << endl;
+		<< "MISCELLANEOUS:" << endl
+		<< "  -wt                  Write locally optimal trees into .treels file" << endl
+		<< "  -fixbr               Fix branch lengths of <treefile>." << endl
+		<< "                       Used with -n 0 to compute log-likelihood of <treefile>" << endl
+		<< "  -wsl                 Writing site log-likelihoods to .sitelh file" << endl
+		<< "  -wslg                Writing site log-likelihoods per Gamma category" << endl;
 	//            << "  -d <file>            Reading genetic distances from file (default: JC)" << endl
 	//			<< "  -d <outfile>         Calculate the distance matrix inferred from tree" << endl
 	//			<< "  -stats <outfile>     Output some statistics about branch lengths" << endl
@@ -3406,69 +3410,69 @@ void usage_iqtree(char *argv[], bool full_command)
 	exit(0);
 }
 
-void usage_mpboot(char *argv[], bool full_command)
+void usage_mpboot(char* argv[], bool full_command)
 {
 	printCopyrightMP(cout);
 
 	cout << "Usage: " << argv[0] << " -s <alignment> [OPTIONS] [<treefile>] " << endl
-		 << endl;
+		<< endl;
 	cout << "GENERAL OPTIONS:" << endl
-		 << "  -?                   Printing this help dialog" << endl
-		 << "  -s <alignment>       Input alignment (REQUIRED) in PHYLIP/FASTA/NEXUS format" << endl
-		 << "  -st <data_type>      BIN, DNA, AA, CODON, or MORPH (default: auto-detect)" << endl
-		 << "  <treefile>           Initial tree for tree reconstruction (default: MP)" << endl
-		 << "  -pre <PREFIX>        Using <PREFIX> for output files (default: alignment name)" << endl
-		 << "  -seed <number>       Random seed number, normally used for debugging purpose" << endl
-		 << "  -v, -vv, -vvv        Verbose mode, printing more messages to screen" << endl
+		<< "  -?                   Printing this help dialog" << endl
+		<< "  -s <alignment>       Input alignment (REQUIRED) in PHYLIP/FASTA/NEXUS format" << endl
+		<< "  -st <data_type>      BIN, DNA, AA, CODON, or MORPH (default: auto-detect)" << endl
+		<< "  <treefile>           Initial tree for tree reconstruction (default: MP)" << endl
+		<< "  -pre <PREFIX>        Using <PREFIX> for output files (default: alignment name)" << endl
+		<< "  -seed <number>       Random seed number, normally used for debugging purpose" << endl
+		<< "  -v, -vv, -vvv        Verbose mode, printing more messages to screen" << endl
 
-		 << endl
-		 << "MPBOOT - MAXIMUM PARSIMONY BOOTSTRAP APPROXIMATION:" << endl
-		 << "  -mulhits                  Store multiple equally parsimonious trees per bootstrap replicate" << endl
-		 << "  -ratchet_iter <number>    Number of non-ratchet iterations before each ratchet iteration (default: 1)" << endl
-		 << "  -ratchet_wgt <number>     Weight to add to each site selected for perturbation during ratchet (default: 1)" << endl
-		 << "  -ratchet_percent <number> Percentage of informative sites selected for perturbation during ratchet (default: 50)" << endl
-		 << "  -ratchet_off              Turn of ratchet, i.e. Only use tree perturbation" << endl
-		 << "  -spr_rad <number>         Maximum radius of SPR (default: 3)" << endl
-		 << "  -cand_cutoff <#s>         Use top #s percentile as cutoff for selecting bootstrap candidates (default: 10)" << endl
-		 << "  -opt_btree_off            Turn off refinement step on the final bootstrap tree set" << endl
-		 << "  -nni_pars                 Hill-climb by NNI instead of SPR" << endl
-		 << "  -cost <file>              Read <file> for the matrix of transition cost between character states" << endl
-		 << "                            Replace <file> by letter e for uniform cost." << endl
+		<< endl
+		<< "MPBOOT - MAXIMUM PARSIMONY BOOTSTRAP APPROXIMATION:" << endl
+		<< "  -mulhits                  Store multiple equally parsimonious trees per bootstrap replicate" << endl
+		<< "  -ratchet_iter <number>    Number of non-ratchet iterations before each ratchet iteration (default: 1)" << endl
+		<< "  -ratchet_wgt <number>     Weight to add to each site selected for perturbation during ratchet (default: 1)" << endl
+		<< "  -ratchet_percent <number> Percentage of informative sites selected for perturbation during ratchet (default: 50)" << endl
+		<< "  -ratchet_off              Turn of ratchet, i.e. Only use tree perturbation" << endl
+		<< "  -spr_rad <number>         Maximum radius of SPR (default: 3)" << endl
+		<< "  -cand_cutoff <#s>         Use top #s percentile as cutoff for selecting bootstrap candidates (default: 10)" << endl
+		<< "  -opt_btree_off            Turn off refinement step on the final bootstrap tree set" << endl
+		<< "  -nni_pars                 Hill-climb by NNI instead of SPR" << endl
+		<< "  -cost <file>              Read <file> for the matrix of transition cost between character states" << endl
+		<< "                            Replace <file> by letter e for uniform cost." << endl
 
-		 << endl
-		 << "NEW STOCHASTIC TREE SEARCH ALGORITHM:" << endl
-		 << "  -numpars <number>    Number of initial parsimony trees (default: 100)" << endl
-		 << "  -toppars <number>    Number of best parsimony trees (default: 20)" << endl
-		 << "  -numcand <number>    Size of the candidate tree set (defaut: 5)" << endl
-		 << "  -pers <perturbation> Perturbation strength for randomized NNI (default: 0.5)" << endl
-		 << "  -numstop <number>    Number of unsuccessful iterations to stop (default: 100)" << endl
-		 << "  -n <#iterations>     Fix number of iterations to <#iterations> (default: auto)" << endl
-		 << "  -iqp                 Use the IQP tree perturbation (default: randomized NNI)" << endl
-		 << "  -iqpnni              Switch back to the old IQPNNI tree search algorithm" << endl
-		 << endl
-		 << "ULTRAFAST BOOTSTRAP:" << endl
-		 << "  -bb <#replicates>    Ultrafast bootstrap (>=1000)" << endl
-		 //            << "  -n <#iterations>     Minimum number of iterations (default: 100)" << endl
-		 << "  -nm <#iterations>    Maximum number of iterations (default: 1000)" << endl
-		 << "  -nstep <#iterations> #Iterations for UFBoot stopping rule (default: 100)" << endl
-		 << "  -bcor <min_corr>     Minimum correlation coefficient (default: 0.99)" << endl
-		 << "  -beps <epsilon>      RELL epsilon to break tie (default: 0.5)" << endl
-		 << endl
-		 << "CONSENSUS RECONSTRUCTION:" << endl
-		 << "  <tree_file>          Set of input trees for consensus reconstruction" << endl
-		 << "  -t <threshold>       Min split support in range [0,1]. 0.5 for majority-rule" << endl
-		 << "                       consensus (default: 0, i.e. extended consensus)" << endl
-		 << "  -bi <burnin>         Discarding <burnin> trees at beginning of <treefile>" << endl
-		 << "  -con                 Computing consensus tree to .contree file" << endl
-		 << "  -net                 Computing consensus network to .nex file" << endl
-		 << "  -sup <target_tree>   Assigning support values for <target_tree> to .suptree" << endl
-		 << endl
-		 << "ROBINSON-FOULDS DISTANCE:" << endl
-		 << "  -rf_all              Computing all-to-all RF distances of trees in <treefile>" << endl
-		 << "  -rf <treefile2>      Computing all RF distances between two sets of trees" << endl
-		 << "                       stored in <treefile> and <treefile2>" << endl
-		 << "  -rf_adj              Computing RF distances of adjacent trees in <treefile>" << endl
-		 << endl;
+		<< endl
+		<< "NEW STOCHASTIC TREE SEARCH ALGORITHM:" << endl
+		<< "  -numpars <number>    Number of initial parsimony trees (default: 100)" << endl
+		<< "  -toppars <number>    Number of best parsimony trees (default: 20)" << endl
+		<< "  -numcand <number>    Size of the candidate tree set (defaut: 5)" << endl
+		<< "  -pers <perturbation> Perturbation strength for randomized NNI (default: 0.5)" << endl
+		<< "  -numstop <number>    Number of unsuccessful iterations to stop (default: 100)" << endl
+		<< "  -n <#iterations>     Fix number of iterations to <#iterations> (default: auto)" << endl
+		<< "  -iqp                 Use the IQP tree perturbation (default: randomized NNI)" << endl
+		<< "  -iqpnni              Switch back to the old IQPNNI tree search algorithm" << endl
+		<< endl
+		<< "ULTRAFAST BOOTSTRAP:" << endl
+		<< "  -bb <#replicates>    Ultrafast bootstrap (>=1000)" << endl
+		//            << "  -n <#iterations>     Minimum number of iterations (default: 100)" << endl
+		<< "  -nm <#iterations>    Maximum number of iterations (default: 1000)" << endl
+		<< "  -nstep <#iterations> #Iterations for UFBoot stopping rule (default: 100)" << endl
+		<< "  -bcor <min_corr>     Minimum correlation coefficient (default: 0.99)" << endl
+		<< "  -beps <epsilon>      RELL epsilon to break tie (default: 0.5)" << endl
+		<< endl
+		<< "CONSENSUS RECONSTRUCTION:" << endl
+		<< "  <tree_file>          Set of input trees for consensus reconstruction" << endl
+		<< "  -t <threshold>       Min split support in range [0,1]. 0.5 for majority-rule" << endl
+		<< "                       consensus (default: 0, i.e. extended consensus)" << endl
+		<< "  -bi <burnin>         Discarding <burnin> trees at beginning of <treefile>" << endl
+		<< "  -con                 Computing consensus tree to .contree file" << endl
+		<< "  -net                 Computing consensus network to .nex file" << endl
+		<< "  -sup <target_tree>   Assigning support values for <target_tree> to .suptree" << endl
+		<< endl
+		<< "ROBINSON-FOULDS DISTANCE:" << endl
+		<< "  -rf_all              Computing all-to-all RF distances of trees in <treefile>" << endl
+		<< "  -rf <treefile2>      Computing all RF distances between two sets of trees" << endl
+		<< "                       stored in <treefile> and <treefile2>" << endl
+		<< "  -rf_adj              Computing RF distances of adjacent trees in <treefile>" << endl
+		<< endl;
 
 	cout << "GENERATING RANDOM TREES:" << endl;
 	cout << "  -r <num_taxa>        Create a random tree under Yule-Harding model." << endl;
@@ -3478,12 +3482,12 @@ void usage_mpboot(char *argv[], bool full_command)
 	cout << "  -rcsg <num_taxa>     Create a random circular split network." << endl;
 	cout << "  -rlen <min_len> <mean_len> <max_len>  " << endl;
 	cout << "                       min, mean, and max branch lengths of random trees." << endl
-		 << endl;
+		<< endl;
 
 	cout << "PRINTING SITE PARSIMONY SCORES:" << endl;
 	cout << "  -wspars              When using together with parsimony tree inference, print site parsimony scores of the best tree found." << endl;
 	cout << "  -wspars-user-tree <treefile> Print site parsimony scores of the user tree in <treefile>" << endl
-		 << endl;
+		<< endl;
 
 	cout << endl;
 
@@ -3495,7 +3499,7 @@ void usage_mpboot(char *argv[], bool full_command)
 	exit(0);
 }
 
-InputType detectInputFile(char *input_file)
+InputType detectInputFile(char* input_file)
 {
 
 	try
@@ -3537,7 +3541,7 @@ InputType detectInputFile(char *input_file)
 	return IN_OTHER;
 }
 
-bool overwriteFile(char *filename)
+bool overwriteFile(char* filename)
 {
 	ifstream infile(filename);
 	if (infile.is_open())
@@ -3555,7 +3559,7 @@ bool overwriteFile(char *filename)
 	return true;
 }
 
-void parseAreaName(char *area_names, set<string> &areas)
+void parseAreaName(char* area_names, set<string>& areas)
 {
 	string all = area_names;
 	int pos;
@@ -3600,7 +3604,7 @@ I random_element(I begin, I end)
 }
 
 template <class T>
-inline T quantile(const vector<T> &v, const double q)
+inline T quantile(const vector<T>& v, const double q)
 {
 	unsigned int size = v.size();
 	if (q <= 0)
@@ -3761,7 +3765,7 @@ int finish_random()
 
 /******************/
 
-int *randstream;
+int* randstream;
 
 int init_random(int seed)
 {

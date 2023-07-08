@@ -2478,6 +2478,9 @@ void runPhyloAnalysis(Params& params)
 			delete alignment;
 			alignment = aln;
 		}
+		if (params.analyze_alignment) {
+			alignment->analyzeAlignment();
+		}
 		tree = new IQTree(alignment);
 	}
 

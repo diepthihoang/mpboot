@@ -613,12 +613,11 @@ public:
         vector<int> findPermCol();
 
         int readVCF(char* filename, char* sequence_type, int numStartRow);
-        vector<vector<Mutation>> missingSamples, existingSamples;
+        vector<vector<Mutation>> missingSamples;
+        vector<vector<Mutation>> existingSamples;
         vector<int> reference_nuc;
-protected:
-
         void analyzeAlignment();
-
+protected:
 
         /**
                 sequence names

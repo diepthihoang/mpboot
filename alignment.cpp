@@ -1448,6 +1448,34 @@ int Alignment::buildPattern(StrVector& sequences, char* sequence_type, int nseq,
     return 1;
 }
 
+double entropy(string s) {
+    map<char, int> cnt;
+    for (int i = 0; i < (int)s.size(); ++ i) {
+        ++ cnt[s[i]];
+    }
+    double ret = 0;
+    for (map<char, int>::iterator it = cnt.begin(); it != cnt.end(); ++ it) {
+        double p = (double)it->second / (double)s.size();
+        ret += p * log2(p);
+    }
+    return -ret;
+}
+
+void Alignment::analyzeAlignment() {
+    map<int, int> cnt;
+    for (int i = 0; i < (int)saveCol.size(); ++ i) {
+        string col = saveCol[i];
+        set<char> s(col.begin(), col.end());
+        ++ cnt[s.size()];
+        double cur_entropy = entropy(col);
+        cout << "At column " << i << " entropy = " << fixed << setprecision(4) << cur_entropy << " / " << log2(s.size()) << " (maximum entroypy)" << endl;
+    }
+    for (auto it = cnt.begin(); it != cnt.end(); ++ it) {
+        double percent = (double)it->second / (double)saveCol.size();
+        cout << "there were " << it->second << " columns with " << it->first << " different characters, account for " << fixed << setprecision(4) << percent * 100 << "%" << endl;
+    }
+}
+
 void split(const string& s, vector<string>& elems, const string& delim)
 {
     elems.clear();
