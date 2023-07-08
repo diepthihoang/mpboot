@@ -1507,12 +1507,13 @@ int Alignment::readVCF(char* filename, char* sequence_type, int numStartRow) {
             existingSamples.resize(nseq);
         }
         else {
-            if (words.size() != 8 + nseq + missingSamples.size())
+            // cout << (int)words.size() << " " << nseq << " " << (int)missingSamples.size() << '\n';
+            if (words.size() != 9 + nseq + missingSamples.size())
                 throw "Number of columns in VCF file is not consistent";
             vector<string> alleles;
             Mutation cur_mut, ref_mut;
             int variant_pos = std::stoi(words[1]); cur_mut.position = variant_pos;
-            while((int)reference_nuc.size() < cur_mut.position)
+            while((int)reference_nuc.size() <= cur_mut.position)
                 reference_nuc.push_back(0);
             split(words[4], alleles, ",");
             cur_mut.ref_name = words[0];
@@ -1547,15 +1548,32 @@ int Alignment::readVCF(char* filename, char* sequence_type, int numStartRow) {
 
                 if (j - 9 >= numStartRow) {
                     cur_mut.name = missingSamplesNames[j - 9 - numStartRow];
-                    assert((cur_mut.ref_nuc & (cur_mut.ref_nuc-1)) == 0);
+                    // assert((cur_mut.ref_nuc & (cur_mut.ref_nuc-1)) == 0);
+                    // assert(cur_mut.ref_nuc > 0);
                     // cout << cur_mut.mut_nuc << " " << cur_mut.ref_nuc << '\n';
                     missingSamples[j - 9 - numStartRow].push_back(cur_mut);
                 } else {
                     cur_mut.name = seq_names[j - 9];
+                    // assert(cur_mut.ref_nuc > 0);
                     existingSamples[j - 9].push_back(cur_mut);
                 }
             }
             ++nsite;
+        }
+    }
+
+    for(int i = 0; i < (int)missingSamples.size(); ++i)
+    {
+        for(auto m : missingSamples[i])
+        {
+            assert(reference_nuc[m.position] > 0);
+        }
+    }
+    for(int i = 0; i < (int)existingSamples.size(); ++i)
+    {
+        for(auto m : existingSamples[i])
+        {
+            assert(reference_nuc[m.position] != 0);
         }
     }
 

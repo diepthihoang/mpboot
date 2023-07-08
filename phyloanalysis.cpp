@@ -3407,9 +3407,25 @@ void addMoreRowMutation(IQTree* tree, Alignment* alignment)
 	newTree.add_row = true;
 	cout << "tree parsimony before add k rows: " << tree->computeParsimony() << " " << newTree.computeParsimony() << '\n';
 	cout << "ungroup alignment: " << tree->aln->size() << " " << newTree.aln->size() << '\n';
-	newTree.computeParsimony();
 	vector<int> permCol = newTree.aln->findPermCol();
+
+	for(int i = 0; i < (int)alignment->missingSamples.size(); ++i)
+    {
+        for(auto m : alignment->missingSamples[i])
+        {
+            assert(newTree.aln->reference_nuc[m.position] > 0);
+        }
+    }
+    for(int i = 0; i < (int)alignment->existingSamples.size(); ++i)
+    {
+        for(auto m : alignment->existingSamples[i])
+        {
+            assert(newTree.aln->reference_nuc[m.position] > 0);
+        }
+    }
+
 	newTree.initMutation(permCol);
+	cout << "tree parsimony after init mutations: " << newTree.computeParsimony() << " " << newTree.computeParsimonyScoreMutation() << '\n';
 	int num_sample = (int)alignment->missingSamples.size();
 	vector<MutationNode> missingSamples(num_sample);
 	for(int i = 0; i < (int)alignment->missingSamples.size(); ++i)
@@ -3425,6 +3441,7 @@ void addMoreRowMutation(IQTree* tree, Alignment* alignment)
 	for(int i = 0; i < (int)missingSamples.size(); ++i)
 	{
 		vector<pair<PhyloNode *, PhyloNeighbor *> > bfs = newTree.breadth_first_expansion();
+		cout << (int)bfs.size() << " ";
 		size_t total_nodes = (int)bfs.size();
 		// Stores the excess mutations to place the sample at each
 		// node of the tree in DFS order. When placement is as a
@@ -3467,9 +3484,11 @@ void addMoreRowMutation(IQTree* tree, Alignment* alignment)
 			inp.has_unique = &best_node_has_unique;
 			inp.node_has_unique = &(node_has_unique);
 
-			newTree.calculatePlacementMutation(inp);
+			newTree.calculatePlacementMutation(inp, false, true);
 			// assert(best_j = *inp.best_j);
 		}
+		cout << best_set_difference << " ";
+		cout << (int)node_excess_mutations[best_j].size() << " ";
 		newTree.addNewSample(bfs[best_j].first, bfs[best_j].second, node_excess_mutations[best_j], i, missingSamples[i].name);
 		cout << newTree.computeParsimonyScoreMutation() << '\n';
 	}

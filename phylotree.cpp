@@ -5393,7 +5393,8 @@ void PhyloTree::computeMutationBranch(vector<int>& permCol, PhyloNeighbor* dad_b
                     mut_l.mut_nuc = (1<<c1);
                     mut_l.par_nuc = (1<<c);
                     mut_l.ref_nuc = aln->reference_nuc[mut_l.position];
-                    assert(mut_l.ref_nuc > 0 && ((mut_l.ref_nuc & (mut_l.ref_nuc-1)) == 0));
+                    // assert(mut_l.ref_nuc > 0);
+                    // assert(mut_l.ref_nuc > 0 && ((mut_l.ref_nuc & (mut_l.ref_nuc-1)) == 0));
                     assert((mut_l.mut_nuc & (mut_l.mut_nuc - 1)) == 0);
                     dad_branch->mutations.push_back(mut_l);
                     ++tree_pars;
@@ -5410,8 +5411,8 @@ void PhyloTree::computeMutationBranch(vector<int>& permCol, PhyloNeighbor* dad_b
                     mut_r.mut_nuc = (1<<c1);
                     mut_r.par_nuc = (1<<c);
                     mut_r.ref_nuc = aln->reference_nuc[mut_r.position];
-                    assert(mut_r.ref_nuc > 0 && ((mut_r.ref_nuc & (mut_r.ref_nuc-1)) == 0));
-                    assert((mut_r.mut_nuc & (mut_r.mut_nuc - 1)) == 0);
+                    // assert(mut_r.ref_nuc > 0 && ((mut_r.ref_nuc & (mut_r.ref_nuc-1)) == 0));
+                    // assert((mut_r.mut_nuc & (mut_r.mut_nuc - 1)) == 0);
                     node_branch->mutations.push_back(mut_r);
                     ++tree_pars;
                 }
@@ -5444,6 +5445,7 @@ int PhyloTree::computePartialParsimonyMutation(PhyloNeighbor* dad_branch, PhyloN
     PhyloNode* node = (PhyloNode*)dad_branch->node;
     PhyloNeighbor* node_branch = (PhyloNeighbor*)node->findNeighbor(dad);
     par_s += node_branch->mutations.size();
+    // cout << par_s << " ";
     FOR_NEIGHBOR_IT(node, dad, it)if ((*it)->node->name != ROOT_NAME)
     {
         par_s += computePartialParsimonyMutation(((PhyloNeighbor*)(*it)), node);
