@@ -2534,7 +2534,7 @@ void runPhyloAnalysis(Params& params)
 		// call main tree reconstruction
 		runTreeReconstruction(params, original_model, *tree, model_info);
 
-		addMoreRowIQTree(tree, alignment);
+		// addMoreRowIQTree(tree, alignment);
 
 		// addMoreRowPLL(tree, alignment, params);
 
@@ -3153,7 +3153,6 @@ int addMoreRowIQTree(IQTree* tree, Alignment* alignment)
 {
 	auto startTime = getCPUTime();
 	// add more K row to this tree
-	string saveTreeString = tree->bestTreeString;
 	int k = alignment->remainSeq.size();
 	IQTree resTree;
 	vector<int> perm;
@@ -3162,32 +3161,38 @@ int addMoreRowIQTree(IQTree* tree, Alignment* alignment)
 	vector<int> permCol = alignment->findPermCol();
 	int bestScore = (int)1e9 + 7;
 	int timer = 0;
-	IQTree newTree, bestTree;
 	do
 	{
 		// my_random_shuffle(perm.begin(), perm.end());
 		++timer;
-		if (timer > 30)
+		if (timer > 1)
 			break;
-		(newTree).copyPhyloTree(tree);
+		IQTree newTree;
+		char *file_name = "tree.treefile";
+		bool is_rooted = false;
+		tree->printTree(file_name);
+		(newTree).readTree(file_name, is_rooted);
+		// newTree.copyPhyloTree(tree);
+		newTree.setAlignment(tree->aln);
 		newTree.aln = new Alignment;
 		newTree.aln->copyAlignment(tree->aln);
+
+		cout << "tree parsimony score before add more k rows: " << tree->computeParsimonyScore() << " " << newTree.computeParsimonyScore() << '\n';
 		newTree.addRemainRow(alignment->remainName, alignment->remainSeq, perm, permCol);
 		newTree.initializeAllPartialPars();
 		newTree.clearAllPartialLH();
-		// cout << newTree.computeParsimonyScore() << " " << newTree.computeParsimony() << '\n';
+		cout << newTree.computeParsimonyScore() << " " << newTree.computeParsimony() << '\n';
 		int curScore = newTree.computeParsimonyScore();
 		if (curScore < bestScore)
 		{
 			bestScore = curScore;
-			bestTree.copyPhyloTree(&newTree);
 		}
 		delete newTree.aln;
 		newTree.aln = NULL;
 	} while (next_permutation(perm.begin(), perm.end()));
 	cout << "\nBest tree parsimony found after add more k rows: ";
 	cout << bestScore << '\n';
-	cout << "Time: " << getCPUTime() - startTime << " seconds\n";
+	cout << "Time: " << fixed << setprecision(3) << getCPUTime() - startTime << " seconds\n";
 	return bestScore;
 }
 
@@ -3398,18 +3403,35 @@ int computeParsimonyPermutation(IQTree* tree, Alignment* alignment, Params& para
 
 void addMoreRowMutation(IQTree* tree, Alignment* alignment)
 {
+	auto startTime = getCPUTime();
 	IQTree newTree;
-	(newTree).copyPhyloTree(tree);
+	char* file_name = "tree.treefile";
+	bool is_rooted = false;
+	newTree.readTree(file_name, is_rooted);
+
+	newTree.setAlignment(tree->aln);
 	newTree.aln = new Alignment;
-	newTree.aln->copyAlignment(alignment);
+	newTree.aln->copyAlignment(tree->aln);
 	newTree.aln->ungroupSitePattern();
 	newTree.save_branch_states_dad = new UINT[newTree.aln->size() + 1];
 	newTree.save_branch_fitch_result = new UINT[newTree.aln->size() + 1];
 	newTree.add_row = true;
+	newTree.aln->missingSamples = alignment->missingSamples;
+	newTree.aln->existingSamples = alignment->existingSamples;
+	newTree.aln->reference_nuc = alignment->reference_nuc;
+
 	cout << "tree parsimony before add k rows: " << tree->computeParsimony() << " " << newTree.computeParsimony() << '\n';
 	cout << "ungroup alignment: " << tree->aln->size() << " " << newTree.aln->size() << '\n';
-	vector<int> permCol = newTree.aln->findPermCol();
-
+	vector<int> permCol = alignment->findPermCol();
+	if (alignment->existingSamples.size())
+	{
+		for (auto& m : permCol)
+			m = alignment->existingSamples[0][m].position;
+	}
+	else
+	{
+		for (auto& m : permCol) m++;
+	}
 	for(int i = 0; i < (int)alignment->missingSamples.size(); ++i)
     {
         for(auto m : alignment->missingSamples[i])
@@ -3442,7 +3464,7 @@ void addMoreRowMutation(IQTree* tree, Alignment* alignment)
 	for(int i = 0; i < (int)missingSamples.size(); ++i)
 	{
 		vector<pair<PhyloNode *, PhyloNeighbor *> > bfs = newTree.breadth_first_expansion();
-		cout << (int)bfs.size() << " ";
+		// cout << (int)bfs.size() << " ";
 		size_t total_nodes = (int)bfs.size();
 		// Stores the excess mutations to place the sample at each
 		// node of the tree in DFS order. When placement is as a
@@ -3488,12 +3510,13 @@ void addMoreRowMutation(IQTree* tree, Alignment* alignment)
 			newTree.calculatePlacementMutation(inp, false, true);
 			// assert(best_j = *inp.best_j);
 		}
-		cout << best_set_difference << " ";
-		cout << (int)node_excess_mutations[best_j].size() << " ";
+		// cout << best_set_difference << " ";
+		// cout << (int)node_excess_mutations[best_j].size() << " ";
 		newTree.addNewSample(bfs[best_j].first, bfs[best_j].second, node_excess_mutations[best_j], i, missingSamples[i].name);
-		cout << newTree.computeParsimonyScoreMutation() << '\n';
 	}
-
-	// cout << "newtree's parsimony score: " << newTree.computeParsimonyScoreMutation() << " " << newTree.computeParsimony() << '\n';
+	delete newTree.aln;
+	newTree.aln = NULL;
+	cout << "new tree's parsimony score: " << newTree.computeParsimonyScoreMutation() << '\n';
 	cout << "we still alive !\n";
+	cout << "Time: " << fixed << setprecision(3) << (double)(getCPUTime() - startTime) << " seconds\n";
 }
