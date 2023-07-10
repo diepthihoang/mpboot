@@ -3487,6 +3487,7 @@ void addMoreRowMutation(IQTree* tree, Alignment* alignment)
 		std::vector<bool> node_has_unique(total_nodes, false);
 		size_t best_node_num_leaves = 0;
 		int best_set_difference = (int)1e9+7;
+		int set_difference = (int)1e9+7;
 		size_t best_j = 0;
 		size_t best_distance = (size_t)1e9+7;
 
@@ -3501,15 +3502,18 @@ void addMoreRowMutation(IQTree* tree, Alignment* alignment)
 			inp.imputed_mutations = &node_imputed_mutations[j];
 			inp.best_node_num_leaves = &best_node_num_leaves;
 			inp.best_set_difference = &best_set_difference;
+			inp.set_difference = &set_difference;
 			inp.best_j =  &best_j;
 			inp.best_distance = &best_distance;
 			inp.j = j;
 			inp.has_unique = &best_node_has_unique;
 			inp.node_has_unique = &(node_has_unique);
 
-			newTree.calculatePlacementMutation(inp, false, true);
+			newTree.calculatePlacementMutation(inp, true, true);
+			cout << *inp.set_difference << '\n';
 			// assert(best_j = *inp.best_j);
 		}
+		cout << best_set_difference << '\n';
 		// cout << best_set_difference << " ";
 		// cout << (int)node_excess_mutations[best_j].size() << " ";
 		newTree.addNewSample(bfs[best_j].first, bfs[best_j].second, node_excess_mutations[best_j], i, missingSamples[i].name);

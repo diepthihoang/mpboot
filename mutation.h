@@ -17,6 +17,7 @@
 #else
 #define TIMEIT()
 #endif
+char get_nuc(int8_t nuc_id);
 
 struct Mutation
 {
@@ -49,6 +50,14 @@ struct Mutation
     inline bool is_masked() const
     {
         return (position < 0);
+    }
+    inline std::string get_string() const {
+        if (is_masked()) {
+            return "MASKED";
+        }
+        else {
+            return get_nuc(par_nuc) + std::to_string(position) + get_nuc(mut_nuc);
+        }
     }
 };
 

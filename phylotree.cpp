@@ -5810,10 +5810,6 @@ void PhyloTree::calculatePlacementMutation(CandidateNode& input, bool compute_pa
             m.ref_nuc = m1.ref_nuc;
             m.par_nuc = anc_nuc;
             m.mut_nuc = m1.ref_nuc;
-            if((m.mut_nuc & (m.mut_nuc - 1)) != 0)
-            {
-                cout << m.mut_nuc << '\n';
-            }
             assert(m.is_masked() || ((m.mut_nuc & (m.mut_nuc - 1)) == 0));
             if (m.mut_nuc != m.par_nuc) {
                 set_difference += 1;
