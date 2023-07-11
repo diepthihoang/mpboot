@@ -323,6 +323,12 @@ public:
 
         void addNewSample(PhyloNode* best_node, PhyloNeighbor *best_node_branch, std::vector<Mutation> node_excess_mutations, int index, std::string name);
 
+        void checkMutation(vector<int> &pos);
+
+        void checkMutationBranch(vector<int> &pos, PhyloNeighbor *dad_branch, PhyloNode *dad, int *branch_subst = NULL);
+
+        string checkPartialMutation(vector<int> &pos, PhyloNeighbor *dad_branch, PhyloNode *dad);
+
         virtual void copyTree(MTree *tree);
         /**
                 copy the sub-tree structure into this tree

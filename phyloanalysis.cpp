@@ -3169,9 +3169,10 @@ int addMoreRowIQTree(IQTree* tree, Alignment* alignment)
 			break;
 		IQTree newTree;
 		char *file_name = "tree.treefile";
+		tree->printTree(file_name, WT_SORT_TAXA | WT_NEWLINE);
 		bool is_rooted = false;
-		tree->printTree(file_name);
 		(newTree).readTree(file_name, is_rooted);
+		cout << newTree.root->name << '\n';
 		// newTree.copyPhyloTree(tree);
 		newTree.setAlignment(tree->aln);
 		newTree.aln = new Alignment;
@@ -3419,10 +3420,17 @@ void addMoreRowMutation(IQTree* tree, Alignment* alignment)
 	newTree.aln->missingSamples = alignment->missingSamples;
 	newTree.aln->existingSamples = alignment->existingSamples;
 	newTree.aln->reference_nuc = alignment->reference_nuc;
+	for(int i = 0; i < tree->aln->getNSeq(); ++i)
+	{
+		cout << newTree.aln->getSeqName(i) << '\n';
+	}
 
 	cout << "tree parsimony before add k rows: " << tree->computeParsimony() << " " << newTree.computeParsimony() << '\n';
 	cout << "ungroup alignment: " << tree->aln->size() << " " << newTree.aln->size() << '\n';
 	vector<int> permCol = alignment->findPermCol();
+	vector<int> savePermCol = permCol;
+	vector<int> pos;
+
 	if (alignment->existingSamples.size())
 	{
 		for (auto& m : permCol)
@@ -3431,6 +3439,13 @@ void addMoreRowMutation(IQTree* tree, Alignment* alignment)
 	else
 	{
 		for (auto& m : permCol) m++;
+	}
+
+	for(int i = 0; i < (int)permCol.size(); ++i)
+	{
+		while((int)pos.size() <= permCol[i])
+			pos.push_back(0);
+		pos[permCol[i]] = i;
 	}
 	for(int i = 0; i < (int)alignment->missingSamples.size(); ++i)
     {
@@ -3510,13 +3525,17 @@ void addMoreRowMutation(IQTree* tree, Alignment* alignment)
 			inp.node_has_unique = &(node_has_unique);
 
 			newTree.calculatePlacementMutation(inp, true, true);
-			cout << *inp.set_difference << '\n';
+			// cout << *inp.set_difference << '\n';
 			// assert(best_j = *inp.best_j);
 		}
-		cout << best_set_difference << '\n';
+		// cout << best_set_difference << '\n';
 		// cout << best_set_difference << " ";
 		// cout << (int)node_excess_mutations[best_j].size() << " ";
 		newTree.addNewSample(bfs[best_j].first, bfs[best_j].second, node_excess_mutations[best_j], i, missingSamples[i].name);
+		newTree.aln->addToAlignmentNewSeq(missingSamples[i].name, alignment->remainSeq[i], savePermCol);
+		newTree.checkMutation(pos);
+		cout << "mutation correct\n";
+		cout << newTree.computeParsimonyScoreMutation() << " " << newTree.computeParsimonyScore() << '\n';
 	}
 	delete newTree.aln;
 	newTree.aln = NULL;

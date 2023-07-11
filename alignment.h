@@ -146,8 +146,6 @@ public:
 
         void buildStateMap(char* map, SeqType seq_type);
 
-        int getMutationFromState(char state);
-
         virtual char convertState(char state, SeqType seq_type);
 
         /**
@@ -610,12 +608,18 @@ public:
 
         void addToAlignmentNewSeq(const string& newName, const string& newSeq, const vector<int>& permCol);
 
+        int getMutationFromState(char state);
+
+        int getStateFromMutation(int nuc);
+
         vector<int> findPermCol();
 
         int readVCF(char* filename, char* sequence_type, int numStartRow);
+
         vector<vector<Mutation>> missingSamples;
         vector<vector<Mutation>> existingSamples;
         vector<int> reference_nuc;
+
         void analyzeAlignment();
 protected:
 

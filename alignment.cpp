@@ -1118,6 +1118,16 @@ int Alignment::getMutationFromState(char state)
     }
 }
 
+int Alignment::getStateFromMutation(int nuc)
+{
+    int value;
+    if((nuc & (nuc - 1)) == 0)
+        value = log2(nuc);
+    else 
+        value = nuc + 3;
+    return convertStateBack(value);
+}
+
 string Alignment::convertStateBackStr(char state)
 {
     string str;
@@ -1533,6 +1543,7 @@ int Alignment::readVCF(char* filename, char* sequence_type, int numStartRow) {
             sequences.resize(nseq, "");
             missingSamples.resize(missingSamplesNames.size());
             existingSamples.resize(nseq);
+            remainSeq.resize(missingSamplesNames.size());
         }
         else {
             // cout << (int)words.size() << " " << nseq << " " << (int)missingSamples.size() << '\n';
@@ -1556,12 +1567,16 @@ int Alignment::readVCF(char* filename, char* sequence_type, int numStartRow) {
                         if (j - 9 < numStartRow) {
                             sequences[j - 9].push_back(allele[0]);
                         }
+                        else 
+                            remainSeq[j-9-numStartRow].push_back(allele[0]);
                         cur_mut.mut_nuc = getMutationFromState(allele[0]);
                     }
                     else {
                         if (j - 9 < numStartRow) {
                             sequences[j - 9].push_back(words[3][0]);
                         }
+                        else 
+                            remainSeq[j-9-numStartRow].push_back(words[3][0]);
                         cur_mut.mut_nuc = getMutationFromState(words[3][0]);
                     }
                 }
@@ -1570,6 +1585,8 @@ int Alignment::readVCF(char* filename, char* sequence_type, int numStartRow) {
                     if (j - 9 < numStartRow) {
                         sequences[j - 9].push_back('-');
                     }
+                    else 
+                        remainSeq[j-9-numStartRow].push_back('-');
                     cur_mut.mut_nuc = getMutationFromState('N');
                     cur_mut.is_missing = true;
                 }
