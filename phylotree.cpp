@@ -988,7 +988,7 @@ int PhyloTree::computeParsimonyBranch(PhyloNeighbor* dad_branch, PhyloNode* dad,
         for (ptn = 0; ptn < aln->size(); ptn += 8) {
             UINT states_left = node_branch->partial_pars[ptn / 8];
             UINT states_right = dad_branch->partial_pars[ptn / 8];
-            UINT states_dad = 0;
+            UINT states_dad = 0, mask = 0;
             int maxi = aln->size() - ptn;
             if (maxi > 8) maxi = 8;
             for (i = 0; i < maxi; i++) {
@@ -996,11 +996,21 @@ int PhyloTree::computeParsimonyBranch(PhyloNeighbor* dad_branch, PhyloNode* dad,
                 UINT state_right = (states_right >> (i * 4)) & 15;
                 UINT state_both = state_left | (state_right << 4);
                 states_dad |= dna_fitch_result[state_both] << (i * 4);
+                for (int j = 0; j < 4; ++j)
+                {
+                    if (1 & (dna_fitch_result[state_both] >> j))
+                    {
+                        mask |= ((1 << j) << (i * 4));
+                        break;
+                    }
+                }
                 tree_pars += dna_fitch_step[state_both] * aln->at(ptn + i).frequency;
                 _pattern_pars[ptn + i] = node_branch->partial_pars[ptn_pars_start_id + ptn + i] +
                     dad_branch->partial_pars[ptn_pars_start_id + ptn + i] + dna_fitch_step[state_both];
                 if (add_row)
+                {
                     save_branch_states_dad[ptn / 8] = states_dad, save_branch_fitch_result[ptn + i] = dna_fitch_step[state_both];
+                }
             }
         }
         //		// the remaining bits
@@ -3210,7 +3220,7 @@ double PhyloTree::computeLikelihoodDervNaive(PhyloNeighbor* dad_branch, PhyloNod
     ddf = my_ddf;
 
     return tree_lh;
-}
+        }
 
 /****************************************************************************
  Branch length optimization by maximum likelihood
@@ -5255,8 +5265,8 @@ void PhyloTree::computePartialMutation(UINT* states_dad, vector<int>& permCol, P
                             if (1 & (state_left >> c1))
                                 break;
                         mut_l.position = permCol[p];
-                        mut_l.mut_nuc = (1<<c1);
-                        mut_l.par_nuc = (1<<c);
+                        mut_l.mut_nuc = (1 << c1);
+                        mut_l.par_nuc = (1 << c);
                         mut_l.ref_nuc = aln->reference_nuc[mut_l.position];
                         left_branch->mutations.push_back(mut_l);
                         // cout << "1+" << mut_l.position << " ";
@@ -5270,8 +5280,8 @@ void PhyloTree::computePartialMutation(UINT* states_dad, vector<int>& permCol, P
                             if (1 & (state_right >> c1))
                                 break;
                         mut_r.position = permCol[p];
-                        mut_r.mut_nuc = (1<<c1);
-                        mut_r.par_nuc = (1<<c);
+                        mut_r.mut_nuc = (1 << c1);
+                        mut_r.par_nuc = (1 << c);
                         mut_r.ref_nuc = aln->reference_nuc[mut_r.position];
                         right_branch->mutations.push_back(mut_r);
                         // cout << "2+" << mut_r.position << " ";
@@ -5390,8 +5400,8 @@ void PhyloTree::computeMutationBranch(vector<int>& permCol, PhyloNeighbor* dad_b
                         if (1 & (state_left >> c1))
                             break;
                     mut_l.position = permCol[p];
-                    mut_l.mut_nuc = (1<<c1);
-                    mut_l.par_nuc = (1<<c);
+                    mut_l.mut_nuc = (1 << c1);
+                    mut_l.par_nuc = (1 << c);
                     mut_l.ref_nuc = aln->reference_nuc[mut_l.position];
                     // assert(mut_l.ref_nuc > 0);
                     // assert(mut_l.ref_nuc > 0 && ((mut_l.ref_nuc & (mut_l.ref_nuc-1)) == 0));
@@ -5408,8 +5418,8 @@ void PhyloTree::computeMutationBranch(vector<int>& permCol, PhyloNeighbor* dad_b
                         if (1 & (state_right >> c1))
                             break;
                     mut_r.position = permCol[p];
-                    mut_r.mut_nuc = (1<<c1);
-                    mut_r.par_nuc = (1<<c);
+                    mut_r.mut_nuc = (1 << c1);
+                    mut_r.par_nuc = (1 << c);
                     mut_r.ref_nuc = aln->reference_nuc[mut_r.position];
                     // assert(mut_r.ref_nuc > 0 && ((mut_r.ref_nuc & (mut_r.ref_nuc-1)) == 0));
                     // assert((mut_r.mut_nuc & (mut_r.mut_nuc - 1)) == 0);
@@ -5437,6 +5447,36 @@ void PhyloTree::initMutation(vector<int>& permCol)
     if (_pattern_pars == NULL) _pattern_pars = aligned_alloc<BootValTypePars>(nptn + VCSIZE_USHORT);
 
     computeMutationBranch(permCol, (PhyloNeighbor*)root->neighbors[0], (PhyloNode*)root);
+
+    root_mutations.clear();
+    for(int i = 0; i < aln->size(); ++i)
+    {
+        int ptn = i / 8;
+        int pos = i % 8;
+        int nuc = ((save_branch_states_dad[ptn] >> (i * 4)) & 15);
+        int ref = aln->reference_nuc[permCol[i]];
+        if((nuc & ref) == 0)
+        {
+            int c1 = 0;
+            for(c1 = 0; c1 < 4; ++c1)
+            {
+                if(1&(ref>>c1))
+                    break;
+            }
+            int c2 = 0;
+            for(c2 = 0; c2 < 4; ++c2)
+            {
+                if(1&(nuc>>c2))
+                    break;
+            }
+            Mutation m;
+            m.position = permCol[i];
+            m.mut_nuc = (1<<c2);
+            m.ref_nuc = ref;
+            m.par_nuc = (1<<c1);
+            root_mutations.push_back(m);
+        }
+    }
 }
 
 int PhyloTree::computePartialParsimonyMutation(PhyloNeighbor* dad_branch, PhyloNode* dad)
@@ -5516,7 +5556,7 @@ vector<pair<PhyloNode*, PhyloNeighbor*> > PhyloTree::breadth_first_expansion()
         // cout << node->name << '\n';
         PhyloNeighbor* node_branch = q.front().second;
         node->dad = (PhyloNode*)node_branch->node;
-        for(auto mut : node_branch->mutations)
+        for (auto mut : node_branch->mutations)
         {
             assert((mut.mut_nuc & (mut.mut_nuc - 1)) == 0);
         }
@@ -5530,13 +5570,13 @@ vector<pair<PhyloNode*, PhyloNeighbor*> > PhyloTree::breadth_first_expansion()
         }
     }
 
-    for(int i = (int)bfs.size() - 1; i >= 0; --i)
+    for (int i = (int)bfs.size() - 1; i >= 0; --i)
     {
         PhyloNode* node = bfs[i].first;
         PhyloNeighbor* node_branch = bfs[i].second;
         PhyloNode* dad = (PhyloNode*)node_branch->node;
         node_branch->num_leaves = 0;
-        if(node->isLeaf())
+        if (node->isLeaf())
         {
             node_branch->num_leaves = 1;
             continue;
@@ -5549,7 +5589,7 @@ vector<pair<PhyloNode*, PhyloNeighbor*> > PhyloTree::breadth_first_expansion()
     return bfs;
 }
 
-void PhyloTree::calculatePlacementMutation(CandidateNode& input, bool compute_parsimony_scores, bool compute_vecs)
+void PhyloTree::calculatePlacementMutation(vector<int>& pos, CandidateNode& input, bool compute_parsimony_scores, bool compute_vecs)
 {
     //    TIMEIT();
 
@@ -5668,6 +5708,13 @@ void PhyloTree::calculatePlacementMutation(CandidateNode& input, bool compute_pa
                 }
             }
         }
+        for (auto m : root_mutations) {
+            if (!m.is_masked() && (std::find(anc_positions.begin(), anc_positions.end(), m.position) == anc_positions.end())) {
+                ancestral_mutations.emplace_back(m);
+                anc_positions.emplace_back(m.position);
+            }
+        }
+
     }
 
     // sort by position. This helps speed up the search
@@ -5684,6 +5731,7 @@ void PhyloTree::calculatePlacementMutation(CandidateNode& input, bool compute_pa
         bool found = false;
         bool has_ref = false;
         auto anc_nuc = m1.ref_nuc;
+        cout << "mut: " << m1.position << " " << anc_nuc << '\n';
         if ((m1.mut_nuc & m1.ref_nuc) != 0) {
             has_ref = true;
         }
@@ -5827,6 +5875,24 @@ void PhyloTree::calculatePlacementMutation(CandidateNode& input, bool compute_pa
             }
         }
     }
+    cout << "ancestral: ";
+    for (auto m : ancestral_mutations)
+    {
+        cout << m.get_string() << " ";
+    }
+    cout << '\n';
+    cout << "sample: ";
+    for (auto m : (*input.missing_sample_mutations))
+    {
+        cout << m.get_string() << "+" << m.par_nuc << "+" << m.mut_nuc << " ";
+    }
+    cout << '\n';
+    cout << "excess: ";
+    for (auto m : (*input.excess_mutations))
+    {
+        cout << m.get_string() << " ";
+    }
+    cout << '\n';
 
     // Set the number of parsimony-increasing mutations
     if (compute_parsimony_scores) {
@@ -5872,7 +5938,7 @@ void PhyloTree::calculatePlacementMutation(CandidateNode& input, bool compute_pa
     }
 }
 
-void PhyloTree::addNewSample(PhyloNode* best_node, PhyloNeighbor *best_node_branch, std::vector<Mutation> node_excess_mutations, int index, std::string sample_name)
+void PhyloTree::addNewSample(PhyloNode* best_node, PhyloNeighbor* best_node_branch, std::vector<Mutation> node_excess_mutations, int index, std::string sample_name)
 {
     PhyloNode* new_node = (PhyloNode*)newNode();
     PhyloNode* sample = (PhyloNode*)newNode(aln->getNSeq(), sample_name.c_str());
@@ -5936,23 +6002,23 @@ void PhyloTree::addNewSample(PhyloNode* best_node, PhyloNeighbor *best_node_bran
     best_node->updateNeighbor(best_dad, new_node, -1.0);
     best_dad->updateNeighbor(best_node, new_node, -1.0);
     // Add mutations to new node using common_mut
-    PhyloNeighbor *new_node_branch = (PhyloNeighbor*)new_node->findNeighbor(best_dad);
+    PhyloNeighbor* new_node_branch = (PhyloNeighbor*)new_node->findNeighbor(best_dad);
     for (auto m : common_mut) {
         new_node_branch->add_mutation(m);
     }
     // Add mutations to best node using l1_mut
-    PhyloNeighbor *new_best_node_branch = (PhyloNeighbor*)best_node->findNeighbor(new_node);
+    PhyloNeighbor* new_best_node_branch = (PhyloNeighbor*)best_node->findNeighbor(new_node);
     for (auto m : l1_mut) {
         new_best_node_branch->add_mutation(m);
     }
-    PhyloNeighbor *sample_branch = (PhyloNeighbor*)sample->findNeighbor(new_node);
+    PhyloNeighbor* sample_branch = (PhyloNeighbor*)sample->findNeighbor(new_node);
     // Add new sample mutations using l2_mut
     for (auto m : l2_mut) {
         sample_branch->add_mutation(m);
     }
 }
 
-string PhyloTree::checkPartialMutation(vector<int> &pos, PhyloNeighbor *dad_branch, PhyloNode *dad)
+string PhyloTree::checkPartialMutation(vector<int>& pos, PhyloNeighbor* dad_branch, PhyloNode* dad)
 {
     PhyloNode* node = (PhyloNode*)dad_branch->node;
     int ptn;
@@ -5972,16 +6038,16 @@ string PhyloTree::checkPartialMutation(vector<int> &pos, PhyloNeighbor *dad_bran
             // cout << "id: " << aln->getNSeq() << " ";
             // cout << node->id << '\n';
             assert(node->id < aln->getNSeq());
-            for(int i = 0; i < (int)aln->getNSite(); ++i)
+            for (int i = 0; i < (int)aln->getNSite(); ++i)
             {
                 Pattern pat = aln->getPattern(i);
                 s += aln->convertStateBack(pat[node->id]);
                 // s += (aln->at(i))[node->id];
             }
-            // cout << s << '\n';
+            cout << node->name << ": ";
+            for (auto m : node_branch->mutations) cout << m.get_string() << "+" << pos[m.position] << " ";
+            cout << s << "\n";
             return s;
-            // cout << node->name << ": ";
-            // for(auto m : node_branch->mutations) cout << m.get_string() << '\n';
         }
         else {
             // internal node
@@ -5993,23 +6059,32 @@ string PhyloTree::checkPartialMutation(vector<int> &pos, PhyloNeighbor *dad_bran
                 if (cur == 0)
                     left_branch = (PhyloNeighbor*)(*it)->node->findNeighbor(node), left = checkPartialMutation(pos, (PhyloNeighbor*)(*it), (PhyloNode*)node), cur = 1;
                 else
-                    right_branch = (PhyloNeighbor*)(*it)->node->findNeighbor(node), right = checkPartialMutation(pos , (PhyloNeighbor*)(*it), (PhyloNode*)node);
+                    right_branch = (PhyloNeighbor*)(*it)->node->findNeighbor(node), right = checkPartialMutation(pos, (PhyloNeighbor*)(*it), (PhyloNode*)node);
             }
-            for(auto m : left_branch->mutations)
+            cout << left << ": ";
+            for (auto m : left_branch->mutations)
+                cout << m.get_string() << "+" << pos[m.position] << " ";
+            for (auto m : left_branch->mutations)
             {
                 assert(pos[m.position] < (int)left.length());
                 left[pos[m.position]] = aln->getStateFromMutation(m.par_nuc);
             }
-            for(auto m : right_branch->mutations)
+            cout << left << '\n';
+            cout << right << ": ";
+            for (auto m : right_branch->mutations)
+                cout << m.get_string() << "+" << pos[m.position] << " ";
+            for (auto m : right_branch->mutations)
             {
                 assert(pos[m.position] < (int)right.length());
                 right[pos[m.position]] = aln->getStateFromMutation(m.par_nuc);
             }
-            if(left != right)
+            cout << right << "\n";
+
+            if (left != right)
             {
-                for(int i = 0; i < (int)left.length(); ++i)
+                for (int i = 0; i < (int)left.length(); ++i)
                 {
-                    if(left[i] != right[i] && (aln->getMutationFromState(left[i]) & aln->getMutationFromState(right[i])) == 0)
+                    if (left[i] != right[i] && (aln->getMutationFromState(left[i]) & aln->getMutationFromState(right[i])) == 0)
                     {
                         cout << (int)left.length() << " " << (int)right.length() << '\n';
                         cout << left << " || " << right << '\n';
@@ -6023,7 +6098,7 @@ string PhyloTree::checkPartialMutation(vector<int> &pos, PhyloNeighbor *dad_bran
     } // END OF DNA VERSION
 }
 
-void PhyloTree::checkMutationBranch(vector<int> &pos, PhyloNeighbor *dad_branch, PhyloNode *dad, int *branch_subst)
+void PhyloTree::checkMutationBranch(vector<int>& pos, PhyloNeighbor* dad_branch, PhyloNode* dad, int* branch_subst)
 {
     PhyloNode* node = (PhyloNode*)dad_branch->node;
     PhyloNeighbor* node_branch = (PhyloNeighbor*)node->findNeighbor(dad);
@@ -6042,24 +6117,34 @@ void PhyloTree::checkMutationBranch(vector<int> &pos, PhyloNeighbor *dad_branch,
     }
 
     string s = checkPartialMutation(pos, dad_branch, dad);
+    cout << "**************\n";
     string t = checkPartialMutation(pos, node_branch, node);
-    for(auto m : node_branch->mutations)
+    cout << "node: " << s << " ";
+    for (auto m : node_branch->mutations)
     {
-        s[pos[m.position]] =  aln->getStateFromMutation(m.par_nuc);
+        cout << m.get_string() << "+" << pos[m.position] << " ";
+        s[pos[m.position]] = aln->getStateFromMutation(m.par_nuc);
     }
-    for(auto m : dad_branch->mutations)
+    cout << s;
+    cout << '\n';
+    cout << "dad: " << t << " ";
+    for (auto m : dad_branch->mutations)
     {
-        t[pos[m.position]] =  aln->getStateFromMutation(m.par_nuc);
+        cout << m.get_string() << "+" << pos[m.position] << " ";
+        t[pos[m.position]] = aln->getStateFromMutation(m.par_nuc);
     }
-    if(s != t)
+    cout << t;
+    cout << '\n';
+    if (s != t)
     {
-        for(int i = 0; i < (int)s.length(); ++i)
+        for (int i = 0; i < (int)s.length(); ++i)
         {
-            if(s[i] != t[i] && (aln->getMutationFromState(s[i]) & aln->getMutationFromState(t[i])) == 0)
+            if (s[i] != t[i] && (aln->getMutationFromState(s[i]) & aln->getMutationFromState(t[i])) == 0)
             {
                 cout << (int)s.length() << " " << (int)t.length() << '\n';
                 cout << s << " || " << t << '\n';
-                cout << "compute mutations wrong";
+                cout << s[i] << " " << t[i] << '\n';
+                cout << "compute mutations wrong at root";
                 exit(1);
             }
         }
@@ -6067,7 +6152,7 @@ void PhyloTree::checkMutationBranch(vector<int> &pos, PhyloNeighbor *dad_branch,
 
 }
 
-void PhyloTree::checkMutation(vector<int> &pos)
+void PhyloTree::checkMutation(vector<int>& pos)
 {
     assert(root->isLeaf());
     PhyloNeighbor* nei = ((PhyloNeighbor*)root->neighbors[0]);

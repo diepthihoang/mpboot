@@ -3407,8 +3407,10 @@ void addMoreRowMutation(IQTree* tree, Alignment* alignment)
 	auto startTime = getCPUTime();
 	IQTree newTree;
 	char* file_name = "tree.treefile";
+	// char* file_name = "global_phylo.nh";
 	bool is_rooted = false;
 	newTree.readTree(file_name, is_rooted);
+	// newTree.copyPhyloTree(tree);
 
 	newTree.setAlignment(tree->aln);
 	newTree.aln = new Alignment;
@@ -3420,14 +3422,14 @@ void addMoreRowMutation(IQTree* tree, Alignment* alignment)
 	newTree.aln->missingSamples = alignment->missingSamples;
 	newTree.aln->existingSamples = alignment->existingSamples;
 	newTree.aln->reference_nuc = alignment->reference_nuc;
-	for(int i = 0; i < tree->aln->getNSeq(); ++i)
-	{
-		cout << newTree.aln->getSeqName(i) << '\n';
-	}
 
 	cout << "tree parsimony before add k rows: " << tree->computeParsimony() << " " << newTree.computeParsimony() << '\n';
-	cout << "ungroup alignment: " << tree->aln->size() << " " << newTree.aln->size() << '\n';
+	cout << "ungroup alignment: " << tree->aln->getNSite() << " " << newTree.aln->getNSite() << '\n';
 	vector<int> permCol = alignment->findPermCol();
+	cout << "perm col: ";
+	for(auto x : permCol)
+		cout << x << " ";
+	cout << '\n';
 	vector<int> savePermCol = permCol;
 	vector<int> pos;
 
@@ -3440,6 +3442,10 @@ void addMoreRowMutation(IQTree* tree, Alignment* alignment)
 	{
 		for (auto& m : permCol) m++;
 	}
+	cout << "perm col: ";
+	for(auto x : permCol)
+		cout << x << " ";
+	cout << '\n';
 
 	for(int i = 0; i < (int)permCol.size(); ++i)
 	{
@@ -3463,7 +3469,16 @@ void addMoreRowMutation(IQTree* tree, Alignment* alignment)
     }
 
 	newTree.initMutation(permCol);
+
 	cout << "tree parsimony after init mutations: " << newTree.computeParsimony() << " " << newTree.computeParsimonyScoreMutation() << '\n';
+	for(int ptn = 0; ptn < (int)newTree.aln->size(); ptn += 8)
+	{
+		int maxi = newTree.aln->size() - ptn;
+		for(int i = 0; i < maxi; ++i)
+		{
+			cout << ((newTree.save_branch_states_dad[ptn] >> (4 * i)) & 15) << " ";
+		}
+	}
 	int num_sample = (int)alignment->missingSamples.size();
 	vector<MutationNode> missingSamples(num_sample);
 	for(int i = 0; i < (int)alignment->missingSamples.size(); ++i)
@@ -3476,8 +3491,15 @@ void addMoreRowMutation(IQTree* tree, Alignment* alignment)
 		missingSamples[i].name = alignment->missingSamples[i][0].name;
 	}
 
+	newTree.checkMutation(pos);
+	cout << "correct mutations\n\n";
+
 	for(int i = 0; i < (int)missingSamples.size(); ++i)
 	{
+		// cout << "Seq: ";
+		// for(int j = 0; j < (int)alignment->remainSeq[i].size(); ++i)
+		// 	cout << alignment->remainSeq[i][permCol[j]] << " ";
+		// cout << '\n';
 		vector<pair<PhyloNode *, PhyloNeighbor *> > bfs = newTree.breadth_first_expansion();
 		// cout << (int)bfs.size() << " ";
 		size_t total_nodes = (int)bfs.size();
@@ -3524,13 +3546,14 @@ void addMoreRowMutation(IQTree* tree, Alignment* alignment)
 			inp.has_unique = &best_node_has_unique;
 			inp.node_has_unique = &(node_has_unique);
 
-			newTree.calculatePlacementMutation(inp, true, true);
+			newTree.calculatePlacementMutation(pos, inp, true, true);
 			// cout << *inp.set_difference << '\n';
 			// assert(best_j = *inp.best_j);
 		}
 		// cout << best_set_difference << '\n';
 		// cout << best_set_difference << " ";
 		// cout << (int)node_excess_mutations[best_j].size() << " ";
+		cout << best_j << '\n';
 		newTree.addNewSample(bfs[best_j].first, bfs[best_j].second, node_excess_mutations[best_j], i, missingSamples[i].name);
 		newTree.aln->addToAlignmentNewSeq(missingSamples[i].name, alignment->remainSeq[i], savePermCol);
 		newTree.checkMutation(pos);

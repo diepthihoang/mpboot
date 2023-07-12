@@ -300,7 +300,7 @@ public:
 
         bool add_row;
         UINT *save_branch_states_dad, *save_branch_fitch_result;
-
+        vector<Mutation> root_mutations;
         // init mutation for calculate
         void initMutation(vector<int> &permCol);
 
@@ -319,7 +319,7 @@ public:
         std::vector<std::pair<PhyloNode*, PhyloNeighbor*> > breadth_first_expansion();
         
         // calculate new mutations
-        void calculatePlacementMutation(CandidateNode &input, bool compute_parsimony_scores = false, bool compute_vecs = false);
+        void calculatePlacementMutation(vector<int> &pos, CandidateNode &input, bool compute_parsimony_scores = false, bool compute_vecs = false);
 
         void addNewSample(PhyloNode* best_node, PhyloNeighbor *best_node_branch, std::vector<Mutation> node_excess_mutations, int index, std::string name);
 

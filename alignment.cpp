@@ -1557,7 +1557,8 @@ int Alignment::readVCF(char* filename, char* sequence_type, int numStartRow) {
             split(words[4], alleles, ",");
             cur_mut.ref_name = words[0];
             cur_mut.ref_nuc = getMutationFromState(words[3][0]);
-            reference_nuc[cur_mut.position] = cur_mut.ref_nuc;
+            if(reference_nuc[cur_mut.position] == 0)
+                reference_nuc[cur_mut.position] = cur_mut.ref_nuc;
 
             for (int j = 9; j < words.size(); ++j) {
                 if (isdigit(words[j][0])) {
@@ -1593,7 +1594,11 @@ int Alignment::readVCF(char* filename, char* sequence_type, int numStartRow) {
 
                 if (j - 9 >= numStartRow) {
                     cur_mut.name = missingSamplesNames[j - 9 - numStartRow];
-                    if (cur_mut.mut_nuc != cur_mut.ref_nuc) missingSamples[j - 9 - numStartRow].push_back(cur_mut);
+                    if (cur_mut.mut_nuc != cur_mut.ref_nuc)
+                    {
+                        cur_mut.par_nuc = cur_mut.ref_nuc;
+                        missingSamples[j - 9 - numStartRow].push_back(cur_mut);
+                    }
                 } else {
                     cur_mut.name = seq_names[j - 9];
                     // assert(cur_mut.ref_nuc > 0);
