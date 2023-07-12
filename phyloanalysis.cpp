@@ -3479,6 +3479,7 @@ void addMoreRowMutation(IQTree* tree, Alignment* alignment)
 			cout << ((newTree.save_branch_states_dad[ptn] >> (4 * i)) & 15) << " ";
 		}
 	}
+	cout << '\n';
 	int num_sample = (int)alignment->missingSamples.size();
 	vector<MutationNode> missingSamples(num_sample);
 	for(int i = 0; i < (int)alignment->missingSamples.size(); ++i)
