@@ -3172,7 +3172,6 @@ int addMoreRowIQTree(IQTree* tree, Alignment* alignment)
 		tree->printTree(file_name, WT_SORT_TAXA | WT_NEWLINE);
 		bool is_rooted = false;
 		(newTree).readTree(file_name, is_rooted);
-		cout << newTree.root->name << '\n';
 		// newTree.copyPhyloTree(tree);
 		newTree.setAlignment(tree->aln);
 		newTree.aln = new Alignment;
@@ -3407,10 +3406,8 @@ void addMoreRowMutation(IQTree* tree, Alignment* alignment)
 	auto startTime = getCPUTime();
 	IQTree newTree;
 	char* file_name = "tree.treefile";
-	// char* file_name = "global_phylo.nh";
 	bool is_rooted = false;
 	newTree.readTree(file_name, is_rooted);
-	// newTree.copyPhyloTree(tree);
 
 	newTree.setAlignment(tree->aln);
 	newTree.aln = new Alignment;
@@ -3426,10 +3423,6 @@ void addMoreRowMutation(IQTree* tree, Alignment* alignment)
 	cout << "tree parsimony before add k rows: " << tree->computeParsimony() << " " << newTree.computeParsimony() << '\n';
 	cout << "ungroup alignment: " << tree->aln->getNSite() << " " << newTree.aln->getNSite() << '\n';
 	vector<int> permCol = alignment->findPermCol();
-	cout << "perm col: ";
-	for(auto x : permCol)
-		cout << x << " ";
-	cout << '\n';
 	vector<int> savePermCol = permCol;
 	vector<int> pos;
 
@@ -3442,10 +3435,6 @@ void addMoreRowMutation(IQTree* tree, Alignment* alignment)
 	{
 		for (auto& m : permCol) m++;
 	}
-	cout << "perm col: ";
-	for(auto x : permCol)
-		cout << x << " ";
-	cout << '\n';
 
 	for(int i = 0; i < (int)permCol.size(); ++i)
 	{
@@ -3453,6 +3442,7 @@ void addMoreRowMutation(IQTree* tree, Alignment* alignment)
 			pos.push_back(0);
 		pos[permCol[i]] = i;
 	}
+
 	for(int i = 0; i < (int)alignment->missingSamples.size(); ++i)
     {
         for(auto m : alignment->missingSamples[i])
@@ -3467,19 +3457,10 @@ void addMoreRowMutation(IQTree* tree, Alignment* alignment)
             assert(newTree.aln->reference_nuc[m.position] > 0);
         }
     }
-
+	
 	newTree.initMutation(permCol);
 
 	cout << "tree parsimony after init mutations: " << newTree.computeParsimony() << " " << newTree.computeParsimonyScoreMutation() << '\n';
-	for(int ptn = 0; ptn < (int)newTree.aln->size(); ptn += 8)
-	{
-		int maxi = newTree.aln->size() - ptn;
-		for(int i = 0; i < maxi; ++i)
-		{
-			cout << ((newTree.save_branch_states_dad[ptn] >> (4 * i)) & 15) << " ";
-		}
-	}
-	cout << '\n';
 	int num_sample = (int)alignment->missingSamples.size();
 	vector<MutationNode> missingSamples(num_sample);
 	for(int i = 0; i < (int)alignment->missingSamples.size(); ++i)
@@ -3492,17 +3473,12 @@ void addMoreRowMutation(IQTree* tree, Alignment* alignment)
 		missingSamples[i].name = alignment->missingSamples[i][0].name;
 	}
 
-	newTree.checkMutation(pos);
-	cout << "correct mutations\n\n";
+	// newTree.checkMutation(pos);
+	// cout << "correct mutations\n\n";
 
 	for(int i = 0; i < (int)missingSamples.size(); ++i)
 	{
-		// cout << "Seq: ";
-		// for(int j = 0; j < (int)alignment->remainSeq[i].size(); ++i)
-		// 	cout << alignment->remainSeq[i][permCol[j]] << " ";
-		// cout << '\n';
 		vector<pair<PhyloNode *, PhyloNeighbor *> > bfs = newTree.breadth_first_expansion();
-		// cout << (int)bfs.size() << " ";
 		size_t total_nodes = (int)bfs.size();
 		// Stores the excess mutations to place the sample at each
 		// node of the tree in DFS order. When placement is as a
@@ -3548,18 +3524,12 @@ void addMoreRowMutation(IQTree* tree, Alignment* alignment)
 			inp.node_has_unique = &(node_has_unique);
 
 			newTree.calculatePlacementMutation(pos, inp, true, true);
-			// cout << *inp.set_difference << '\n';
-			// assert(best_j = *inp.best_j);
 		}
-		// cout << best_set_difference << '\n';
-		// cout << best_set_difference << " ";
-		// cout << (int)node_excess_mutations[best_j].size() << " ";
-		cout << best_j << '\n';
+	
 		newTree.addNewSample(bfs[best_j].first, bfs[best_j].second, node_excess_mutations[best_j], i, missingSamples[i].name);
-		newTree.aln->addToAlignmentNewSeq(missingSamples[i].name, alignment->remainSeq[i], savePermCol);
-		newTree.checkMutation(pos);
-		cout << "mutation correct\n";
-		cout << newTree.computeParsimonyScoreMutation() << " " << newTree.computeParsimonyScore() << '\n';
+		// newTree.aln->addToAlignmentNewSeq(missingSamples[i].name, alignment->remainSeq[i], savePermCol);
+		// newTree.checkMutation(pos);
+		// cout << newTree.computeParsimonyScoreMutation() << " " << newTree.computeParsimonyScore() << '\n';
 	}
 	delete newTree.aln;
 	newTree.aln = NULL;

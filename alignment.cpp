@@ -1315,7 +1315,7 @@ int Alignment::buildPattern(StrVector& sequences, char* sequence_type, int nseq,
             err_str << " characters (" << sequences[seq_id].length() << ")\n";
         }
     }
-
+    
     if (err_str.str() != "")
         throw err_str.str();
 
@@ -1561,6 +1561,7 @@ int Alignment::readVCF(char* filename, char* sequence_type, int numStartRow) {
                 reference_nuc[cur_mut.position] = cur_mut.ref_nuc;
 
             for (int j = 9; j < words.size(); ++j) {
+                cur_mut.is_missing = false;
                 if (isdigit(words[j][0])) {
                     int allele_id = std::stoi(words[j]);
                     if (allele_id > 0) {
@@ -1608,7 +1609,6 @@ int Alignment::readVCF(char* filename, char* sequence_type, int numStartRow) {
             ++nsite;
         }
     }
-
     for(int i = 0; i < (int)missingSamples.size(); ++i)
     {
         for(auto m : missingSamples[i])
