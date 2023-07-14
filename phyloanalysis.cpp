@@ -3413,7 +3413,7 @@ void addMoreRowMutation(IQTree* tree, Alignment* alignment)
 	newTree.aln = new Alignment;
 	newTree.aln->copyAlignment(tree->aln);
 	newTree.aln->ungroupSitePattern();
-	newTree.save_branch_states_dad = new UINT[newTree.aln->size() + 1];
+	newTree.save_branch_states_dad = new UINT[(newTree.aln->size() + 7) / 8 + 1];
 	newTree.save_branch_fitch_result = new UINT[newTree.aln->size() + 1];
 	newTree.add_row = true;
 	newTree.aln->missingSamples = alignment->missingSamples;
@@ -3457,6 +3457,14 @@ void addMoreRowMutation(IQTree* tree, Alignment* alignment)
             assert(newTree.aln->reference_nuc[m.position] > 0);
         }
     }
+
+	int sz = 0;
+	for(int m : permCol)
+		sz = max(sz, m);
+	newTree.cur_missing_sample_mutations.resize(sz + 1);
+	newTree.cur_ancestral_mutations.resize(sz + 1);
+	newTree.visited_missing_sample_mutations.resize(sz + 1);
+	newTree.visited_ancestral_mutations.resize(sz + 1);
 	
 	newTree.initMutation(permCol);
 
@@ -3523,7 +3531,7 @@ void addMoreRowMutation(IQTree* tree, Alignment* alignment)
 			inp.has_unique = &best_node_has_unique;
 			inp.node_has_unique = &(node_has_unique);
 
-			newTree.calculatePlacementMutation(pos, inp, true, true);
+			newTree.calculatePlacementMutation(pos, inp, false, true);
 		}
 	
 		newTree.addNewSample(bfs[best_j].first, bfs[best_j].second, node_excess_mutations[best_j], i, missingSamples[i].name);

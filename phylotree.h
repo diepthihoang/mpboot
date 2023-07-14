@@ -318,6 +318,10 @@ public:
 
         std::vector<std::pair<PhyloNode*, PhyloNeighbor*> > breadth_first_expansion();
         
+        std::vector<Mutation> cur_missing_sample_mutations, cur_ancestral_mutations;
+        std::vector<int> visited_missing_sample_mutations, visited_ancestral_mutations;
+        int curTime;
+
         // calculate new mutations
         void calculatePlacementMutation(vector<int> &pos, CandidateNode &input, bool compute_parsimony_scores = false, bool compute_vecs = false);
 

@@ -90,6 +90,7 @@ void PhyloTree::init() {
     nodeBranchDists = NULL;
     save_all_trees = NULL;
     add_row = false;
+    curTime = 0;
 }
 
 PhyloTree::PhyloTree(Alignment* aln) : MTree() {
@@ -5602,11 +5603,17 @@ void PhyloTree::calculatePlacementMutation(vector<int>& pos, CandidateNode& inpu
     int num_common_mut = 0;
     assert(input.node->dad);
 
+    ++curTime;
+    for(auto m : (*input.missing_sample_mutations))
+    {
+        visited_missing_sample_mutations[m.position] = curTime;
+        cur_missing_sample_mutations[m.position] = m;
+    }
+
     // For non-root nodes, add mutations common to current node (branch) to
     // excess mutations. Set has_unique to true if a mutation unique to current
     // node not in new sample is found.
     if (!(input.node == root)) {
-        size_t start_index = 0;
         for (auto m1 : input.node_branch->mutations) {
             node_num_mut++;
             auto anc_nuc = m1.mut_nuc;
@@ -5619,9 +5626,8 @@ void PhyloTree::calculatePlacementMutation(vector<int>& pos, CandidateNode& inpu
             assert(((anc_nuc - 1) & anc_nuc) == 0);
             bool found = false;
             bool found_pos = false;
-            for (size_t k = start_index; k < input.missing_sample_mutations->size(); k++) {
-                auto m2 = (*input.missing_sample_mutations)[k];
-                start_index = k;
+            if(visited_missing_sample_mutations[m1.position] == curTime) {
+                auto m2 = cur_missing_sample_mutations[m1.position];
                 if (m1.position == m2.position) {
                     found_pos = true;
                     if (m2.is_missing) {
@@ -5646,12 +5652,8 @@ void PhyloTree::calculatePlacementMutation(vector<int>& pos, CandidateNode& inpu
 
                             found = true;
                             num_common_mut++;
-                            break;
                         }
                     }
-                }
-                if (m1.position < m2.position) {
-                    break;
                 }
             }
             if (!found) {
@@ -5684,6 +5686,13 @@ void PhyloTree::calculatePlacementMutation(vector<int>& pos, CandidateNode& inpu
             anc_positions.emplace_back(m.position);
         }
     }
+
+    for(auto m : ancestral_mutations)
+    {
+        visited_ancestral_mutations[m.position] = curTime;
+        cur_ancestral_mutations[m.position] = m;
+    }
+
     // Add ancestral mutations to ancestral mutations. When multiple mutations
     // at same position are found in the path leading from the root to the
     // current node, add only the most recent mutation to the vector
@@ -5693,30 +5702,30 @@ void PhyloTree::calculatePlacementMutation(vector<int>& pos, CandidateNode& inpu
             n = n->dad;
             PhyloNeighbor* node_branch = (PhyloNeighbor*)n->findNeighbor(n->dad);
             for (auto m : node_branch->mutations) {
-                if (!m.is_masked() && (std::find(anc_positions.begin(), anc_positions.end(), m.position) == anc_positions.end())) {
+                if (!m.is_masked() && visited_ancestral_mutations[m.position] != curTime) {
                     ancestral_mutations.emplace_back(m);
                     anc_positions.emplace_back(m.position);
+                    visited_ancestral_mutations[m.position] = curTime;
+                    cur_ancestral_mutations[m.position] = m;
                 }
             }
         }
         for (auto m : root_mutations) {
-            if (!m.is_masked() && (std::find(anc_positions.begin(), anc_positions.end(), m.position) == anc_positions.end())) {
+            if (!m.is_masked() && visited_ancestral_mutations[m.position] != curTime) {
                 ancestral_mutations.emplace_back(m);
                 anc_positions.emplace_back(m.position);
+                visited_ancestral_mutations[m.position] = curTime;
+                cur_ancestral_mutations[m.position] = m;
             }
         }
-
     }
 
-    // sort by position. This helps speed up the search
-    std::sort(ancestral_mutations.begin(), ancestral_mutations.end());
     // Iterate over missing sample mutations
     for (auto m1 : (*input.missing_sample_mutations)) {
         // Missing bases (Ns) are ignored
         if (m1.is_missing) {
             continue;
         }
-        size_t start_index = 0;
         bool found_pos = false;
         bool found = false;
         bool has_ref = false;
@@ -5725,20 +5734,15 @@ void PhyloTree::calculatePlacementMutation(vector<int>& pos, CandidateNode& inpu
             has_ref = true;
         }
         // Check if mutation is found in ancestral_mutations
-        for (size_t k = start_index; k < ancestral_mutations.size(); k++) {
-            auto m2 = ancestral_mutations[k];
+        if(visited_ancestral_mutations[m1.position] == curTime) {
+            auto m2 = cur_ancestral_mutations[m1.position];
             // Masked mutations don't match anything
-            if (m2.is_masked()) {
-                continue;
-            }
-            start_index = k;
-            if (m1.position == m2.position) {
+            if (!m2.is_masked()) {
                 found_pos = true;
                 anc_nuc = m2.mut_nuc;
                 if ((m1.mut_nuc & anc_nuc) != 0) {
                     found = true;
                 }
-                break;
             }
         }
         if (found) {
@@ -5810,26 +5814,20 @@ void PhyloTree::calculatePlacementMutation(vector<int>& pos, CandidateNode& inpu
     // root to the current node consists of a non-reference allele but no such
     // variant is found in the missing sample
     for (auto m1 : ancestral_mutations) {
-        size_t start_index = 0;
         bool found = false;
         bool found_pos = false;
         auto anc_nuc = m1.mut_nuc;
-        for (size_t k = start_index; k < input.missing_sample_mutations->size(); k++) {
+        if(visited_missing_sample_mutations[m1.position] == curTime) {
             // If ancestral mutation is masked, terminate the search for
             // identical mutation
-            if (m1.is_masked()) {
-                break;
-            }
-            auto m2 = (*input.missing_sample_mutations)[k];
-            start_index = k;
-            if (m1.position == m2.position) {
+            if (!m1.is_masked()) {
+                auto m2 = cur_missing_sample_mutations[m1.position];
                 found_pos = true;
                 // Missing bases (Ns) are ignored
                 if (m2.is_missing) {
                     found = true;
-                    break;
                 }
-                if ((m2.mut_nuc & anc_nuc) != 0) {
+                else if ((m2.mut_nuc & anc_nuc) != 0) {
                     found = true;
                 }
             }
