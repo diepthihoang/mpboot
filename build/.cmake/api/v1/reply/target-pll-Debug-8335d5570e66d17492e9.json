@@ -3,7 +3,7 @@
 	"artifacts" : 
 	[
 		{
-			"path" : "zlib-1.2.7/libz.a"
+			"path" : "pllrepo/src/libpll.a"
 		}
 	],
 	"backtrace" : 1,
@@ -16,7 +16,7 @@
 		],
 		"files" : 
 		[
-			"zlib-1.2.7/CMakeLists.txt",
+			"pllrepo/src/CMakeLists.txt",
 			"CMakeLists.txt"
 		],
 		"nodes" : 
@@ -27,7 +27,7 @@
 			{
 				"command" : 0,
 				"file" : 0,
-				"line" : 151,
+				"line" : 93,
 				"parent" : 0
 			},
 			{
@@ -59,7 +59,7 @@
 			"compileCommandFragments" : 
 			[
 				{
-					"fragment" : "-O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7"
+					"fragment" : "-O0 -g -fno-inline-functions -fno-inline -arch x86_64 -mmacosx-version-min=13.0   -mmacosx-version-min=10.7"
 				}
 			],
 			"defines" : 
@@ -100,17 +100,27 @@
 				11,
 				12,
 				13,
-				14
+				14,
+				15,
+				16,
+				17,
+				18,
+				19,
+				20,
+				21,
+				22,
+				23,
+				24
 			]
 		}
 	],
-	"id" : "zlibstatic::@d05fb201812998335587",
-	"name" : "zlibstatic",
-	"nameOnDisk" : "libz.a",
+	"id" : "pll::@39d6608e8cb293566390",
+	"name" : "pll",
+	"nameOnDisk" : "libpll.a",
 	"paths" : 
 	{
-		"build" : "zlib-1.2.7",
-		"source" : "zlib-1.2.7"
+		"build" : "pllrepo/src",
+		"source" : "pllrepo/src"
 	},
 	"sourceGroups" : 
 	[
@@ -133,13 +143,7 @@
 				12,
 				13,
 				14,
-				15
-			]
-		},
-		{
-			"name" : "Header Files",
-			"sourceIndexes" : 
-			[
+				15,
 				16,
 				17,
 				18,
@@ -148,9 +152,7 @@
 				21,
 				22,
 				23,
-				24,
-				25,
-				26
+				24
 			]
 		}
 	],
@@ -159,152 +161,152 @@
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "zlib-1.2.7/adler32.c",
+			"path" : "pllrepo/src/alignment.c",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "zlib-1.2.7/compress.c",
+			"path" : "pllrepo/src/bipartitionList.c",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "zlib-1.2.7/crc32.c",
+			"path" : "pllrepo/src/evaluateGenericSpecial.c",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "zlib-1.2.7/deflate.c",
+			"path" : "pllrepo/src/evaluatePartialGenericSpecial.c",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "zlib-1.2.7/gzclose.c",
+			"path" : "pllrepo/src/fastDNAparsimony.c",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "zlib-1.2.7/gzlib.c",
+			"path" : "pllrepo/src/hardware.c",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "zlib-1.2.7/gzread.c",
+			"path" : "pllrepo/src/hash.c",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "zlib-1.2.7/gzwrite.c",
+			"path" : "pllrepo/src/lexer.c",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "zlib-1.2.7/inflate.c",
+			"path" : "pllrepo/src/makenewzGenericSpecial.c",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "zlib-1.2.7/infback.c",
+			"path" : "pllrepo/src/models.c",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "zlib-1.2.7/inftrees.c",
+			"path" : "pllrepo/src/newick.c",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "zlib-1.2.7/inffast.c",
+			"path" : "pllrepo/src/newviewGenericSpecial.c",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "zlib-1.2.7/trees.c",
+			"path" : "pllrepo/src/optimizeModel.c",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "zlib-1.2.7/uncompr.c",
+			"path" : "pllrepo/src/parsePartition.c",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "zlib-1.2.7/zutil.c",
+			"path" : "pllrepo/src/queue.c",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
-			"path" : "zlib-1.2.7/win32/zlib1.rc",
+			"compileGroupIndex" : 0,
+			"path" : "pllrepo/src/randomTree.c",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
-			"path" : "build/zlib-1.2.7/zconf.h",
-			"sourceGroupIndex" : 1
+			"compileGroupIndex" : 0,
+			"path" : "pllrepo/src/recom.c",
+			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
-			"path" : "zlib-1.2.7/zlib.h",
-			"sourceGroupIndex" : 1
+			"compileGroupIndex" : 0,
+			"path" : "pllrepo/src/restartHashTable.c",
+			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
-			"path" : "zlib-1.2.7/crc32.h",
-			"sourceGroupIndex" : 1
+			"compileGroupIndex" : 0,
+			"path" : "pllrepo/src/searchAlgo.c",
+			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
-			"path" : "zlib-1.2.7/deflate.h",
-			"sourceGroupIndex" : 1
+			"compileGroupIndex" : 0,
+			"path" : "pllrepo/src/ssort.c",
+			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
-			"path" : "zlib-1.2.7/gzguts.h",
-			"sourceGroupIndex" : 1
+			"compileGroupIndex" : 0,
+			"path" : "pllrepo/src/stack.c",
+			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
-			"path" : "zlib-1.2.7/inffast.h",
-			"sourceGroupIndex" : 1
+			"compileGroupIndex" : 0,
+			"path" : "pllrepo/src/topologies.c",
+			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
-			"path" : "zlib-1.2.7/inffixed.h",
-			"sourceGroupIndex" : 1
+			"compileGroupIndex" : 0,
+			"path" : "pllrepo/src/trash.c",
+			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
-			"path" : "zlib-1.2.7/inflate.h",
-			"sourceGroupIndex" : 1
+			"compileGroupIndex" : 0,
+			"path" : "pllrepo/src/treeIO.c",
+			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
-			"path" : "zlib-1.2.7/inftrees.h",
-			"sourceGroupIndex" : 1
-		},
-		{
-			"backtrace" : 1,
-			"path" : "zlib-1.2.7/trees.h",
-			"sourceGroupIndex" : 1
-		},
-		{
-			"backtrace" : 1,
-			"path" : "zlib-1.2.7/zutil.h",
-			"sourceGroupIndex" : 1
+			"compileGroupIndex" : 0,
+			"path" : "pllrepo/src/utils.c",
+			"sourceGroupIndex" : 0
 		}
 	],
 	"type" : "STATIC_LIBRARY"

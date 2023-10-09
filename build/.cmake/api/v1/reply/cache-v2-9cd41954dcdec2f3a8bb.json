@@ -91,7 +91,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "26"
+			"value" : "27"
 		},
 		{
 			"name" : "CMAKE_CACHE_PATCH_VERSION",
@@ -103,7 +103,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "4"
+			"value" : "6"
 		},
 		{
 			"name" : "CMAKE_COLOR_MAKEFILE",
@@ -131,7 +131,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/opt/homebrew/Cellar/cmake/3.26.4/bin/cmake"
+			"value" : "/opt/homebrew/Cellar/cmake/3.27.6/bin/cmake"
 		},
 		{
 			"name" : "CMAKE_CPACK_COMMAND",
@@ -143,7 +143,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/opt/homebrew/Cellar/cmake/3.26.4/bin/cpack"
+			"value" : "/opt/homebrew/Cellar/cmake/3.27.6/bin/cpack"
 		},
 		{
 			"name" : "CMAKE_CTEST_COMMAND",
@@ -155,7 +155,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/opt/homebrew/Cellar/cmake/3.26.4/bin/ctest"
+			"value" : "/opt/homebrew/Cellar/cmake/3.27.6/bin/ctest"
 		},
 		{
 			"name" : "CMAKE_CXX_COMPILER",
@@ -891,7 +891,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/opt/homebrew/Cellar/cmake/3.26.4/share/cmake"
+			"value" : "/opt/homebrew/Cellar/cmake/3.27.6/share/cmake"
 		},
 		{
 			"name" : "CMAKE_SHARED_LINKER_FLAGS",
@@ -1100,6 +1100,22 @@
 			],
 			"type" : "FILEPATH",
 			"value" : "/usr/bin/strip"
+		},
+		{
+			"name" : "CMAKE_TAPI",
+			"properties" : 
+			[
+				{
+					"name" : "ADVANCED",
+					"value" : "1"
+				},
+				{
+					"name" : "HELPSTRING",
+					"value" : "Path to a program."
+				}
+			],
+			"type" : "FILEPATH",
+			"value" : "/Library/Developer/CommandLineTools/usr/bin/tapi"
 		},
 		{
 			"name" : "CMAKE_UNAME",

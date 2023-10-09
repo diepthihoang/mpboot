@@ -1,0 +1,95 @@
+{
+	"kind" : "toolchains",
+	"toolchains" : 
+	[
+		{
+			"compiler" : 
+			{
+				"id" : "Clang",
+				"implicit" : 
+				{
+					"includeDirectories" : 
+					[
+						"/usr/local/include",
+						"/Library/Developer/CommandLineTools/usr/lib/clang/14.0.3/include",
+						"/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include",
+						"/Library/Developer/CommandLineTools/usr/include"
+					],
+					"linkDirectories" : 
+					[
+						"/usr/local/lib",
+						"/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib"
+					],
+					"linkFrameworkDirectories" : 
+					[
+						"/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks"
+					],
+					"linkLibraries" : []
+				},
+				"path" : "/usr/bin/clang",
+				"version" : "14.0.3.14030022"
+			},
+			"language" : "C",
+			"sourceFileExtensions" : 
+			[
+				"c",
+				"m"
+			]
+		},
+		{
+			"compiler" : 
+			{
+				"id" : "Clang",
+				"implicit" : 
+				{
+					"includeDirectories" : 
+					[
+						"/usr/local/include",
+						"/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1",
+						"/Library/Developer/CommandLineTools/usr/lib/clang/14.0.3/include",
+						"/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include",
+						"/Library/Developer/CommandLineTools/usr/include"
+					],
+					"linkDirectories" : 
+					[
+						"/usr/local/lib",
+						"/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib"
+					],
+					"linkFrameworkDirectories" : 
+					[
+						"/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks"
+					],
+					"linkLibraries" : 
+					[
+						"c++"
+					]
+				},
+				"path" : "/usr/bin/clang++",
+				"version" : "14.0.3.14030022"
+			},
+			"language" : "CXX",
+			"sourceFileExtensions" : 
+			[
+				"C",
+				"M",
+				"c++",
+				"cc",
+				"cpp",
+				"cxx",
+				"mm",
+				"mpp",
+				"CPP",
+				"ixx",
+				"cppm",
+				"ccm",
+				"cxxm",
+				"c++m"
+			]
+		}
+	],
+	"version" : 
+	{
+		"major" : 1,
+		"minor" : 0
+	}
+}

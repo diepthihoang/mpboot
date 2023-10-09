@@ -59,7 +59,7 @@
 			"compileCommandFragments" : 
 			[
 				{
-					"fragment" : "-O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7"
+					"fragment" : "-O0 -g -fno-inline-functions -fno-inline -arch x86_64 -mmacosx-version-min=13.0   -mmacosx-version-min=10.7"
 				}
 			],
 			"defines" : 

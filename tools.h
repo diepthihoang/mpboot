@@ -502,6 +502,16 @@ struct Params
         int numStartRow;
 
         /**
+         * Tree file name
+        */
+        char* mutation_tree_file;
+
+        /**
+         *  Placement problem
+         */
+        bool isPlacement;
+
+        /**
          *  Number of starting parsimony trees
          */
         int numParsTrees;

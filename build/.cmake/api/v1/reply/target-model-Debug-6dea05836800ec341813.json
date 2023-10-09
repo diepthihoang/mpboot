@@ -3,7 +3,7 @@
 	"artifacts" : 
 	[
 		{
-			"path" : "ncl/libncl.a"
+			"path" : "model/libmodel.a"
 		}
 	],
 	"backtrace" : 1,
@@ -16,7 +16,7 @@
 		],
 		"files" : 
 		[
-			"ncl/CMakeLists.txt",
+			"model/CMakeLists.txt",
 			"CMakeLists.txt"
 		],
 		"nodes" : 
@@ -59,7 +59,7 @@
 			"compileCommandFragments" : 
 			[
 				{
-					"fragment" : " -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7"
+					"fragment" : " -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -mmacosx-version-min=13.0   -mmacosx-version-min=10.7"
 				}
 			],
 			"defines" : 
@@ -101,17 +101,21 @@
 				12,
 				13,
 				14,
-				15
+				15,
+				16,
+				17,
+				18,
+				19
 			]
 		}
 	],
-	"id" : "ncl::@7cb6e39d9e63f0f58208",
-	"name" : "ncl",
-	"nameOnDisk" : "libncl.a",
+	"id" : "model::@6e2dbee8102cccb9a4b2",
+	"name" : "model",
+	"nameOnDisk" : "libmodel.a",
 	"paths" : 
 	{
-		"build" : "ncl",
-		"source" : "ncl"
+		"build" : "model",
+		"source" : "model"
 	},
 	"sourceGroups" : 
 	[
@@ -134,7 +138,11 @@
 				12,
 				13,
 				14,
-				15
+				15,
+				16,
+				17,
+				18,
+				19
 			]
 		}
 	],
@@ -143,97 +151,121 @@
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "ncl/nxsassumptionsblock.cpp",
+			"path" : "model/modelgtr.cpp",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "ncl/nxsblock.cpp",
+			"path" : "model/modelbin.cpp",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "ncl/nxscharactersblock.cpp",
+			"path" : "model/modeldna.cpp",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "ncl/nxsdatablock.cpp",
+			"path" : "model/modelfactory.cpp",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "ncl/nxsdiscretedatum.cpp",
+			"path" : "model/modelnonrev.cpp",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "ncl/nxsdiscretematrix.cpp",
+			"path" : "model/modelprotein.cpp",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "ncl/nxsdistancedatum.cpp",
+			"path" : "model/modelset.cpp",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "ncl/nxsdistancesblock.cpp",
+			"path" : "model/modelsubst.cpp",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "ncl/nxsemptyblock.cpp",
+			"path" : "model/partitionmodel.cpp",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "ncl/nxsexception.cpp",
+			"path" : "model/rategamma.cpp",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "ncl/nxsreader.cpp",
+			"path" : "model/rategammainvar.cpp",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "ncl/nxssetreader.cpp",
+			"path" : "model/rateheterogeneity.cpp",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "ncl/nxsstring.cpp",
+			"path" : "model/rateinvar.cpp",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "ncl/nxstaxablock.cpp",
+			"path" : "model/ratemeyerdiscrete.cpp",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "ncl/nxstoken.cpp",
+			"path" : "model/ratemeyerhaeseler.cpp",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "ncl/nxstreesblock.cpp",
+			"path" : "model/ratekategory.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "model/ratefree.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "model/ratefreeinvar.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "model/modelcodon.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "model/modelmorphology.cpp",
 			"sourceGroupIndex" : 0
 		}
 	],

@@ -635,6 +635,8 @@ void parseArg(int argc, char* argv[], Params& params)
 {
 	int cnt;
 	params.numStartRow = 1000000000;
+	params.mutation_tree_file = NULL;
+	params.isPlacement = false;
 	verbose_mode = VB_MIN;
 	params.tree_gen = NONE;
 	params.user_file = NULL;
@@ -945,8 +947,21 @@ void parseArg(int argc, char* argv[], Params& params)
 			}
 			if (strcmp(argv[cnt], "-start_row") == 0)
 			{
-				++cnt;
+				cnt++;
 				params.numStartRow = convert_int(argv[cnt]);
+				continue;
+			}
+			if (strcmp(argv[cnt], "-placement") == 0)
+			{
+				cnt++;
+				params.isPlacement = true;
+				continue;
+			}
+			if (strcmp(argv[cnt], "-mutation_tree_file") == 0)
+			{
+				cnt++;
+				params.mutation_tree_file = argv[cnt];
+				// cout << "Mutation tree file: " << params.mutation_tree_file << endl;
 				continue;
 			}
 			if (strcmp(argv[cnt], "-ho") == 0 || strcmp(argv[cnt], "-?") == 0)

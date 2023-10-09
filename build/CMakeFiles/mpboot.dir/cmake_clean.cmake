@@ -89,6 +89,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/mpboot.dir/phylotree.cpp.o.d"
   "CMakeFiles/mpboot.dir/phylotreesse.cpp.o"
   "CMakeFiles/mpboot.dir/phylotreesse.cpp.o.d"
+  "CMakeFiles/mpboot.dir/placement.cpp.o"
+  "CMakeFiles/mpboot.dir/placement.cpp.o.d"
   "CMakeFiles/mpboot.dir/pruning.cpp.o"
   "CMakeFiles/mpboot.dir/pruning.cpp.o.d"
   "CMakeFiles/mpboot.dir/split.cpp.o"

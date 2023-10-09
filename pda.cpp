@@ -67,6 +67,7 @@
 #include <stdlib.h>
 #include "sprparsimony.h"
 #include "vectorclass/vectorclass.h"
+#include "placement.h"
 
 #ifdef _OPENMP
 	#include <omp.h>
@@ -2320,9 +2321,10 @@ int main(int argc, char *argv[])
 
 	cout.precision(3);
 	cout.setf(ios::fixed);
-
-	// call the main function
-	if (params.tree_gen != NONE) {
+	if(params.isPlacement) {
+		addMoreRowMutation(params);
+	} // call the main function
+	else if (params.tree_gen != NONE) {
 		generateRandomTree(params);
 	} else if (params.do_pars_multistate) {
 //		cout << "Starting the test for computing concensus NOT from file:" << endl;

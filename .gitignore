@@ -1,6 +1,7 @@
 .cproject
 .settings
 .project
+.vscode
 examples
 pll/CMakeFiles/
 pll/Makefile

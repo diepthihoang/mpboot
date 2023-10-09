@@ -401,6 +401,7 @@ parstree.cpp
 sprparsimony.cpp
 test.cpp
 mutation.cpp
+placement.cpp
 )
 
 ##################################################################

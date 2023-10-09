@@ -3,7 +3,7 @@
 	"artifacts" : 
 	[
 		{
-			"path" : "model/libmodel.a"
+			"path" : "ncl/libncl.a"
 		}
 	],
 	"backtrace" : 1,
@@ -16,7 +16,7 @@
 		],
 		"files" : 
 		[
-			"model/CMakeLists.txt",
+			"ncl/CMakeLists.txt",
 			"CMakeLists.txt"
 		],
 		"nodes" : 
@@ -59,7 +59,7 @@
 			"compileCommandFragments" : 
 			[
 				{
-					"fragment" : " -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk -mmacosx-version-min=13.0   -mmacosx-version-min=10.7"
+					"fragment" : " -stdlib=libc++ -std=c++11  -O0 -g -fno-inline-functions -fno-inline -arch x86_64 -mmacosx-version-min=13.0   -mmacosx-version-min=10.7"
 				}
 			],
 			"defines" : 
@@ -101,21 +101,17 @@
 				12,
 				13,
 				14,
-				15,
-				16,
-				17,
-				18,
-				19
+				15
 			]
 		}
 	],
-	"id" : "model::@6e2dbee8102cccb9a4b2",
-	"name" : "model",
-	"nameOnDisk" : "libmodel.a",
+	"id" : "ncl::@7cb6e39d9e63f0f58208",
+	"name" : "ncl",
+	"nameOnDisk" : "libncl.a",
 	"paths" : 
 	{
-		"build" : "model",
-		"source" : "model"
+		"build" : "ncl",
+		"source" : "ncl"
 	},
 	"sourceGroups" : 
 	[
@@ -138,11 +134,7 @@
 				12,
 				13,
 				14,
-				15,
-				16,
-				17,
-				18,
-				19
+				15
 			]
 		}
 	],
@@ -151,121 +143,97 @@
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "model/modelgtr.cpp",
+			"path" : "ncl/nxsassumptionsblock.cpp",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "model/modelbin.cpp",
+			"path" : "ncl/nxsblock.cpp",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "model/modeldna.cpp",
+			"path" : "ncl/nxscharactersblock.cpp",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "model/modelfactory.cpp",
+			"path" : "ncl/nxsdatablock.cpp",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "model/modelnonrev.cpp",
+			"path" : "ncl/nxsdiscretedatum.cpp",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "model/modelprotein.cpp",
+			"path" : "ncl/nxsdiscretematrix.cpp",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "model/modelset.cpp",
+			"path" : "ncl/nxsdistancedatum.cpp",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "model/modelsubst.cpp",
+			"path" : "ncl/nxsdistancesblock.cpp",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "model/partitionmodel.cpp",
+			"path" : "ncl/nxsemptyblock.cpp",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "model/rategamma.cpp",
+			"path" : "ncl/nxsexception.cpp",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "model/rategammainvar.cpp",
+			"path" : "ncl/nxsreader.cpp",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "model/rateheterogeneity.cpp",
+			"path" : "ncl/nxssetreader.cpp",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "model/rateinvar.cpp",
+			"path" : "ncl/nxsstring.cpp",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "model/ratemeyerdiscrete.cpp",
+			"path" : "ncl/nxstaxablock.cpp",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "model/ratemeyerhaeseler.cpp",
+			"path" : "ncl/nxstoken.cpp",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "model/ratekategory.cpp",
-			"sourceGroupIndex" : 0
-		},
-		{
-			"backtrace" : 1,
-			"compileGroupIndex" : 0,
-			"path" : "model/ratefree.cpp",
-			"sourceGroupIndex" : 0
-		},
-		{
-			"backtrace" : 1,
-			"compileGroupIndex" : 0,
-			"path" : "model/ratefreeinvar.cpp",
-			"sourceGroupIndex" : 0
-		},
-		{
-			"backtrace" : 1,
-			"compileGroupIndex" : 0,
-			"path" : "model/modelcodon.cpp",
-			"sourceGroupIndex" : 0
-		},
-		{
-			"backtrace" : 1,
-			"compileGroupIndex" : 0,
-			"path" : "model/modelmorphology.cpp",
+			"path" : "ncl/nxstreesblock.cpp",
 			"sourceGroupIndex" : 0
 		}
 	],
