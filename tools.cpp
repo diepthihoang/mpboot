@@ -635,6 +635,7 @@ void parseArg(int argc, char* argv[], Params& params)
 {
 	int cnt;
 	params.numStartRow = 1000000000;
+	params.numAddRow = 0;
 	params.mutation_tree_file = NULL;
 	params.isPlacement = false;
 	verbose_mode = VB_MIN;
@@ -945,19 +946,24 @@ void parseArg(int argc, char* argv[], Params& params)
 				params.analyze_alignment = true;
 				continue;
 			}
-			if (strcmp(argv[cnt], "-start_row") == 0)
+			if (strcmp(argv[cnt], "-ppon") == 0)
+			{
+				params.isPlacement = true;
+				continue;
+			}
+			if (strcmp(argv[cnt], "-ppn") == 0)
 			{
 				cnt++;
 				params.numStartRow = convert_int(argv[cnt]);
 				continue;
 			}
-			if (strcmp(argv[cnt], "-placement") == 0)
+			if (strcmp(argv[cnt], "-ppk") == 0)
 			{
 				cnt++;
-				params.isPlacement = true;
+				params.numAddRow = convert_int(argv[cnt]);
 				continue;
 			}
-			if (strcmp(argv[cnt], "-mutation_tree_file") == 0)
+			if (strcmp(argv[cnt], "-pptree") == 0)
 			{
 				cnt++;
 				params.mutation_tree_file = argv[cnt];

@@ -432,6 +432,7 @@ void addMoreRowMutation(Params& params)
     newTree.initMutation(permCol);
 
     cout << "tree parsimony after init mutations: " << newTree.computeParsimony() << " " << newTree.computeParsimonyScoreMutation() << '\n';
+	// newTree.checkMutation(pos);
     int num_sample = (int)alignment->missingSamples.size();
     vector<MutationNode> missingSamples(num_sample);
     for (int i = 0; i < (int)alignment->missingSamples.size(); ++i)
@@ -447,7 +448,7 @@ void addMoreRowMutation(Params& params)
     // newTree.checkMutation(pos);
     // cout << "correct mutations\n\n";
 
-    for (int i = 0; i < (int)missingSamples.size(); ++i)
+    for (int i = 0; i < min((int)missingSamples.size(), params.numAddRow); ++i)
     {
         vector<pair<PhyloNode*, PhyloNeighbor*> > bfs = newTree.breadth_first_expansion();
         size_t total_nodes = (int)bfs.size();

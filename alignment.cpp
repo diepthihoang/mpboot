@@ -1787,7 +1787,6 @@ int Alignment::readFasta(char* filename, char* sequence_type)
     in.open(filename);
     // remove the failbit
     in.exceptions(ios::badbit);
-
     for (; !in.eof(); line_num++)
     {
         getline(in, line);

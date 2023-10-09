@@ -502,6 +502,11 @@ struct Params
         int numStartRow;
 
         /**
+         * Number of adding row
+        */
+       int numAddRow;
+
+        /**
          * Tree file name
         */
         char* mutation_tree_file;
