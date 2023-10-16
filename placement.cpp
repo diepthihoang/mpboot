@@ -347,24 +347,8 @@ void addMoreRowMutation(Params& params)
 
     vector<ModelInfo> model_info;
     alignment->checkGappySeq();
-
-    StrVector removed_seqs;
-    StrVector twin_seqs;
-    // remove identical sequences
-    if (params.ignore_identical_seqs)
-        tree->removeIdenticalSeqs(params, removed_seqs, twin_seqs);
-
-    // call main tree reconstruction
-    runTreeReconstruction(params, original_model, *tree, model_info);
-
-    if (params.concatenate_aln)
-    {
-    	Alignment aln(params.concatenate_aln, params.sequence_type, params.intype);
-    	cout << "Concatenating " << params.aln_file << " with " << params.concatenate_aln << " ..." << endl;
-    	alignment->concatenateAlignment(&aln);
-    }
-
-    cout << "\nStart adding more K rows\n";
+    
+    cout << "\nStart placement core\n";
 
     auto startTime = getCPUTime();
     IQTree newTree;
@@ -383,8 +367,8 @@ void addMoreRowMutation(Params& params)
     newTree.aln->existingSamples = alignment->existingSamples;
     newTree.aln->reference_nuc = alignment->reference_nuc;
 
-    cout << "tree parsimony before add k rows: " << tree->computeParsimony() << " " << newTree.computeParsimony() << '\n';
-    cout << "ungroup alignment: " << tree->aln->getNSite() << " " << newTree.aln->getNSite() << '\n';
+    cout << "Tree parsimony before add k rows: " << newTree.computeParsimony() << '\n';
+    // cout << "Ungroup alignment: " << tree->aln->getNSite() << " " << newTree.aln->getNSite() << '\n';
     vector<int> permCol = alignment->findPermCol();
     vector<int> savePermCol = permCol;
     vector<int> pos;
@@ -431,8 +415,7 @@ void addMoreRowMutation(Params& params)
 
     newTree.initMutation(permCol);
 
-    cout << "tree parsimony after init mutations: " << newTree.computeParsimony() << " " << newTree.computeParsimonyScoreMutation() << '\n';
-	// newTree.checkMutation(pos);
+    cout << "Tree parsimony after init mutations: " << newTree.computeParsimony() << " " << newTree.computeParsimonyScoreMutation() << '\n';
     int num_sample = (int)alignment->missingSamples.size();
     vector<MutationNode> missingSamples(num_sample);
     for (int i = 0; i < (int)alignment->missingSamples.size(); ++i)
@@ -505,7 +488,6 @@ void addMoreRowMutation(Params& params)
     }
     delete newTree.aln;
     newTree.aln = NULL;
-    cout << "new tree's parsimony score: " << newTree.computeParsimonyScoreMutation() << '\n';
-    cout << "we still alive !\n";
+    cout << "New tree's parsimony score: " << newTree.computeParsimonyScoreMutation() << '\n';
     cout << "Time: " << fixed << setprecision(3) << (double)(getCPUTime() - startTime) << " seconds\n";
 }
