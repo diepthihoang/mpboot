@@ -46,7 +46,7 @@ int addMoreRowIQTree(IQTree* tree, Alignment* alignment)
 	for (int i = 0; i < k; ++i)
 		perm.push_back(i);
 	vector<int> permCol = alignment->findPermCol();
-	int bestScore = (int)1e9 + 7;
+	int bestScore = INF;
 	int timer = 0;
 	do
 	{
@@ -94,7 +94,7 @@ int addMoreRowPLL(IQTree* tree, Alignment* alignment, Params& params)
 
 	if (k <= 5)
 	{
-		int bestScore = (int)1e9 + 7;
+		int bestScore = INF;
 		vector<int> bestPerm;
 
 		vector<int> perm;
@@ -356,19 +356,22 @@ void addMoreRowMutation(Params& params)
     bool is_rooted = false;
     newTree.readTree(file_name, is_rooted);
 
+	newTree.add_row = true;
+
+	// Init new tree's alignment
     newTree.setAlignment(tree->aln);
     newTree.aln = new Alignment;
     newTree.aln->copyAlignment(tree->aln);
     newTree.aln->ungroupSitePattern();
-    newTree.save_branch_states_dad = new UINT[(newTree.aln->size() + 7) / 8 + 1];
-    newTree.save_branch_fitch_result = new UINT[newTree.aln->size() + 1];
-    newTree.add_row = true;
     newTree.aln->missingSamples = alignment->missingSamples;
     newTree.aln->existingSamples = alignment->existingSamples;
     newTree.aln->reference_nuc = alignment->reference_nuc;
 
+	// Init new tree's memory
+	newTree.save_branch_states_dad = new UINT[(newTree.aln->size() + 7) / 8 + 1];
+    newTree.save_branch_fitch_result = new UINT[newTree.aln->size() + 1];
+
     cout << "Tree parsimony before add k rows: " << newTree.computeParsimony() << '\n';
-    // cout << "Ungroup alignment: " << tree->aln->getNSite() << " " << newTree.aln->getNSite() << '\n';
     vector<int> permCol = alignment->findPermCol();
     vector<int> savePermCol = permCol;
     vector<int> pos;
@@ -390,20 +393,20 @@ void addMoreRowMutation(Params& params)
         pos[permCol[i]] = i;
     }
 
-    for (int i = 0; i < (int)alignment->missingSamples.size(); ++i)
-    {
-        for (auto m : alignment->missingSamples[i])
-        {
-            assert(newTree.aln->reference_nuc[m.position] > 0);
-        }
-    }
-    for (int i = 0; i < (int)alignment->existingSamples.size(); ++i)
-    {
-        for (auto m : alignment->existingSamples[i])
-        {
-            assert(newTree.aln->reference_nuc[m.position] > 0);
-        }
-    }
+    // for (int i = 0; i < (int)alignment->missingSamples.size(); ++i)
+    // {
+    //     for (auto m : alignment->missingSamples[i])
+    //     {
+    //         assert(newTree.aln->reference_nuc[m.position] > 0);
+    //     }
+    // }
+    // for (int i = 0; i < (int)alignment->existingSamples.size(); ++i)
+    // {
+    //     for (auto m : alignment->existingSamples[i])
+    //     {
+    //         assert(newTree.aln->reference_nuc[m.position] > 0);
+    //     }
+    // }
 
     int sz = 0;
     for (int m : permCol)
@@ -421,17 +424,15 @@ void addMoreRowMutation(Params& params)
     for (int i = 0; i < (int)alignment->missingSamples.size(); ++i)
     {
         missingSamples[i].mutations = alignment->missingSamples[i];
-        for (auto m : alignment->missingSamples[i])
-        {
-            assert((m.ref_nuc & (m.ref_nuc - 1)) == 0);
-        }
+        // for (auto m : alignment->missingSamples[i])
+        // {
+        //     assert((m.ref_nuc & (m.ref_nuc - 1)) == 0);
+        // }
         missingSamples[i].name = alignment->missingSamples[i][0].name;
     }
 
-    // newTree.checkMutation(pos);
-    // cout << "correct mutations\n\n";
-
-    for (int i = 0; i < min((int)missingSamples.size(), params.numAddRow); ++i)
+	int numSample = min((int)missingSamples.size(), params.numAddRow);
+    for (int i = 0; i < numSample; ++i)
     {
         vector<pair<PhyloNode*, PhyloNeighbor*> > bfs = newTree.breadth_first_expansion();
         size_t total_nodes = (int)bfs.size();
@@ -455,8 +456,8 @@ void addMoreRowMutation(Params& params)
 
         std::vector<bool> node_has_unique(total_nodes, false);
         size_t best_node_num_leaves = 0;
-        int best_set_difference = (int)1e9 + 7;
-        int set_difference = (int)1e9 + 7;
+        int best_set_difference = INF;
+        int set_difference = INF;
         size_t best_j = 0;
         size_t best_distance = (size_t)1e9 + 7;
 
@@ -478,7 +479,7 @@ void addMoreRowMutation(Params& params)
             inp.has_unique = &best_node_has_unique;
             inp.node_has_unique = &(node_has_unique);
 
-            newTree.calculatePlacementMutation(pos, inp, false, true);
+            newTree.calculatePlacementMutation(inp, false, true);
         }
 
         newTree.addNewSample(bfs[best_j].first, bfs[best_j].second, node_excess_mutations[best_j], i, missingSamples[i].name);

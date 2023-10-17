@@ -323,7 +323,7 @@ public:
         int curTime;
 
         // calculate new mutations
-        void calculatePlacementMutation(vector<int> &pos, CandidateNode &input, bool compute_parsimony_scores = false, bool compute_vecs = false);
+        void calculatePlacementMutation(CandidateNode &input, bool compute_parsimony_scores = false, bool compute_vecs = false);
 
         void addNewSample(PhyloNode* best_node, PhyloNeighbor *best_node_branch, std::vector<Mutation> node_excess_mutations, int index, std::string name);
 

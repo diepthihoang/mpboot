@@ -7,6 +7,8 @@
 #include "nnisearch.h"
 #include "mutation.h"
 
+const int INF = (int)1e9 + 7;
+
 // add more K row using IQTree
 int addMoreRowIQTree(IQTree *tree, Alignment *alignment);
 

@@ -2,6 +2,8 @@
 .settings
 .project
 .vscode
+build
+.DS_Store
 examples
 pll/CMakeFiles/
 pll/Makefile

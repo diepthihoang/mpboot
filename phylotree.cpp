@@ -5581,7 +5581,7 @@ vector<pair<PhyloNode*, PhyloNeighbor*> > PhyloTree::breadth_first_expansion()
     return bfs;
 }
 
-void PhyloTree::calculatePlacementMutation(vector<int>& pos, CandidateNode& input, bool compute_parsimony_scores, bool compute_vecs)
+void PhyloTree::calculatePlacementMutation(CandidateNode& input, bool compute_parsimony_scores, bool compute_vecs)
 {
     //    TIMEIT();
 
