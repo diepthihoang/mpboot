@@ -75,6 +75,7 @@ You can clone the source code from GitHub with:
 `git clone https://github.com/diepthihoang/mpboot.git`  
 Switch to branch which contains MPBoot-MPI source code:
 * `git checkout mpboot-mpi-sync` for synchronous version
+* `git checkout mpboot-mpi-async` for asynchronous version
 
 ### Compiling under Linux
 1. Create folder **build** outside folder **mpboot**.
