@@ -1,38 +1,68 @@
 # mpboot
-MPBoot: Fast phylogenetic maximum parsimony tree inference and bootstrap approximation
+Synchronous version for MPBoot
 
-## **COMPILING INSTRUCTION SINCE 2020**
-* Clone the source code, unzip it, and rename to **source**
-* Create folder **build** outside folder **source**
-* Change directory to **build**
-* Run **cmake** command:
+## Downloading source code
+You can clone the source code from GitHub with:
 
-**cmake ../source -DIQTREE_FLAGS=sse4 -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++**
-* Replace **sse4** by **avx** in above command if you decide to run MPBoot on AVX architecture
-* Run **make**
-* You will find the executable named **mpboot** once the **make** command is done.
+`git clone https://github.com/diepthihoang/mpboot.git`  
+Switch to branch which contains synchronous version of MPBoot-MPI source code:
+* `git checkout mpboot-mpi-sync`
 
-<hr>
-<br><br><br>
+## Compiling under Linux
+1. Create folder **build** outside folder **mpboot**.
+2. Open a Terminal.
+3. Change directory to **build**
+4. Configure source code with CMake:  
+`cmake ../source -DIQTREE_FLAGS=avx -DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpicxx`
+> Replace avx by sse4 in above command if you decide to run MPBoot on SSE architecture
 
+5. Run command `make -j4` to compile source code with 4 processes:  
+> Option **j** specifies the number of processes used to compile source code with **make**.
+  
+The compiler will generate an executable file named **mpboot-avx**
+> In case of running MPBoot on SSE architecture, the executable file is named **mpboot**.
 
-> ## **COMPILING INSTRUCTION PRIOR TO 2020**
-> * Clone the source code, unzip it, and rename to **source**
-> * Change directory to **source**, run following commands to update the sub-repository
-> 
-> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**git submodule init**
-> 
-> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**git submodule update**
-> 
-> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**cd pllrepo**
-> 
-> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**git checkout subufbootmp**
-> 
-> * Create folder **build** outside folder **source**
-> * Change directory to **build**
-> * Run **cmake** command:
-> 
-> **cmake ../source -DIQTREE_FLAGS=sse4 -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++**
-> * Replace **sse4** by **avx** in above command if you decide to run MPBoot on AVX architecture
-> * Run **make**
-> * You will find the executable named **mpboot** once the **make** command is done.
+6. To analyst file **example.phy** with 2 processes, run command:  
+`mpirun -np 2 ./mpboot-avx -s example.phy`
+> Option **np** specifies the number of processes used to run MPBoot-MPI
+
+## Compiling under Mac OS X
+1. Create folder **build** outside folder **mpboot**.
+2. Open a Terminal.
+3. Change directory to **build**
+4. Configure source code with CMake:  
+`cmake ../mpboot -DIQTREE_FLAGS=avx -DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpicxx`
+> Replace avx by sse4 in above command if you decide to run MPBoot on SSE architecture
+
+5. Run command `make -j4` to compile source code with 4 processes. Option **j** specifies the number of processes used to compile source code with **make**.
+  
+The compiler will generate an executable file named **mpboot-avx**
+> In case of running MPBoot on SSE architecture, the executable file is named **mpboot**.
+
+6. To analyst file **example.phy** with 2 processes, run command:  
+`mpirun -np 2 ./mpboot-avx -s example.phy` 
+> Option **np** specifies the number of processes used to run MPBoot-MPI
+
+## Compiling under Windows
+* Requirements:  
+  * cmake version >= 3.21
+  * TDM-GCC
+  * MSMPI
+1. Create folder **build** outside folder **mpboot**.
+2. Open a Terminal.
+3. Change directory to **build**
+4. Configure source code with CMake:  
+`cmake -G "MinGW Makefiles" -DIQTREE_FLAGS=mpiavx ../mpboot`
+> Replace mpiavx by mpisse4 in above command if you decide to run MPBoot on SSE architecture.  
+> Due to having conflicts with **Vectorization**, please not using **Clang** to configure source code.
+
+5. Run command `mingw32-make -j4` to compile source code with 4 processes:  
+> Option **j** specifies the number of processes used to compile source code with **make**.
+  
+The compiler will generate an executable file named **mpboot-avx** 
+> In case of running MPBoot on SSE architecture, the executable file is named **mpboot**.
+  
+
+6. To analyst file **example.phy** with 2 processes, run command:  
+`mpiexec -n 2 ./mpboot-avx -s example.phy`
+> Option **n** specifies the number of processes used to run MPBoot-MPI
