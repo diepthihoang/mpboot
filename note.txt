@@ -1,0 +1,23 @@
+- calculate error:
+    rms = sigma((D[u][v] - D'[u][v]) ^ 2) / (n * (n - 1) / 2)
+
+- find best pair:
+    + thuật toán nguyên thủy: n^2
+        minimize D[u][v] * (r - 2) - Sum(u) - Sum(v)
+    + đặt cận:
+        gọi Qmin là min hiện tại đã tìm đc
+        for u...
+            for v theo thứ tự tăng dần của D[u][v] (chỗ này sort theo pair (D[u][v], v) => mảng sorted)
+                vì sum(u) fixed => D[u][v] * (r - 2) - sum(u) tăng dần
+                sum(v) <= max sum()
+                => dừng duyệt khi D[u][v] * (r - 2) - sum(u) - max sum() >= Qmin
+    + vấn đề: update lại sau khi join 2 thằng u và v -> tạo ra w 
+        D[w][] tính thủ công mất O(n) => tính luôn Sum(w)
+        Cập nhập lại các D[][w] và Sum(w) mất O(n)
+        Cập nhập mảng sorted[u]: xét các pair (D[u][v], v) tăng dần
+            Gọi garbage là các vị trí v đã bị loại bỏ
+            Nếu số garbage > r / 2 => loại bỏ hết garbage
+    + có thể cải tiến:
+        tốn thời gian nhất khi tìm best pair
+        xử lí đa luồng khi tìm best pair: vì các u khác nhau gần như độc lập => chia từng hàng cho workers để tối ưu
+    + thuật toán mới chạy nhanh hơn nhiều lần thuật cũ, so với decenttree thì nhanh hơn đa số

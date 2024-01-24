@@ -3587,7 +3587,28 @@ double PhyloTree::computeObsDist(Params &params, Alignment *alignment, double* &
  compute BioNJ tree, a more accurate extension of Neighbor-Joining
  ****************************************************************************/
 
+#define NEW_ALGO
 void PhyloTree::computeBioNJ(Params &params, Alignment *alignment, string &dist_file) {
+#ifdef NEW_ALGO
+    string rapidnj_file = params.out_prefix;
+    rapidnj_file += ".rapidnj";
+    cout << "Computing BIONJ tree..." << endl;
+    RapidNJ rapidnj;
+    rapidnj.readInp(dist_file.c_str(), rapidnj_file.c_str());
+    double cur = getCPUTime();
+    rapidnj.create(dist_file.c_str(), rapidnj_file.c_str());
+    cout << getCPUTime() - cur << '\n';
+    rapidnj.calcError();
+    bool my_rooted = false;
+    bool non_empty_tree = (root != NULL);
+    if (root)
+        freeNode();
+    readTree(rapidnj_file.c_str(), my_rooted);
+
+    if (non_empty_tree)
+        initializeAllPartialLh();
+    setAlignment(alignment);
+#else
     string bionj_file = params.out_prefix;
     bionj_file += ".bionj";
     cout << "Computing BIONJ tree..." << endl;
@@ -3602,6 +3623,8 @@ void PhyloTree::computeBioNJ(Params &params, Alignment *alignment, string &dist_
     if (non_empty_tree)
         initializeAllPartialLh();
     setAlignment(alignment);
+   
+#endif 
 }
 
 int PhyloTree::fixNegativeBranch(bool force, Node *node, Node *dad) {

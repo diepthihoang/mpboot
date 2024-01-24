@@ -18,17 +18,14 @@
 ;                                                                           ;
 \*;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;*/
 
-
-#include <stdio.h>                  
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
+#include <bits/stdc++.h>
+using namespace std;
 
 #define PREC 8                             /* precision of branch-lengths  */
 #define PRC  100
 #define LEN  1000                            /* length of taxon names        */
 
-class BioNj {
+class BioNj { // stupid code
 typedef struct word
 {
   char name[LEN];
@@ -444,11 +441,12 @@ void Best_pair(float **delta, int r, int *a, int *b, int n)
 		      Qmin=Qxy;
 		      *a=x;
 		      *b=y;
-		    }
+        }
 		}
 	    }
         }
     }
+    //cout << Qmin << '\n';
 }
 
 
@@ -787,4 +785,371 @@ int create(const char *inputFile, const char *outputFile) {
   return 0;
 }
 };
+
+class RapidNJ {
+  FILE *input, *output;  
+  struct TREE {
+    vector<vector<pair<int, float>>> child;
+    vector<string> nameTax;
+    int cur = 0;
+    FILE *output;
+    TREE() {}
+    void initialize(vector<string> nameTax, FILE *output) {
+      int n = nameTax.size();
+      cur = n;
+      child.resize(n * 2 + 2);
+      this->nameTax = nameTax; 
+      this->output = output;
+    }
+    int createNode() {
+      return cur++;
+    }
+    void addEdge(int u, int v, float w) { // u is v's parent
+      child[u].push_back({v, w});
+    }
+    vector<pair<int, float>> calcTotalDistanceToLeaves(int top, float branchLen) {
+      vector<pair<int, float>> ans;
+      queue<pair<int, float>> q;
+      q.push({top, branchLen});
+      while (q.size()) {
+        int u = q.front().first; 
+        float d = q.front().second;
+        q.pop();
+        if (child[u].empty()) {
+          ans.push_back({u, d});
+          continue;
+        }
+        for (auto [v, w]: child[u]) {
+          q.push({v, d + w});
+        }
+      }
+      return ans;
+    }
+    void print(int u, float l) {
+      if (child[u].empty()) {
+        fprintf(output, "%s:%f", nameTax[u].c_str(), l);
+      } else {
+        fprintf(output, "(");
+        for (int i = 0; i < child[u].size(); ++i) {
+          int v = child[u][i].first;
+          float w = child[u][i].second;
+          print(v, w);
+          if (i != child[u].size() - 1) fprintf(output, ",");
+        }
+        fprintf(output, "):%f", l);
+      }
+    }
+    void print() {
+      int u = cur - 1;
+      fprintf(output, "(");
+      for (int i = 0; i < child[u].size(); ++i) {
+        int v = child[u][i].first;
+        float w = child[u][i].second;
+        print(v, w);
+        if (i != child[u].size() - 1) fprintf(output, ",");
+      }
+      fprintf(output, ");");
+    }
+  } tree;
+  
+                        
+  float **delta, **dist;                        
+  int r, n, time = 0;
+  bool *garbage;
+  pair<float, int> **sorted;
+  int *len, *rank, *realNode;
+  
+  void Initialize() { 
+    float distance;
+    char cur[LEN];
+    vector<string> name(n);    
+    for (int i = 0; i < n; ++i) {
+      fscanf(input, "%s", cur);
+      name[i] = cur;
+      for (int j = 0; j < n; ++j) {
+        fscanf(input, "%f", &distance);
+        delta[i][j] = dist[i][j] = distance;
+      }
+    }
+    tree.initialize(name, output);
+  }
+
+  int Symmetrize() {
+    int lig;                                  
+    int col;                                 
+    float value;                              
+    int symmetric = 1;
+    for (lig = 0; lig < n; lig++) {
+      for (col = 0; col < lig; col++) {
+        if (delta[lig][col] != delta[col][lig]) {
+          value = (delta[lig][col] + delta[col][lig]) / 2;
+          delta[lig][col] = value;
+          delta[col][lig] = value;
+          symmetric = 0;
+        }
+      }
+    }
+    if(!symmetric)
+        printf("The matrix is not symmetric");
+    return(symmetric);
+  }
+  float Distance(int i, int j) {
+    if (i > j) return (delta[i][j]);
+    else return(delta[j][i]);
+  }
+
+  float Variance(int i, int j) {
+    if (i > j) return (delta[j][i]);
+    else return (delta[i][j]);
+  }
+
+  int Emptied(int i) {
+    return (realNode[i] == -1);
+  }
+
+  float Sum_S(int i) {
+    return(delta[i][i]);
+  }
+
+  void Compute_sums_Sx() {
+    float sum = 0;
+    for(int i = 0; i < n; i++) {
+      if(!Emptied(i)) {
+        sum = 0;
+        for(int j = 0; j < n; j++) {
+          if(i != j && !Emptied(j))          
+          sum += Distance(i, j);
+        }
+      }
+      delta[i][i] = sum;                          
+    }                                              
+  }
+  int last = 1;
+  void Best_pair(int *a, int *b) {
+    float Qmin = 1e300;
+    float Umax = -1e300;
+    for (int i = 0; i < n; ++i) 
+        if (!Emptied(i))
+            Umax = max(Umax, Sum_S(i));  
+    auto findMinRow = [&](int x) { 
+      int dead = 0;
+      for (int i = 0; i < len[x]; ++i) {
+        int y = sorted[x][i].second;
+        if (Emptied(y) || rank[x] < rank[y]) {
+          ++dead;
+        } else {
+          if (sorted[x][i].first * (r - 2) - Sum_S(x) - Umax > Qmin) break;
+          float Qxy = Agglomerative_criterion(x, y);
+          if (Qxy < Qmin - 0.000001) {
+              Qmin = Qxy;
+              *a = x;
+              *b = y;
+          } 
+        }
+      }
+      return dead;
+    };
+    auto findMinRowGarbage = [&](int x) { 
+      int cur = 0;
+      for (int i = 0; i < len[x]; ++i) {
+        int y = sorted[x][i].second;
+        if (Emptied(y) || rank[x] < rank[y]) continue;
+        float Qxy = Agglomerative_criterion(x, y);
+        if (Qxy < Qmin - 0.000001) {
+          Qmin = Qxy;
+          *a = x;
+          *b = y;
+        }
+        sorted[x][cur++] = sorted[x][i]; 
+      }
+      len[x] = cur;
+    };
+    int x = last;
+    do {
+      if(!Emptied(x)) {
+        if (garbage[x]) {
+          findMinRowGarbage(x);
+          garbage[x] = 0;
+        } else {
+          int dead = findMinRow(x);
+          if (dead > r / 2) garbage[x] = 1;
+        }
+      }
+      x = (x == n - 1 ? 0 : x + 1);
+    } while (x != last);
+  }
+
+  float Finish_branch_length(int i, int j, int k) {
+    return 0.5 * (Distance(i, j) + Distance(i, k) - Distance(j, k));
+  }
+
+  void Finish() {
+    int l = 0;
+    int i = 0;
+    float length;
+    int last[3];                  
+    while (l < n) {                            
+        if (!Emptied(l)) {
+            last[i] = l;
+            i++;
+        }
+        l++;
+    }
+    int root = tree.createNode();
+    tree.addEdge(root, realNode[last[0]], Finish_branch_length(last[0], last[1], last[2]));
+    tree.addEdge(root, realNode[last[1]], Finish_branch_length(last[1], last[0], last[2]));
+    tree.addEdge(root, realNode[last[2]], Finish_branch_length(last[2], last[1], last[0]));
+    tree.print();
+  }
+
+  float Agglomerative_criterion(int i, int j) {
+    return (r - 2) * Distance(i, j) - Sum_S(i) - Sum_S(j);
+  }
+
+  float Branch_length(int a, int b) {
+    return 0.5 * (Distance(a, b) + (Sum_S(a) - Sum_S(b)) / (r - 2));
+  }
+
+  float Reduction4(int a, float la, int b, float lb, int i, float lamda) {
+    return lamda * (Distance(a, i) - la) + (1 - lamda) * (Distance(b, i) - lb);              
+  }
+
+  float Reduction10(int a, int b, int i, float lamda, float vab) {
+    return lamda * Variance(a, i) + (1 - lamda) * Variance(b, i) - lamda * (1 - lamda) * vab; 
+  }
+
+  float Lamda(int a, int b, float vab) {
+    float lamda = 0.0;
+    if (vab == 0.0) lamda = 0.5;
+    else {
+      for (int i = 0; i < n; i++) {
+          if (a != i && b != i && !Emptied(i))
+              lamda += (Variance(b, i) - Variance(a, i));
+      }
+      lamda = 0.5 + lamda / (2 * (r - 2) * vab);
+    }                                             
+    if(lamda > 1.0) lamda = 1.0;                            
+    if(lamda < 0.0) lamda = 0.0;
+    return(lamda);
+  }
+
+public :
+  void readInp(const char *inputFile, const char *outputFile) {
+    input = fopen(inputFile, "r");
+    output = fopen(outputFile, "w");
+
+    fscanf(input, "%d", &n);
+
+    garbage = (bool*) calloc(n, sizeof(bool));
+    rank = (int*) calloc(n, sizeof(int));
+    len = (int*) calloc(n, sizeof(int));
+    delta = (float**) calloc(n, sizeof(float*));
+    dist = (float**) calloc(n, sizeof(float*));
+    realNode = (int*) calloc(n, sizeof(int));
+    for (int i = 0; i < n; i++) {
+        delta[i] = (float*) calloc(n, sizeof(float));
+        dist[i] = (float*) calloc(n, sizeof(float));
+        if(delta[i] == NULL) {
+            printf("Out of memories!!");
+            exit(0);
+        }
+    }
+    r = n;
+    Initialize();
+    if(!Symmetrize()) printf("\n The matrix  is not symmetric.\n ");
+  }
+  int create(const char *inputFile, const char *outputFile) {
+    int* a = (int*)calloc(1, sizeof(int));
+    int* b = (int*)calloc(1, sizeof(int));
+
+    *a = 0;
+    *b = 0;
+
+    for (int i = 0; i < n; ++i) rank[i] = 0, realNode[i] = i;
+    sorted = new pair<float, int>* [n];
+    for (int i = 0; i < n; ++i) {
+        sorted[i] = new pair<float, int> [n];
+        for (int j = 0; j < i; ++j) {
+            sorted[i][j].first = Distance(i, j);
+            sorted[i][j].second = j; 
+        }
+        len[i] = i;
+        sort(sorted[i], sorted[i] + i);
+    }
+    float *tmp = new float[n];
+    Compute_sums_Sx();
+    while (r > 3) {
+      Best_pair(a, b);       
+      float vab = Variance(*a, *b);    
+      float la = Branch_length(*a, *b); 
+      float lb = Branch_length(*b, *a);  
+      float lamda = Lamda(*a, *b, vab); 
+      
+      rank[*a] = ++time;
+      len[*a] = 0;
+      float sum = 0;
+      int x, y;
+      for (int i = 0; i < n; ++i) tmp[i] = 0;
+      for (int i = 0; i < n; i++) {
+        if (!Emptied(i) && (i != *a) && (i != *b)) {
+          if (*a > i) {
+              x = *a;
+              y = i;
+          } else {
+              x = i;
+              y = *a;                     
+          }                                
+          tmp[i] -= Distance(*a, i) + Distance(*b, i);                        
+          delta[x][y] = Reduction4(*a, la, *b, lb, i, lamda);
+          tmp[i] += Distance(*a, i);
+
+          sum += Distance(*a, i);
+          delta[y][x] = Reduction10(*a, *b, i, lamda, vab);
+          sorted[*a][len[*a]++] = {delta[x][y], i};
+        }
+      }
+      for (int i = 0; i < n; ++i) delta[i][i] += tmp[i];
+      sort(sorted[*a], sorted[*a] + len[*a]);
+      delta[*a][*a] = sum;          
+      last = *a;
+
+      int par = tree.createNode();
+      tree.addEdge(par, realNode[*a], la);
+      tree.addEdge(par, realNode[*b], lb);
+
+      realNode[*b] = -1;
+      realNode[*a] = par;
+      --r;
+    }
+    Finish();   
+    for(int i = n - 1; i >= 0; i--) free(delta[i]);
+    free(realNode);
+    free(delta);
+    free(b);
+    free(a);
+    fclose(input);
+    fclose(output);
+    return 0;
+  }
+  void calcError() {
+    float sumSquares = 0;
+    for (int u = n; u < tree.cur; ++u) {
+      vector<vector<pair<int, float>>> totalDist;
+      for (auto [v, w]: tree.child[u]) 
+        totalDist.push_back(tree.calcTotalDistanceToLeaves(v, w));
+      for (int i = 0; i < totalDist.size(); ++i)
+        for (int j = i + 1; j < totalDist.size(); ++j) {
+          for (auto [c1, d1]: totalDist[i])
+            for (auto [c2, d2]: totalDist[j]) {
+              float diff = (d1 + d2 - dist[c1][c2]);
+              sumSquares += diff * diff;
+            }
+        }
+    }
+    float rms = sqrt(sumSquares * 2.0 / n / (n - 1.0));
+    cout << "Root Mean Square Error: " << rms << '\n';
+    free(dist);
+  }
+};
+
 #endif

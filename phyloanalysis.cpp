@@ -1179,6 +1179,7 @@ void computeInitialTree(Params &params, IQTree &iqtree, string &dist_file, int &
 		iqtree.computeBioNJ(params, iqtree.aln, dist_file);
 		mpiout << getCPUTime() - start << " seconds" << endl;
 		numInitTrees = 1;
+		exit(-1);
 		break;
     }
 
