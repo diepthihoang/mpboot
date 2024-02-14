@@ -2181,6 +2181,10 @@ void runPhyloAnalysis(Params &params) {
 	IQTree *tree;
 
 	/****************** read in alignment **********************/
+	if (strcmp(params.sequence_type, "BIN") == 0) {
+		params.sequence_type = "DNA";
+	}
+
 	if (params.partition_file) {
 		// Partition model analysis
 		if(params.partition_type){
@@ -2210,8 +2214,6 @@ void runPhyloAnalysis(Params &params) {
 			alignment = aln;
 		}
 		tree = new IQTree(alignment);
-
-
 	}
 
 
