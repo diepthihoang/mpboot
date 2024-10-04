@@ -59,7 +59,12 @@
 #endif
 
 #if defined(USE_HASH_MAP) && !defined(_MSC_VER)
-	#if !defined(__GNUC__)
+        #if defined(__clang__)
+                // libc++ detected:     _LIBCPP_VERSION
+                // libstdc++ detected:  __GLIBCXX__
+                #include <unordered_map>
+                #include <unordered_set>
+	#elif !defined(__GNUC__)
 		#include <hash_map>
 		#include <hash_set>
 		using namespace stdext;
@@ -69,10 +74,21 @@
 		using namespace __gnu_cxx;
 		#define unordered_map hash_map
 		#define unordered_set hash_set
-	#else
+        /*
+        NHANLT: resolve ambiguous reference
+        std::tr1 is Technical Report 1, a proposal of extensions for C++0X when waiting
+        for C++11 to get approved. Most of features (including
+        std::tr1::unordered_map/set) in Technical Report 1 had been merged into C++11.
+        C++11 had been fully implemented since GCC 4.8.1 -> we only need to use std::tr1
+        in GCC older than 4.8.1
+        */
+	#elif GCC_VERSION < 40800
 		#include <tr1/unordered_map>
 		#include <tr1/unordered_set>
 		using namespace std::tr1;
+        #else
+                #include <unordered_map>
+                #include <unordered_set>
 	#endif
 #else
 	#include <map>
