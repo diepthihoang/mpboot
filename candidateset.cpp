@@ -150,7 +150,7 @@ bool CandidateSet::update(string tree, double score) {
 }
 
 vector<double> CandidateSet::getBestScores(int numBestScore) {
-	if (numBestScore == 0)
+	if (numBestScore == 0 || numBestScore > size())
 		numBestScore = size();
 	vector<double> res;
 	for (reverse_iterator rit = rbegin(); rit != rend() && numBestScore > 0; rit++, numBestScore--) {

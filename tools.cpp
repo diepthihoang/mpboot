@@ -805,6 +805,7 @@ void parseArg(int argc, char *argv[], Params &params) {
     params.do_first_rell = false;
     params.remove_dup_seq = false;
     params.test_mode = false;
+	params.savek = 0;
 
 #ifdef _OPENMP
     params.num_threads = 0;
@@ -2261,6 +2262,15 @@ void parseArg(int argc, char *argv[], Params &params) {
 					throw "Use -numcand <number_of_candidate_trees>";
 				params.popSize = convert_int(argv[cnt]);
 				assert(params.popSize < params.numParsTrees);
+				continue;
+			}
+			if (strcmp(argv[cnt], "-savek") == 0) {
+				cnt++;
+				if (cnt >= argc)
+					throw "Use -savek <number_of_saving_trees>";
+				params.savek = convert_int(argv[cnt]);
+				params.numParsTrees = max(params.savek, params.numParsTrees);
+				assert(params.savek > 0);
 				continue;
 			}
 			if (strcmp(argv[cnt], "-beststart") == 0) {
