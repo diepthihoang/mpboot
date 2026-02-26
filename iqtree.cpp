@@ -28,8 +28,12 @@
 #include "pllrepo/src/pllInternal.h"
 #include "nnisearch.h"
 #include "sprparsimony.h"
+#if defined(__AVX__) || defined(__SSE3__) || defined(__x86_64__) || defined(__i386__)
 #include "vectorclass/vectorclass.h"
-#include "vectorclass/vectormath_common.h"
+#define MPBOOT_USE_VECTORCLASS 1
+#else
+#define MPBOOT_USE_VECTORCLASS 0
+#endif
 #include "parstree.h"
 
 Params *globalParam;
@@ -3282,6 +3286,7 @@ void IQTree::saveCurrentTree(double cur_logl) {
 	// if on_ratchet_hclimb1, update cur_logl
 	if(params->maximum_parsimony && on_ratchet_hclimb1 && reps_segments != -1){
 		int ptn = 0, segment_id = 0, score = 0;
+#if MPBOOT_USE_VECTORCLASS
 		VectorClassUShort vc_score = 0;
 		// sum by segment to avoid data overflow
 		for(; segment_id < reps_segments; segment_id++){
@@ -3290,6 +3295,12 @@ void IQTree::saveCurrentTree(double cur_logl) {
 			score += horizontal_add(vc_score);
 			vc_score = 0;
 		}
+#else
+        for(; segment_id < reps_segments; segment_id++){
+            for (; ptn < segment_upper[segment_id]; ptn++)
+                score += _pattern_pars[ptn] * original_sample[ptn];
+        }
+#endif
 		cur_logl = -score;
 	}
 
@@ -3422,15 +3433,24 @@ void IQTree::saveCurrentTree(double cur_logl) {
 					rell = -(double)res;
 				}else{
 					int ptn = 0, segment_id = 0, res = 0;
+                #if MPBOOT_USE_VECTORCLASS
 					VectorClassUShort vc_rell = 0;
+                #endif
 					int max_nptn = nptn / 2;
 					for(; segment_id < reps_segments; segment_id++){
+                    #if MPBOOT_USE_VECTORCLASS
 						for (; ptn < segment_upper[segment_id]; ptn+=VCSIZE_USHORT){
 							if(params->do_first_rell && ptn >= max_nptn) break;
 							vc_rell = VectorClassUShort().load_a(&_pattern_pars[ptn]) * VectorClassUShort().load_a(&boot_sample[ptn]) + vc_rell;
 						}
 						res += horizontal_add(vc_rell);
 						vc_rell = 0;
+                    #else
+                        for (; ptn < segment_upper[segment_id]; ptn++){
+                            if(params->do_first_rell && ptn >= max_nptn) break;
+                            res += _pattern_pars[ptn] * boot_sample[ptn];
+                        }
+                    #endif
 
 						if((!skipped) && (reps_segments > 1) && (segment_id > reps_segments / 4) && (segment_id < reps_segments - 1)){
 							int reps_total = res + boot_samples_pars_remain_bounds[sample][segment_id];
@@ -3462,6 +3482,7 @@ void IQTree::saveCurrentTree(double cur_logl) {
 //				} else {
 					// SSE optimized version of the above loop
 					BootValType *boot_sample = boot_samples[sample];
+    #if MPBOOT_USE_VECTORCLASS
 	#ifdef BOOT_VAL_FLOAT
 					VectorClassFloat vc_rell = 0.0;
 					int maxptn = nptn - VCSIZE_FLOAT;
@@ -3479,6 +3500,12 @@ void IQTree::saveCurrentTree(double cur_logl) {
 					for (; ptn < nptn; ptn++)
 						res += pattern_lh[ptn] * boot_sample[ptn];
 					rell = res;
+    #else
+                    BootValType res = 0.0;
+                    for (ptn = 0; ptn < nptn; ptn++)
+                        res += pattern_lh[ptn] * boot_sample[ptn];
+                    rell = res;
+    #endif
 //				}
 			}
 

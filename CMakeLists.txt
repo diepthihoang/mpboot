@@ -29,7 +29,7 @@
 #
 
 
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 
 project(mpboot)
 add_definitions(-DIQ_TREE)
@@ -70,9 +70,6 @@ elseif (APPLE)
 	message("Target OS     : Mac OS X")
 	# to be compatible back to Mac OS X 10.7
 	add_definitions("-mmacosx-version-min=10.7")
-	if (CMAKE_SYSTEM_PROCESSOR MATCHES "(ARM)|(arm)")
-		set(CMAKE_OSX_ARCHITECTURES "x86_64" CACHE INTERNAL "" FORCE)
-	endif()
 	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -mmacosx-version-min=10.7")
     SET(CMAKE_FIND_LIBRARY_SUFFIXES .a ${CMAKE_FIND_LIBRARY_SUFFIXES})
 elseif (UNIX) 
@@ -195,7 +192,13 @@ endif()
 ##################################################################
 # configure SSE/AVX/FMA instructions
 ##################################################################
-if (IQTREE_FLAGS MATCHES "fma") # AVX+FMA instruction set
+set(DISABLE_X86_VECTOR_FLAGS "FALSE")
+if (APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "(ARM)|(arm)" AND IQTREE_FLAGS MATCHES "sse|avx|avx2|fma")
+	set(DISABLE_X86_VECTOR_FLAGS "TRUE")
+	message("Vectorization : requested x86 SIMD flags are disabled on arm64")
+endif()
+
+if (NOT DISABLE_X86_VECTOR_FLAGS AND IQTREE_FLAGS MATCHES "fma") # AVX+FMA instruction set
  	message("Vectorization : AVX+FMA")
 	add_definitions(-D__SSE3 -D__AVX) # define both SSE3 and AVX directive
 	if (VCC)
@@ -214,7 +217,7 @@ if (IQTREE_FLAGS MATCHES "fma") # AVX+FMA instruction set
 	endif()
 	SET(EXE_SUFFIX "${EXE_SUFFIX}-fma")
 
-elseif (IQTREE_FLAGS MATCHES "avx2") # AVX instruction set
+elseif (NOT DISABLE_X86_VECTOR_FLAGS AND IQTREE_FLAGS MATCHES "avx2") # AVX instruction set
  	message("Vectorization : AVX2")
 	add_definitions(-D__SSE3 -D__AVX) # define both SSE3 and AVX directive
 	if (VCC) 
@@ -231,7 +234,7 @@ elseif (IQTREE_FLAGS MATCHES "avx2") # AVX instruction set
 		endif()
 	endif()
 	SET(EXE_SUFFIX "${EXE_SUFFIX}-avx2")
-elseif (IQTREE_FLAGS MATCHES "avx") # AVX instruction set
+elseif (NOT DISABLE_X86_VECTOR_FLAGS AND IQTREE_FLAGS MATCHES "avx") # AVX instruction set
  	message("Vectorization : AVX")
 	add_definitions(-D__SSE3 -D__AVX) # define both SSE3 and AVX directive
 	if (VCC) 
@@ -248,7 +251,7 @@ elseif (IQTREE_FLAGS MATCHES "avx") # AVX instruction set
 		endif()
 	endif()
 	SET(EXE_SUFFIX "${EXE_SUFFIX}-avx")
-elseif (IQTREE_FLAGS MATCHES "sse4") #SSE intruction set
+elseif (NOT DISABLE_X86_VECTOR_FLAGS AND IQTREE_FLAGS MATCHES "sse4") #SSE intruction set
 	message("Vectorization : SSE4.1")
 	add_definitions(-D__SSE3)
 	
@@ -263,7 +266,7 @@ elseif (IQTREE_FLAGS MATCHES "sse4") #SSE intruction set
 			set(COMBINED_FLAGS "${COMBINED_FLAGS} -msse4.1")
 		endif()
 	endif()
-elseif (IQTREE_FLAGS MATCHES "sse") #SSE intruction set
+elseif (NOT DISABLE_X86_VECTOR_FLAGS AND IQTREE_FLAGS MATCHES "sse") #SSE intruction set
 	message("Vectorization : SSE3")
 	add_definitions(-D__SSE3)
 	
@@ -326,6 +329,11 @@ configure_file (
 include_directories("${PROJECT_BINARY_DIR}")
 include_directories("${PROJECT_BINARY_DIR}/zlib-1.2.7")
 
+set(MPBOOT_X86_SIMD "FALSE")
+if (CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|amd64|AMD64|i.86")
+	set(MPBOOT_X86_SIMD "TRUE")
+endif()
+
 
 ##################################################################
 # subdirectories containing necessary libraries for the build 
@@ -335,7 +343,9 @@ add_subdirectory(ncl)
 add_subdirectory(whtest)
 add_subdirectory(sprng)
 add_subdirectory(zlib-1.2.7)
-add_subdirectory(vectorclass)
+if (MPBOOT_X86_SIMD)
+	add_subdirectory(vectorclass)
+endif()
 add_subdirectory(model)
 
 ##################################################################
@@ -375,7 +385,6 @@ phyloanalysis.cpp
 phylonode.cpp
 phylosupertree.cpp
 phylotree.cpp
-phylotreesse.cpp
 #phylotreeeigen.cpp
 pruning.cpp
 split.cpp
@@ -401,6 +410,12 @@ parstree.cpp
 sprparsimony.cpp
 test.cpp
 )
+
+if (MPBOOT_X86_SIMD)
+	target_sources(mpboot PRIVATE phylotreesse.cpp)
+else()
+	target_sources(mpboot PRIVATE phylotree_arm.cpp)
+endif()
 
 ##################################################################
 # setup linking flags
@@ -428,7 +443,11 @@ if (IQTREE_FLAGS MATCHES "omp")
 	endif()
 endif()
 
-target_link_libraries(mpboot pll ncl whtest zlibstatic sprng vectorclass model ${PLATFORM_LIB} ${THREAD_LIB})	
+if (MPBOOT_X86_SIMD)
+	target_link_libraries(mpboot pll ncl whtest zlibstatic sprng vectorclass model ${PLATFORM_LIB} ${THREAD_LIB})
+else()
+	target_link_libraries(mpboot pll ncl whtest zlibstatic sprng model ${PLATFORM_LIB} ${THREAD_LIB})
+endif()
 
 ##################################################################
 # setup the executable name 

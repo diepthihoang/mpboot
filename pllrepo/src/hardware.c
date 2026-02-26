@@ -26,7 +26,7 @@ static __inline void cpuid(unsigned int op, int count,
 	*ebx = regs[1];
 	*ecx = regs[2];
 	*edx = regs[3];
-#else
+#elif defined(__i386__) || defined(__x86_64__) || defined(_M_IX86) || defined(_M_X64)
 	*eax = op;
   *ecx = count;
   asm volatile("cpuid"
@@ -37,6 +37,13 @@ static __inline void cpuid(unsigned int op, int count,
 
         : "0" (*eax), "2" (*ecx)
         : "memory");
+#else
+	(void)op;
+	(void)count;
+	*eax = 0;
+	*ebx = 0;
+	*ecx = 0;
+	*edx = 0;
 #endif
 }
 
@@ -142,8 +149,8 @@ static void pll_probe_hardware (pllHardwareInfo * hw)
 
 int pllGetHardwareInfo (pllHardwareInfo * hw)
 {
-  pll_probe_hardware (&hw);
-  pll_probe_cpu (&hw);
+  pll_probe_hardware (hw);
+  pll_probe_cpu (hw);
 
   /* TODO: finish failure checks in probe_hardware and probe_cpu */
   return (1);

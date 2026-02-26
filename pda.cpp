@@ -66,7 +66,16 @@
 //#include <unistd.h>
 #include <stdlib.h>
 #include "sprparsimony.h"
+#if defined(__AVX__) || defined(__SSE3__) || defined(__x86_64__) || defined(__i386__)
 #include "vectorclass/vectorclass.h"
+#define MPBOOT_USE_VECTORCLASS 1
+#else
+#define MPBOOT_USE_VECTORCLASS 0
+
+static inline int instrset_detect() { return 0; }
+static inline bool hasFMA3() { return false; }
+static inline bool hasFMA4() { return false; }
+#endif
 
 #ifdef _OPENMP
 	#include <omp.h>
@@ -2215,16 +2224,19 @@ int main(int argc, char *argv[])
 	//pclose(pfile);
 
 	int instrset = instrset_detect();
-	if (instrset < 3) outError("Your CPU does not support SSE3!");
 	bool has_fma3 = hasFMA3();
 	bool has_fma4 = hasFMA4();
 	bool has_fma =  has_fma3 || has_fma4;
 
-#ifdef __AVX
+#if MPBOOT_USE_VECTORCLASS
+	if (instrset < 3) outError("Your CPU does not support SSE3!");
+#endif
+
+#if MPBOOT_USE_VECTORCLASS && defined(__AVX)
 	if (instrset < 7) {
 		outError("Your CPU does not support AVX, please use SSE3 version of MPBoot.");
 	}
-#else
+#elif MPBOOT_USE_VECTORCLASS
 	if (instrset >= 7) {
 		outWarning("Your CPU supports AVX but you are using SSE3 version of MPBoot!");
 		outWarning("Please switch to AVX version that is 40% faster than SSE3.");
@@ -2232,7 +2244,7 @@ int main(int argc, char *argv[])
 	}
 #endif
 
-#ifdef __FMA__
+#if MPBOOT_USE_VECTORCLASS && defined(__FMA__)
 	if (!has_fma) {
 		outError("Your CPU does not support FMA instruction, quiting now...");
 	}
