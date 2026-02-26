@@ -1,4 +1,5 @@
-cmake_minimum_required(VERSION 2.4.4)
+cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
+# updated to modern CMake version to avoid configuration errors with CMake 4.x
 set(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS ON)
 
 project(zlib C)

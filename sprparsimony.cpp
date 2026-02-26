@@ -109,6 +109,9 @@
 #else
     // no vectorization
 #define VECTOR_SIZE 1
+#define USHORT_PER_VECTOR 1
+#define INTS_PER_VECTOR 1
+#define LONG_INTS_PER_VECTOR 1
 #endif
 
 #include "pllrepo/src/pll.h"
